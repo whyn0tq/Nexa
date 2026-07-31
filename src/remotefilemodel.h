@@ -3,7 +3,10 @@
 #include "types.h"
 
 #include <QAbstractTableModel>
+#include <QFileIconProvider>
+#include <QHash>
 #include <QIcon>
+#include <QSortFilterProxyModel>
 
 class QMimeData;
 
@@ -11,6 +14,12 @@ class RemoteFileModel final : public QAbstractTableModel {
     Q_OBJECT
 
 public:
+    enum Column { NameColumn, SizeColumn, ModifiedColumn, TypeColumn,
+                  ColumnCount };
+
+    static constexpr int SortRole = Qt::UserRole + 1;
+    static constexpr int IsDirectoryRole = Qt::UserRole + 2;
+
     explicit RemoteFileModel(QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
@@ -28,13 +37,34 @@ public:
     void appendEntries(const RemoteEntries &entries);
     void clear();
     const RemoteEntry *entryAt(int row) const;
+    const RemoteEntries &entries() const { return m_entries; }
     static QString remoteMimeType();
     static RemoteEntries entriesFromMimeData(const QMimeData *mimeData);
 
 private:
-    static QString humanSize(qint64 bytes);
+    QIcon iconFor(const RemoteEntry &entry) const;
 
     RemoteEntries m_entries;
+    QFileIconProvider m_iconProvider;
     QIcon m_folderIcon;
     QIcon m_fileIcon;
+    QIcon m_linkIcon;
+    mutable QHash<QString, QIcon> m_suffixIcons;
+};
+
+class RemoteSortFilterProxy final : public QSortFilterProxyModel {
+    Q_OBJECT
+
+public:
+    explicit RemoteSortFilterProxy(QObject *parent = nullptr);
+
+    void setNameFilter(const QString &filter);
+
+protected:
+    bool lessThan(const QModelIndex &left,
+                  const QModelIndex &right) const override;
+    bool filterAcceptsRow(int row, const QModelIndex &parent) const override;
+
+private:
+    QString m_nameFilter;
 };

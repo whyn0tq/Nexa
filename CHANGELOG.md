@@ -6,6 +6,47 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-01
+
+### Added
+
+- Dedicated SSH session for transfers, so browsing stays responsive while large
+  uploads and downloads are running.
+- Transfer queue with per-item progress, speed, state and per-item cancellation.
+- Resumable transfers: interrupted downloads and uploads continue from the byte
+  they reached instead of restarting.
+- Overwrite policies (resume, overwrite, skip, rename) applied per transfer.
+- Preservation of modification time and the executable bit across transfers.
+- Keyboard-interactive and SSH-agent authentication, negotiated against the
+  methods the server actually advertises.
+- Light theme alongside the dark one, with the choice remembered (Ctrl+T).
+- Breadcrumb navigation with back/forward history for both panes.
+- Name filter and sortable columns in both panes.
+- Empty-state placeholders and an inline, dismissible notification area.
+- Unit tests for the transfer overwrite/resume rules.
+
+### Changed
+
+- Errors are reported in an inline banner with a short history instead of one
+  modal dialog per failure.
+- Downloads are written to a `.nexapart` scratch file and renamed on success, so
+  an interrupted transfer can never be mistaken for a complete file.
+- Directory trees are walked iteratively, keeping one server handle open at a
+  time instead of one per level.
+- SFTP limits are negotiated once per session rather than once per file.
+- The colour system is defined as design tokens in one place instead of inline
+  stylesheet literals.
+
+### Fixed
+
+- Short SFTP reads no longer corrupt downloads: the pipeline is resynchronised
+  at the byte actually received rather than the byte requested.
+- Files whose size the server does not report are downloaded completely instead
+  of being written as empty.
+- A server-side failure during a directory listing is no longer treated as the
+  end of the directory, which could silently truncate it.
+- Deleting a deep tree no longer risks exhausting server handles or the stack.
+
 ## [0.1.0] - 2026-07-29
 
 ### Added

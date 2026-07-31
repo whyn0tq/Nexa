@@ -17,7 +17,7 @@
 # Nexa
 
 Nexa is a modern, local-first SSH and SFTP workspace for Windows. It combines a
-two-pane file manager, secure credential storage, automatic reconnection and
+two-pane file manager, secure credential storage, a resumable transfer queue and
 high-throughput asynchronous transfers in one native desktop application.
 
 > **Preview notice:** Nexa is under active development. Keep independent backups
@@ -27,7 +27,10 @@ high-throughput asynchronous transfers in one native desktop application.
 
 - **Local-first:** no mandatory account or cloud service.
 - **Private:** passwords and passphrases are protected with Windows DPAPI.
+- **Never blocked:** transfers run on their own SSH session, so browsing stays
+  responsive while gigabytes are moving.
 - **Fast:** pipelined directory listing and up to 64 in-flight SFTP requests.
+- **Recoverable:** an interrupted transfer continues from the byte it reached.
 - **Practical:** drag files, directories and even items from an open ZIP archive.
 - **Resilient:** reconnects automatically when a hosting provider closes SFTP.
 - **Open:** licensed under GPL-3.0-or-later.
@@ -36,7 +39,8 @@ high-throughput asynchronous transfers in one native desktop application.
 
 ### Connections and security
 
-- Password and private-key authentication
+- Password, private-key, SSH-agent and keyboard-interactive authentication,
+  negotiated against the methods the server advertises
 - SHA-256 server host-key verification
 - Detection of changed host keys
 - Encrypted saved credentials using Windows DPAPI
@@ -46,6 +50,8 @@ high-throughput asynchronous transfers in one native desktop application.
 ### File management
 
 - Native two-pane local/remote file browser
+- Breadcrumb navigation with back/forward history
+- Name filter and sortable columns in both panes
 - Upload and download files or complete directory trees
 - Create, rename and recursively delete remote entries
 - Keyboard shortcuts and context menus
@@ -56,11 +62,38 @@ high-throughput asynchronous transfers in one native desktop application.
 
 ### Transfer engine
 
-- Asynchronous SFTP reads and writes
-- Up to 64 in-flight requests
-- Progress, transferred size and average throughput
+- A dedicated SSH session for transfers, so browsing stays responsive while a
+  multi-gigabyte transfer runs
+- Transfer queue with per-item progress, speed, state and cancellation
+- Resumable transfers: an interrupted file continues from the byte it reached
+- Overwrite policies: resume, overwrite, skip or rename
+- Downloads land in a `.nexapart` scratch file and are renamed on success, so a
+  partial file is never mistaken for a complete one
+- Modification time and the executable bit are preserved
+- Asynchronous SFTP reads and writes, up to 64 in-flight requests
 - Retry after connection loss
-- UI updates throttled to keep large transfers responsive
+
+### Appearance
+
+- Dark and light themes, remembered between runs (`Ctrl+T`)
+- One set of design tokens driving the whole interface
+- Inline, dismissible notifications instead of modal error dialogs
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|---|---|
+| `Enter` | Open the selected folder |
+| `Delete` | Delete the selected remote entries |
+| `F2` | Rename the selected entry |
+| `F5` | Refresh the current remote directory |
+| `Alt` + `←` / `→` | Back and forward through history |
+| `Alt` + `↑` | Go to the parent directory |
+| `Ctrl` + `L` | Type a remote path |
+| `Ctrl` + `Shift` + `L` | Type a local path |
+| `Ctrl` + `F` | Focus the name filter |
+| `Ctrl` + `1` / `2` | Switch between Files and Transfers |
+| `Ctrl` + `T` | Toggle the dark and light theme |
 
 ## Quick start
 
@@ -116,9 +149,10 @@ The result is written to `dist-release\Nexa.exe`.
 
 ## Roadmap
 
-- [ ] Persistent transfer queue
+- [x] Transfer queue with per-item progress and cancellation
+- [x] Resume and partial-transfer recovery
+- [ ] Queue that survives a restart
 - [ ] Multiple simultaneous file transfers
-- [ ] Pause, resume and partial-transfer recovery
 - [ ] SSH terminal with tabs
 - [ ] Host groups, tags and search
 - [ ] Port forwarding and jump hosts
@@ -127,7 +161,8 @@ The result is written to `dist-release\Nexa.exe`.
 - [ ] Windows installer and automatic updates
 - [ ] Linux and macOS support
 
-See [VERSION.md](VERSION.md) for the detailed release history.
+See [CHANGELOG.md](CHANGELOG.md) for the release history and
+[VERSION.md](VERSION.md) for what the current release contains.
 
 ## Contributing
 

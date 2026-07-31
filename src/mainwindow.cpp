@@ -2,11 +2,20 @@
 
 #include "connectdialog.h"
 #include "fileviews.h"
+#include "format.h"
+#include "pathbar.h"
 #include "remotefilemodel.h"
 #include "sftpworker.h"
+#include "transferpanel.h"
 
 #include <QAbstractItemView>
 #include <QApplication>
+#include <QClipboard>
+#include <QCloseEvent>
+#include <QDateTime>
+#include <QDesktopServices>
+#include <QDir>
+#include <QHBoxLayout>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QFileSystemModel>
@@ -15,184 +24,187 @@
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
-#include <QMessageBox>
 #include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSettings>
-#include <QSplitter>
-#include <QStatusBar>
 #include <QShortcut>
+#include <QSplitter>
+#include <QStackedWidget>
+#include <QStatusBar>
+#include <QStyle>
 #include <QTableView>
 #include <QThread>
 #include <QTimer>
-#include <QToolBar>
 #include <QTreeView>
 #include <QUrl>
 #include <QVBoxLayout>
 
-#include <algorithm>
-
 namespace {
-QWidget *panelHeader(const QString &caption, QLineEdit *path,
-                     QPushButton *up, QWidget *parent)
+void repolish(QWidget *widget)
 {
-    auto *widget = new QWidget(parent);
-    widget->setObjectName(QStringLiteral("panelHeader"));
+    if (!widget)
+        return;
+    widget->style()->unpolish(widget);
+    widget->style()->polish(widget);
+    widget->update();
+}
+
+QPushButton *iconButton(const QString &glyph, const QString &tooltip)
+{
+    auto *button = new QPushButton(glyph);
+    button->setObjectName(QStringLiteral("iconButton"));
+    button->setToolTip(tooltip);
+    button->setFixedSize(Theme::ControlHeight, Theme::ControlHeight);
+    button->setCursor(Qt::PointingHandCursor);
+    return button;
+}
+
+QLineEdit *filterField(const QString &placeholder)
+{
+    auto *field = new QLineEdit;
+    field->setPlaceholderText(placeholder);
+    field->setClearButtonEnabled(true);
+    field->setFixedWidth(190);
+    return field;
+}
+
+QWidget *emptyState(const QString &glyph, const QString &title,
+                    const QString &text)
+{
+    auto *widget = new QWidget;
     auto *layout = new QVBoxLayout(widget);
-    layout->setContentsMargins(18, 17, 18, 13);
-    layout->setSpacing(10);
-    auto *label = new QLabel(caption);
-    label->setObjectName(QStringLiteral("panelTitle"));
-    layout->addWidget(label);
-    auto *row = new QHBoxLayout;
-    row->setSpacing(8);
-    up->setText(QStringLiteral("←"));
-    up->setObjectName(QStringLiteral("iconButton"));
-    up->setToolTip(QObject::tr("На уровень выше"));
-    up->setFixedSize(38, 38);
-    path->setObjectName(QStringLiteral("pathInput"));
-    row->addWidget(up);
-    row->addWidget(path);
-    layout->addLayout(row);
+    layout->setContentsMargins(Theme::SpaceXl, Theme::SpaceXl * 2,
+                               Theme::SpaceXl, Theme::SpaceXl * 2);
+    layout->setSpacing(Theme::SpaceSm);
+    layout->addStretch();
+    auto *icon = new QLabel(glyph);
+    icon->setObjectName(QStringLiteral("emptyStateIcon"));
+    icon->setAlignment(Qt::AlignCenter);
+    auto *titleLabel = new QLabel(title);
+    titleLabel->setObjectName(QStringLiteral("emptyStateTitle"));
+    titleLabel->setAlignment(Qt::AlignCenter);
+    auto *textLabel = new QLabel(text);
+    textLabel->setObjectName(QStringLiteral("emptyStateText"));
+    textLabel->setAlignment(Qt::AlignCenter);
+    textLabel->setWordWrap(true);
+    layout->addWidget(icon);
+    layout->addWidget(titleLabel);
+    layout->addWidget(textLabel);
+    layout->addStretch();
     return widget;
 }
+
+QString appendName(const QString &directory, const QString &name)
+{
+    return directory.endsWith(QLatin1Char('/'))
+               ? directory + name
+               : directory + QLatin1Char('/') + name;
+}
+
+class LocalFileSystemModel final : public QFileSystemModel {
+public:
+    using QFileSystemModel::QFileSystemModel;
+
+    QVariant headerData(int section, Qt::Orientation orientation,
+                        int role) const override
+    {
+        if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
+            switch (section) {
+            case NameColumn:
+                return MainWindow::tr("Имя");
+            case SizeColumn:
+                return MainWindow::tr("Размер");
+            case TypeColumn:
+                return MainWindow::tr("Тип");
+            case DateColumn:
+                return MainWindow::tr("Изменён");
+            default:
+                break;
+            }
+        }
+        return QFileSystemModel::headerData(section, orientation, role);
+    }
+
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        if (role == Qt::TextAlignmentRole && index.column() == SizeColumn)
+            return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
+        if (role != Qt::DisplayRole || !index.isValid())
+            return QFileSystemModel::data(index, role);
+
+        const QFileInfo info = fileInfo(index);
+        switch (index.column()) {
+        case SizeColumn:
+            return info.isDir() ? QStringLiteral("—") : Format::size(info.size());
+        case TypeColumn: {
+            if (info.isDir())
+                return MainWindow::tr("Папка");
+            if (info.isSymLink())
+                return MainWindow::tr("Ссылка");
+            const QString suffix = info.suffix().toUpper();
+            return suffix.isEmpty() ? MainWindow::tr("Файл") : suffix;
+        }
+        case DateColumn:
+            return Format::timestamp(info.lastModified());
+        default:
+            return QFileSystemModel::data(index, role);
+        }
+    }
+
+private:
+    enum Column { NameColumn, SizeColumn, TypeColumn, DateColumn };
+};
 }
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     qRegisterMetaType<ConnectionProfile>();
     qRegisterMetaType<RemoteEntries>();
+    qRegisterMetaType<TransferStatus>();
+    qRegisterMetaType<QVector<TransferJob>>();
+
+    Theme::setMode(Theme::loadSavedMode());
     buildUi();
     applyTheme();
+    wireWorkers();
 
-    m_workerThread = new QThread(this);
-    m_worker = new SftpWorker;
-    m_worker->moveToThread(m_workerThread);
-    connect(m_workerThread, &QThread::finished, m_worker, &QObject::deleteLater);
-
-    connect(this, &MainWindow::connectRequested,
-            m_worker, &SftpWorker::connectToHost);
-    connect(this, &MainWindow::hostKeyConfirmed,
-            m_worker, &SftpWorker::confirmHostKey);
-    connect(this, &MainWindow::disconnectRequested,
-            m_worker, &SftpWorker::disconnectFromHost);
-    connect(this, &MainWindow::remoteListRequested,
-            m_worker, &SftpWorker::listDirectory);
-    connect(this, &MainWindow::downloadRequested,
-            m_worker, &SftpWorker::downloadFile);
-    connect(this, &MainWindow::uploadRequested,
-            m_worker, &SftpWorker::uploadFile);
-    connect(this, &MainWindow::remoteMkdirRequested,
-            m_worker, &SftpWorker::createDirectory);
-    connect(this, &MainWindow::remoteFileCreateRequested,
-            m_worker, &SftpWorker::createFile);
-    connect(this, &MainWindow::remoteRemoveRequested,
-            m_worker, &SftpWorker::removeEntry);
-    connect(this, &MainWindow::remoteRenameRequested,
-            m_worker, &SftpWorker::renameEntry);
-
-    connect(m_worker, &SftpWorker::connected,
-            this, &MainWindow::onConnected);
-    connect(m_worker, &SftpWorker::disconnected,
-            this, &MainWindow::onDisconnected);
-    connect(m_worker, &SftpWorker::hostKeyConfirmationRequired,
-            this, &MainWindow::onHostKeyRequired);
-    connect(m_worker, &SftpWorker::directoryListed,
-            this, &MainWindow::onRemoteListed);
-    connect(m_worker, &SftpWorker::directoryBatchReceived,
-            this, &MainWindow::onRemoteBatchReceived);
-    connect(m_worker, &SftpWorker::errorOccurred,
-            this, &MainWindow::onError);
-    connect(m_worker, &SftpWorker::performanceMetric, this,
-            [this](const QString &operation, qint64 milliseconds) {
-                statusBar()->showMessage(
-                    tr("%1 — %2 мс").arg(operation).arg(milliseconds), 5000);
-            });
-    connect(m_worker, &SftpWorker::reconnecting, this, [this] {
-        m_connectionLabel->setText(tr("●  Переподключение…"));
-        m_connectionLabel->setStyleSheet(QStringLiteral("color:#fbbf24;"));
-        statusBar()->showMessage(
-            tr("Соединение потеряно. Переподключаюсь автоматически…"));
-    });
-    connect(m_worker, &SftpWorker::reconnected, this, [this] {
-        m_connectionLabel->setText(tr("●  Подключено"));
-        m_connectionLabel->setStyleSheet(QStringLiteral("color:#4ade80;"));
-        statusBar()->showMessage(
-            tr("Соединение восстановлено. Операция продолжена."), 5000);
-    });
-    connect(m_worker, &SftpWorker::transferProgress, this,
-            [this](const QString &label, qint64 done, qint64 total) {
-                m_progress->setVisible(true);
-                m_progress->setMaximum(total > 0 ? 1000 : 0);
-                if (total > 0)
-                    m_progress->setValue(
-                        static_cast<int>((done * 1000) / total));
-                const double seconds =
-                    std::max(0.001,
-                             static_cast<double>(m_transferTimer.elapsed()) /
-                                 1000.0);
-                const double megabytesPerSecond =
-                    static_cast<double>(done) / (1024.0 * 1024.0) / seconds;
-                statusBar()->showMessage(
-                    tr("Передача %1 — %2 / %3 — %4 МБ/с")
-                        .arg(label, humanSize(done), humanSize(total))
-                        .arg(megabytesPerSecond, 0, 'f', 1));
-            });
-    connect(m_worker, &SftpWorker::transferStarted, this,
-            [this](const QString &label, bool upload) {
-                m_transferTimer.restart();
-                statusBar()->showMessage(
-                    upload ? tr("Загрузка «%1» на сервер…").arg(label)
-                           : tr("Скачивание «%1»…").arg(label));
-                m_progress->setVisible(true);
-                m_progress->setRange(0, 0);
-            });
-    connect(m_worker, &SftpWorker::transferFinished, this,
-            [this](const QString &label) {
-                m_progress->setVisible(false);
-                statusBar()->showMessage(tr("Передача «%1» завершена.").arg(label),
-                                         4000);
-                requestRemoteDirectory(m_currentRemotePath);
-                m_localModel->setRootPath(m_localPath->text());
-            });
-    connect(m_worker, &SftpWorker::deletionProgress, this,
-            [this](qint64 count, const QString &path) {
-                statusBar()->showMessage(
-                    tr("Удаление… обработано объектов: %1 — %2")
-                        .arg(count).arg(path));
-            });
-
-    m_workerThread->start();
     setConnectionState(false);
     QTimer::singleShot(0, this, [this] {
         const auto saved = ConnectDialog::lastProfile();
         if (!saved)
             return;
+        m_activeProfile = *saved;
         m_connectButton->setEnabled(false);
         m_connectionLabel->setText(tr("●  Подключение…"));
-        statusBar()->showMessage(
-            tr("Восстанавливаю сохранённую SFTP-сессию…"));
+        showNotice(tr("Восстанавливаю сохранённую SFTP-сессию…"), Notice::Info);
         emit connectRequested(*saved);
     });
 }
 
 MainWindow::~MainWindow()
 {
-    if (m_workerThread && m_workerThread->isRunning()) {
-        m_worker->requestStop();
-        QMetaObject::invokeMethod(m_worker, "disconnectFromHost",
-                                  Qt::BlockingQueuedConnection);
+    const QVector<QPair<QThread *, SftpWorker *>> sessions{
+        {m_transferThread, m_transferWorker},
+        {m_browseThread, m_browseWorker}};
+    for (const auto &[thread, worker] : sessions) {
+        if (!thread)
+            continue;
+        if (worker)
+            worker->requestStop();
+        thread->quit();
+
+        if (!thread->wait(5000))
+            thread->terminate();
     }
-    m_workerThread->quit();
-    m_workerThread->wait();
 }
 
 void MainWindow::buildUi()
 {
-    resize(1380, 820);
-    setMinimumSize(1040, 640);
+    resize(1420, 860);
+    setMinimumSize(1080, 660);
     setWindowTitle(QStringLiteral("Nexa"));
 
     auto *root = new QWidget;
@@ -200,16 +212,159 @@ void MainWindow::buildUi()
     auto *rootLayout = new QHBoxLayout(root);
     rootLayout->setContentsMargins(0, 0, 0, 0);
     rootLayout->setSpacing(0);
+    rootLayout->addWidget(buildSidebar());
 
+    auto *workspace = new QWidget;
+    workspace->setObjectName(QStringLiteral("workspace"));
+    auto *workspaceLayout = new QVBoxLayout(workspace);
+    workspaceLayout->setContentsMargins(Theme::SpaceXl, Theme::SpaceXl,
+                                        Theme::SpaceXl, Theme::SpaceLg);
+    workspaceLayout->setSpacing(Theme::SpaceLg);
+
+    auto *topBar = new QHBoxLayout;
+    topBar->setSpacing(Theme::SpaceSm);
+    auto *titleLayout = new QVBoxLayout;
+    titleLayout->setSpacing(2);
+    auto *workspaceTitle = new QLabel(tr("Файлы и сервер"));
+    workspaceTitle->setObjectName(QStringLiteral("workspaceTitle"));
+    auto *workspaceSubtitle = new QLabel(
+        tr("Перетаскивайте объекты между панелями — передача начнётся "
+           "автоматически"));
+    workspaceSubtitle->setObjectName(QStringLiteral("workspaceSubtitle"));
+    titleLayout->addWidget(workspaceTitle);
+    titleLayout->addWidget(workspaceSubtitle);
+    topBar->addLayout(titleLayout);
+    topBar->addStretch();
+
+    m_themeButton = iconButton(QString(), tr("Сменить тему (Ctrl+T)"));
+    m_disconnectButton = new QPushButton(tr("Отключиться"));
+    m_disconnectButton->setObjectName(QStringLiteral("secondaryButton"));
+    m_connectButton = new QPushButton(tr("＋  Подключиться"));
+    m_connectButton->setObjectName(QStringLiteral("primaryButton"));
+    m_disconnectButton->setMinimumHeight(Theme::ControlHeight + 4);
+    m_connectButton->setMinimumHeight(Theme::ControlHeight + 4);
+    topBar->addWidget(m_themeButton);
+    topBar->addWidget(m_disconnectButton);
+    topBar->addWidget(m_connectButton);
+    workspaceLayout->addLayout(topBar);
+
+    connect(m_themeButton, &QPushButton::clicked, this, &MainWindow::toggleTheme);
+    connect(m_connectButton, &QPushButton::clicked,
+            this, &MainWindow::showConnectDialog);
+    connect(m_disconnectButton, &QPushButton::clicked, this, [this] {
+        emit disconnectRequested();
+    });
+
+    m_notification = new QFrame;
+    m_notification->setObjectName(QStringLiteral("notificationBanner"));
+    m_notification->setVisible(false);
+    auto *noticeLayout = new QHBoxLayout(m_notification);
+    noticeLayout->setContentsMargins(Theme::SpaceLg, Theme::SpaceMd,
+                                     Theme::SpaceMd, Theme::SpaceMd);
+    noticeLayout->setSpacing(Theme::SpaceMd);
+    auto *noticeText = new QVBoxLayout;
+    noticeText->setSpacing(2);
+    m_notificationText = new QLabel;
+    m_notificationText->setObjectName(QStringLiteral("notificationText"));
+    m_notificationText->setWordWrap(true);
+    m_notificationDetail = new QLabel;
+    m_notificationDetail->setObjectName(QStringLiteral("notificationDetail"));
+    m_notificationDetail->setWordWrap(true);
+    m_notificationDetail->setVisible(false);
+    noticeText->addWidget(m_notificationText);
+    noticeText->addWidget(m_notificationDetail);
+    noticeLayout->addLayout(noticeText, 1);
+    auto *dismiss = iconButton(QStringLiteral("✕"), tr("Скрыть"));
+    dismiss->setFixedSize(26, 26);
+    noticeLayout->addWidget(dismiss, 0, Qt::AlignTop);
+    connect(dismiss, &QPushButton::clicked, this,
+            [this] { m_notification->setVisible(false); });
+    workspaceLayout->addWidget(m_notification);
+
+    m_notificationTimer = new QTimer(this);
+    m_notificationTimer->setSingleShot(true);
+    connect(m_notificationTimer, &QTimer::timeout, this,
+            [this] { m_notification->setVisible(false); });
+
+    m_pages = new QStackedWidget;
+    m_pages->addWidget(buildFilesPage());
+
+    m_transferPanel = new TransferPanel;
+    auto *transferPage = new QWidget;
+    transferPage->setObjectName(QStringLiteral("workspacePage"));
+    auto *transferLayout = new QVBoxLayout(transferPage);
+    transferLayout->setContentsMargins(0, 0, 0, 0);
+    transferLayout->addWidget(m_transferPanel);
+    m_pages->addWidget(transferPage);
+    workspaceLayout->addWidget(m_pages, 1);
+
+    rootLayout->addWidget(workspace, 1);
+    setCentralWidget(root);
+
+    m_statusLeft = new QLabel(tr("Готово"));
+    statusBar()->addWidget(m_statusLeft, 1);
+    m_progress = new QProgressBar;
+    m_progress->setFixedWidth(190);
+    m_progress->setVisible(false);
+    statusBar()->addPermanentWidget(m_progress);
+
+    connect(m_transferPanel, &TransferPanel::cancelAllRequested, this, [this] {
+        m_transferWorker->cancelAllJobs();
+        showNotice(tr("Отмена активных передач…"), Notice::Warning);
+    });
+    connect(m_transferPanel, &TransferPanel::cancelRequested, this,
+            [this](quint64 id) { m_transferWorker->cancelJob(id); });
+    connect(m_transferPanel, &TransferPanel::clearFinishedRequested, this,
+            [this] { m_transferPanel->model()->removeFinished(); });
+    connect(m_transferPanel, &TransferPanel::revealRequested, this,
+            [](const TransferStatus &status) {
+                const QString directory =
+                    QFileInfo(status.localPath).absolutePath();
+                QDesktopServices::openUrl(QUrl::fromLocalFile(directory));
+            });
+    connect(m_transferPanel->model(), &TransferModel::summaryChanged,
+            this, &MainWindow::updateTransferSummary);
+    connect(m_transferPanel, &TransferPanel::overwritePolicyChanged, this,
+            [this](OverwritePolicy policy) {
+                m_transferWorker->setOverwritePolicy(policy);
+            });
+
+    const auto shortcut = [this](QKeySequence sequence, auto slot) {
+        auto *action = new QShortcut(sequence, this);
+        connect(action, &QShortcut::activated, this, slot);
+    };
+    shortcut(QKeySequence(Qt::Key_F5), &MainWindow::refreshRemote);
+    shortcut(QKeySequence(Qt::Key_F2), &MainWindow::renameRemoteSelected);
+    shortcut(QKeySequence(Qt::Key_Delete), &MainWindow::removeRemoteSelected);
+    shortcut(QKeySequence(Qt::CTRL | Qt::Key_L),
+             [this] { m_remotePathBar->beginEdit(); });
+    shortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_L),
+             [this] { m_localPathBar->beginEdit(); });
+    shortcut(QKeySequence(Qt::CTRL | Qt::Key_F),
+             [this] { m_remoteFilter->setFocus(); });
+    shortcut(QKeySequence(Qt::ALT | Qt::Key_Left),
+             [this] { m_remotePathBar->goBack(); });
+    shortcut(QKeySequence(Qt::ALT | Qt::Key_Right),
+             [this] { m_remotePathBar->goForward(); });
+    shortcut(QKeySequence(Qt::ALT | Qt::Key_Up),
+             [this] { m_remotePathBar->goUp(); });
+    shortcut(QKeySequence(Qt::CTRL | Qt::Key_T), &MainWindow::toggleTheme);
+    shortcut(QKeySequence(Qt::CTRL | Qt::Key_1), [this] { setActivePage(0); });
+    shortcut(QKeySequence(Qt::CTRL | Qt::Key_2), [this] { setActivePage(1); });
+}
+
+QWidget *MainWindow::buildSidebar()
+{
     auto *sidebar = new QFrame;
     sidebar->setObjectName(QStringLiteral("sidebar"));
-    sidebar->setFixedWidth(216);
-    auto *sidebarLayout = new QVBoxLayout(sidebar);
-    sidebarLayout->setContentsMargins(18, 22, 18, 18);
-    sidebarLayout->setSpacing(8);
+    sidebar->setFixedWidth(224);
+    auto *layout = new QVBoxLayout(sidebar);
+    layout->setContentsMargins(Theme::SpaceLg, Theme::SpaceXl, Theme::SpaceLg,
+                               Theme::SpaceLg);
+    layout->setSpacing(Theme::SpaceSm);
 
     auto *brandRow = new QHBoxLayout;
-    brandRow->setSpacing(11);
+    brandRow->setSpacing(Theme::SpaceMd);
     auto *brandMark = new QLabel(QStringLiteral("N"));
     brandMark->setObjectName(QStringLiteral("brandMark"));
     brandMark->setAlignment(Qt::AlignCenter);
@@ -218,120 +373,143 @@ void MainWindow::buildUi()
     brandText->setSpacing(0);
     auto *brand = new QLabel(QStringLiteral("Nexa"));
     brand->setObjectName(QStringLiteral("brandTitle"));
-    auto *edition = new QLabel(tr("Secure workspace"));
+    auto *edition = new QLabel(tr("SSH и SFTP"));
     edition->setObjectName(QStringLiteral("brandSubtitle"));
     brandText->addWidget(brand);
     brandText->addWidget(edition);
     brandRow->addWidget(brandMark);
     brandRow->addLayout(brandText);
-    sidebarLayout->addLayout(brandRow);
-    sidebarLayout->addSpacing(26);
+    brandRow->addStretch();
+    layout->addLayout(brandRow);
+    layout->addSpacing(Theme::SpaceXl);
 
-    auto *navigationCaption = new QLabel(tr("РАБОЧЕЕ ПРОСТРАНСТВО"));
-    navigationCaption->setObjectName(QStringLiteral("sectionCaption"));
-    sidebarLayout->addWidget(navigationCaption);
-    auto *filesNavigation = new QPushButton(tr("  ▣  Файлы"));
-    filesNavigation->setObjectName(QStringLiteral("navigationActive"));
-    filesNavigation->setCursor(Qt::ArrowCursor);
-    sidebarLayout->addWidget(filesNavigation);
-    auto *hostsNavigation = new QPushButton(tr("  ◈  Подключения"));
-    hostsNavigation->setObjectName(QStringLiteral("navigationButton"));
-    hostsNavigation->setToolTip(
-        tr("Менеджер подключений появится в следующей версии"));
-    sidebarLayout->addWidget(hostsNavigation);
-    auto *transfersNavigation = new QPushButton(tr("  ⇅  Передачи"));
-    transfersNavigation->setObjectName(QStringLiteral("navigationButton"));
-    transfersNavigation->setToolTip(
-        tr("Постоянная очередь появится в следующей версии"));
-    sidebarLayout->addWidget(transfersNavigation);
-    connect(hostsNavigation, &QPushButton::clicked, this, [this] {
-        statusBar()->showMessage(
-            tr("Менеджер подключений запланирован для Nexa 0.2"),
-            3500);
-    });
-    connect(transfersNavigation, &QPushButton::clicked, this, [this] {
-        statusBar()->showMessage(
-            tr("Постоянная очередь передач запланирована для Nexa 0.2"),
-            3500);
-    });
-    sidebarLayout->addStretch();
+    auto *caption = new QLabel(tr("РАБОЧЕЕ ПРОСТРАНСТВО"));
+    caption->setObjectName(QStringLiteral("sectionCaption"));
+    layout->addWidget(caption);
+
+    const QStringList navigationTitles{tr("  ▣   Файлы"), tr("  ⇅   Передачи")};
+    for (int i = 0; i < navigationTitles.size(); ++i) {
+        auto *button = new QPushButton(navigationTitles.at(i));
+        button->setObjectName(QStringLiteral("navigationButton"));
+        button->setCursor(Qt::PointingHandCursor);
+        button->setProperty("active", i == 0);
+        connect(button, &QPushButton::clicked, this,
+                [this, i] { setActivePage(i); });
+        m_navigationButtons.append(button);
+        if (i == 1) {
+            auto *row = new QHBoxLayout;
+            row->setContentsMargins(0, 0, 0, 0);
+            row->setSpacing(Theme::SpaceXs);
+            row->addWidget(button, 1);
+            m_navigationBadge = new QLabel;
+            m_navigationBadge->setObjectName(QStringLiteral("navigationBadge"));
+            m_navigationBadge->setVisible(false);
+            row->addWidget(m_navigationBadge);
+            layout->addLayout(row);
+        } else {
+            layout->addWidget(button);
+        }
+    }
+    layout->addStretch();
 
     auto *connectionCard = new QFrame;
     connectionCard->setObjectName(QStringLiteral("connectionCard"));
     auto *connectionLayout = new QVBoxLayout(connectionCard);
-    connectionLayout->setContentsMargins(13, 13, 13, 13);
-    connectionLayout->setSpacing(9);
+    connectionLayout->setContentsMargins(Theme::SpaceMd, Theme::SpaceMd,
+                                         Theme::SpaceMd, Theme::SpaceMd);
+    connectionLayout->setSpacing(Theme::SpaceXs);
     auto *connectionCaption = new QLabel(tr("СОЕДИНЕНИЕ"));
     connectionCaption->setObjectName(QStringLiteral("sectionCaption"));
-    connectionLayout->addWidget(connectionCaption);
     m_connectionLabel = new QLabel(tr("●  Не подключено"));
     m_connectionLabel->setObjectName(QStringLiteral("connectionLabel"));
+    m_connectionDetail = new QLabel(tr("Сервер не выбран"));
+    m_connectionDetail->setObjectName(QStringLiteral("connectionDetail"));
+    m_connectionDetail->setWordWrap(true);
+    connectionLayout->addWidget(connectionCaption);
     connectionLayout->addWidget(m_connectionLabel);
-    sidebarLayout->addWidget(connectionCard);
-    auto *versionLabel =
-        new QLabel(QStringLiteral("Nexa 0.1.0 Preview"));
-    versionLabel->setObjectName(QStringLiteral("versionLabel"));
-    versionLabel->setAlignment(Qt::AlignCenter);
-    sidebarLayout->addWidget(versionLabel);
-    rootLayout->addWidget(sidebar);
+    connectionLayout->addWidget(m_connectionDetail);
+    layout->addWidget(connectionCard);
 
-    auto *workspace = new QWidget;
-    workspace->setObjectName(QStringLiteral("workspace"));
-    auto *workspaceLayout = new QVBoxLayout(workspace);
-    workspaceLayout->setContentsMargins(24, 20, 24, 16);
-    workspaceLayout->setSpacing(16);
+    auto *version = new QLabel(QStringLiteral("Nexa %1")
+                                   .arg(QApplication::applicationVersion()));
+    version->setObjectName(QStringLiteral("versionLabel"));
+    version->setAlignment(Qt::AlignCenter);
+    layout->addWidget(version);
+    return sidebar;
+}
 
-    auto *topBar = new QHBoxLayout;
-    auto *titleLayout = new QVBoxLayout;
-    titleLayout->setSpacing(2);
-    auto *eyebrow = new QLabel(tr("ФАЙЛОВЫЙ МЕНЕДЖЕР"));
-    eyebrow->setObjectName(QStringLiteral("eyebrow"));
-    auto *workspaceTitle = new QLabel(tr("Ваши файлы и сервер"));
-    workspaceTitle->setObjectName(QStringLiteral("workspaceTitle"));
-    auto *workspaceSubtitle = new QLabel(
-        tr("Перетаскивайте файлы между панелями — передача начнётся автоматически"));
-    workspaceSubtitle->setObjectName(QStringLiteral("workspaceSubtitle"));
-    titleLayout->addWidget(eyebrow);
-    titleLayout->addWidget(workspaceTitle);
-    titleLayout->addWidget(workspaceSubtitle);
-    topBar->addLayout(titleLayout);
-    topBar->addStretch();
-
-    m_connectButton = new QPushButton(tr("＋  Подключиться"));
-    m_connectButton->setObjectName(QStringLiteral("primaryButton"));
-    m_disconnectButton = new QPushButton(tr("Отключиться"));
-    m_disconnectButton->setObjectName(QStringLiteral("secondaryButton"));
-    m_connectButton->setMinimumHeight(40);
-    m_disconnectButton->setMinimumHeight(40);
-    topBar->addWidget(m_disconnectButton);
-    topBar->addWidget(m_connectButton);
-    workspaceLayout->addLayout(topBar);
-
-    connect(m_connectButton, &QPushButton::clicked,
-            this, &MainWindow::showConnectDialog);
-    connect(m_disconnectButton, &QPushButton::clicked,
-            this, [this] { emit disconnectRequested(); });
+QWidget *MainWindow::buildFilesPage()
+{
+    auto *page = new QWidget;
+    page->setObjectName(QStringLiteral("workspacePage"));
+    auto *layout = new QVBoxLayout(page);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     auto *splitter = new QSplitter;
     splitter->setObjectName(QStringLiteral("fileSplitter"));
     splitter->setChildrenCollapsible(false);
+    splitter->addWidget(buildLocalPanel());
+    splitter->addWidget(buildRemotePanel());
+    splitter->setSizes({580, 580});
+    layout->addWidget(splitter, 1);
+    return page;
+}
 
-    auto *localPanel = new QFrame;
-    localPanel->setObjectName(QStringLiteral("fileCard"));
-    auto *localLayout = new QVBoxLayout(localPanel);
-    localLayout->setContentsMargins(0, 0, 0, 0);
-    localLayout->setSpacing(0);
-    m_localPath = new QLineEdit(QDir::homePath());
-    auto *localUp = new QPushButton;
-    localLayout->addWidget(panelHeader(tr("Этот компьютер"), m_localPath,
-                                       localUp, localPanel));
+QWidget *MainWindow::buildLocalPanel()
+{
+    auto *card = new QFrame;
+    card->setObjectName(QStringLiteral("fileCard"));
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(0);
 
-    m_localModel = new QFileSystemModel(this);
+    auto *header = new QWidget;
+    header->setObjectName(QStringLiteral("panelHeader"));
+    header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    auto *headerLayout = new QVBoxLayout(header);
+    headerLayout->setContentsMargins(Theme::SpaceLg, Theme::SpaceLg,
+                                     Theme::SpaceLg, Theme::SpaceMd);
+    headerLayout->setSpacing(Theme::SpaceSm);
+
+    auto *titleRow = new QHBoxLayout;
+    titleRow->setSpacing(Theme::SpaceSm);
+    auto *titleColumn = new QVBoxLayout;
+    titleColumn->setSpacing(0);
+    auto *title = new QLabel(tr("Этот компьютер"));
+    title->setObjectName(QStringLiteral("panelTitle"));
+    m_localMeta = new QLabel;
+    m_localMeta->setObjectName(QStringLiteral("panelMeta"));
+    titleColumn->addWidget(title);
+    titleColumn->addWidget(m_localMeta);
+    titleRow->addLayout(titleColumn);
+    titleRow->addStretch();
+    m_localFilter = filterField(tr("Фильтр по имени"));
+    titleRow->addWidget(m_localFilter);
+    headerLayout->addLayout(titleRow);
+
+    auto *navigationRow = new QHBoxLayout;
+    navigationRow->setSpacing(Theme::SpaceXs);
+    m_localBack = iconButton(QStringLiteral("‹"), tr("Назад"));
+    m_localForward = iconButton(QStringLiteral("›"), tr("Вперёд"));
+    m_localUp = iconButton(QStringLiteral("↑"), tr("На уровень выше"));
+    auto *localHome = iconButton(QStringLiteral("⌂"), tr("Домашняя папка"));
+    m_localPathBar = new PathBar(PathBar::Style::Local);
+    navigationRow->addWidget(m_localBack);
+    navigationRow->addWidget(m_localForward);
+    navigationRow->addWidget(m_localUp);
+    navigationRow->addWidget(localHome);
+    navigationRow->addWidget(m_localPathBar, 1);
+    headerLayout->addLayout(navigationRow);
+    cardLayout->addWidget(header);
+
+    m_localModel = new LocalFileSystemModel(this);
     m_localModel->setOption(QFileSystemModel::DontWatchForChanges, true);
     m_localModel->setOption(QFileSystemModel::DontResolveSymlinks, true);
     m_localModel->setOption(QFileSystemModel::DontUseCustomDirectoryIcons, true);
     m_localModel->setFilter(QDir::AllEntries | QDir::NoDotAndDotDot);
+    m_localModel->setNameFilterDisables(false);
     m_localModel->setRootPath(QDir::homePath());
+
     m_localView = new LocalFileView;
     m_localView->setModel(m_localModel);
     m_localView->setRootIndex(m_localModel->index(QDir::homePath()));
@@ -340,76 +518,196 @@ void MainWindow::buildUi()
     m_localView->setAlternatingRowColors(true);
     m_localView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_localView->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_localView->setUniformRowHeights(true);
+
+    m_localView->setRootIsDecorated(false);
+    m_localView->setItemsExpandable(false);
     m_localView->header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    localLayout->addWidget(m_localView);
+    m_localView->header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    m_localView->header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    m_localView->header()->setSectionResizeMode(3, QHeaderView::ResizeToContents);
+    cardLayout->addWidget(m_localView, 1);
+
+    m_localPathBar->setPath(QDir::homePath());
 
     connect(m_localView, &QTreeView::doubleClicked,
             this, &MainWindow::openLocal);
-    connect(m_localPath, &QLineEdit::returnPressed, this, [this] {
-        const QFileInfo info(m_localPath->text());
-        if (info.isDir())
-            m_localView->setRootIndex(m_localModel->index(info.absoluteFilePath()));
-    });
-    connect(localUp, &QPushButton::clicked, this, [this] {
-        QDir dir(m_localPath->text());
-        if (dir.cdUp()) {
-            m_localPath->setText(dir.absolutePath());
-            m_localView->setRootIndex(m_localModel->index(dir.absolutePath()));
-        }
-    });
-    connect(m_localView, &QWidget::customContextMenuRequested,
-            this, [this](const QPoint &position) {
+
+    connect(m_localModel, &QFileSystemModel::directoryLoaded, this,
+            [this](const QString &path) {
+                if (QDir(path) == QDir(m_localPathBar->path()))
+                    refreshPanelMeta();
+            });
+    connect(m_localPathBar, &PathBar::pathActivated,
+            this, &MainWindow::navigateLocal);
+    connect(m_localPathBar, &PathBar::historyChanged,
+            this, &MainWindow::refreshNavigationButtons);
+    connect(m_localBack, &QPushButton::clicked,
+            m_localPathBar, &PathBar::goBack);
+    connect(m_localForward, &QPushButton::clicked,
+            m_localPathBar, &PathBar::goForward);
+    connect(m_localUp, &QPushButton::clicked, m_localPathBar, &PathBar::goUp);
+    connect(localHome, &QPushButton::clicked, this,
+            [this] { navigateLocal(QDir::homePath()); });
+    connect(m_localFilter, &QLineEdit::textChanged, this,
+            [this](const QString &text) {
+                m_localModel->setNameFilters(
+                    text.trimmed().isEmpty()
+                        ? QStringList()
+                        : QStringList{QStringLiteral("*%1*").arg(text.trimmed())});
+            });
+    connect(m_localView, &QWidget::customContextMenuRequested, this,
+            [this](const QPoint &position) {
                 QMenu menu(this);
                 auto *upload = menu.addAction(tr("Загрузить на сервер"));
-                upload->setEnabled(m_connected &&
-                                   !m_localView->selectionModel()
-                                        ->selectedRows().isEmpty());
+                upload->setEnabled(
+                    m_connected &&
+                    !m_localView->selectionModel()->selectedRows().isEmpty());
                 connect(upload, &QAction::triggered,
                         this, &MainWindow::uploadSelected);
+                menu.addSeparator();
+                auto *reveal = menu.addAction(tr("Открыть в Проводнике"));
+                connect(reveal, &QAction::triggered, this, [this] {
+                    QDesktopServices::openUrl(
+                        QUrl::fromLocalFile(m_localPathBar->path()));
+                });
                 menu.exec(m_localView->viewport()->mapToGlobal(position));
             });
+    connect(m_localView, &LocalFileView::remoteDataDropped, this,
+            [this](const QByteArray &encodedEntries,
+                   const QModelIndex &targetIndex) {
+                if (!m_connected)
+                    return;
+                QString destination = m_localPathBar->path();
+                if (targetIndex.isValid()) {
+                    const QFileInfo target = m_localModel->fileInfo(targetIndex);
+                    if (target.isDir())
+                        destination = target.absoluteFilePath();
+                }
+                QMimeData mimeData;
+                mimeData.setData(RemoteFileModel::remoteMimeType(),
+                                 encodedEntries);
+                const RemoteEntries entries =
+                    RemoteFileModel::entriesFromMimeData(&mimeData);
+                QVector<TransferJob> jobs;
+                jobs.reserve(entries.size());
+                for (const RemoteEntry &entry : entries)
+                    jobs.append(downloadJobFor(entry, destination));
+                enqueueJobs(jobs);
+            });
+    return card;
+}
 
-    auto *remotePanel = new QFrame;
-    remotePanel->setObjectName(QStringLiteral("fileCard"));
-    auto *remoteLayout = new QVBoxLayout(remotePanel);
-    remoteLayout->setContentsMargins(0, 0, 0, 0);
-    remoteLayout->setSpacing(0);
-    m_remotePath = new QLineEdit(QStringLiteral("/"));
-    auto *remoteUp = new QPushButton;
-    remoteLayout->addWidget(panelHeader(tr("Удалённый сервер"), m_remotePath,
-                                        remoteUp, remotePanel));
+QWidget *MainWindow::buildRemotePanel()
+{
+    m_remoteCard = new QFrame;
+    m_remoteCard->setObjectName(QStringLiteral("fileCard"));
+    auto *cardLayout = new QVBoxLayout(m_remoteCard);
+    cardLayout->setContentsMargins(0, 0, 0, 0);
+    cardLayout->setSpacing(0);
+
+    auto *header = new QWidget;
+    header->setObjectName(QStringLiteral("panelHeader"));
+    header->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    auto *headerLayout = new QVBoxLayout(header);
+    headerLayout->setContentsMargins(Theme::SpaceLg, Theme::SpaceLg,
+                                     Theme::SpaceLg, Theme::SpaceMd);
+    headerLayout->setSpacing(Theme::SpaceSm);
+
+    auto *titleRow = new QHBoxLayout;
+    titleRow->setSpacing(Theme::SpaceSm);
+    auto *titleColumn = new QVBoxLayout;
+    titleColumn->setSpacing(0);
+    auto *title = new QLabel(tr("Удалённый сервер"));
+    title->setObjectName(QStringLiteral("panelTitle"));
+    m_remoteMeta = new QLabel;
+    m_remoteMeta->setObjectName(QStringLiteral("panelMeta"));
+    titleColumn->addWidget(title);
+    titleColumn->addWidget(m_remoteMeta);
+    titleRow->addLayout(titleColumn);
+    titleRow->addStretch();
+    m_remoteFilter = filterField(tr("Фильтр по имени"));
+    titleRow->addWidget(m_remoteFilter);
+    headerLayout->addLayout(titleRow);
+
+    auto *navigationRow = new QHBoxLayout;
+    navigationRow->setSpacing(Theme::SpaceXs);
+    m_remoteBack = iconButton(QStringLiteral("‹"), tr("Назад"));
+    m_remoteForward = iconButton(QStringLiteral("›"), tr("Вперёд"));
+    m_remoteUp = iconButton(QStringLiteral("↑"), tr("На уровень выше"));
+    auto *remoteRefresh = iconButton(QStringLiteral("⟳"), tr("Обновить (F5)"));
+    auto *remoteEdit = iconButton(QStringLiteral("⌨"), tr("Ввести путь (Ctrl+L)"));
+    m_remotePathBar = new PathBar(PathBar::Style::Remote);
+    navigationRow->addWidget(m_remoteBack);
+    navigationRow->addWidget(m_remoteForward);
+    navigationRow->addWidget(m_remoteUp);
+    navigationRow->addWidget(remoteRefresh);
+    navigationRow->addWidget(m_remotePathBar, 1);
+    navigationRow->addWidget(remoteEdit);
+    headerLayout->addLayout(navigationRow);
+    cardLayout->addWidget(header);
+
+    m_remoteModel = new RemoteFileModel(this);
+    m_remoteProxy = new RemoteSortFilterProxy(this);
+    m_remoteProxy->setSourceModel(m_remoteModel);
 
     m_remoteView = new RemoteFileView;
-    m_remoteModel = new RemoteFileModel(this);
-    m_remoteView->setModel(m_remoteModel);
+    m_remoteView->setModel(m_remoteProxy);
     m_remoteView->setAlternatingRowColors(true);
     m_remoteView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_remoteView->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_remoteView->setShowGrid(false);
+    m_remoteView->setSortingEnabled(true);
+    m_remoteView->sortByColumn(RemoteFileModel::NameColumn, Qt::AscendingOrder);
     m_remoteView->setContextMenuPolicy(Qt::CustomContextMenu);
+    m_remoteView->setWordWrap(false);
     m_remoteView->verticalHeader()->hide();
+    m_remoteView->verticalHeader()->setDefaultSectionSize(Theme::RowHeight);
     m_remoteView->horizontalHeader()->setStretchLastSection(false);
     m_remoteView->horizontalHeader()->setSectionResizeMode(
-        0, QHeaderView::Stretch);
-    remoteLayout->addWidget(m_remoteView);
+        RemoteFileModel::NameColumn, QHeaderView::Stretch);
+    for (int column = RemoteFileModel::SizeColumn;
+         column < RemoteFileModel::ColumnCount; ++column) {
+        m_remoteView->horizontalHeader()->setSectionResizeMode(
+            column, QHeaderView::ResizeToContents);
+    }
+    cardLayout->addWidget(m_remoteView, 1);
+
+    m_remoteEmptyState = emptyState(
+        QStringLiteral("◈"), tr("Нет подключения"),
+        tr("Нажмите «Подключиться», чтобы открыть SFTP-сессию. Отпечаток "
+           "ключа сервера будет показан для проверки."));
+    cardLayout->addWidget(m_remoteEmptyState, 1);
+    m_remoteView->setVisible(false);
 
     connect(m_remoteView, &QTableView::doubleClicked,
             this, &MainWindow::openRemote);
-    connect(m_remotePath, &QLineEdit::returnPressed,
-            this, &MainWindow::goToRemotePath);
-    connect(remoteUp, &QPushButton::clicked,
-            this, &MainWindow::goRemoteUp);
-    connect(m_remoteView, &QWidget::customContextMenuRequested,
-            this, [this](const QPoint &position) {
-                QMenu menu(this);
-                QString destinationDirectory = m_currentRemotePath;
-                const QModelIndex targetIndex =
-                    m_remoteView->indexAt(position);
-                if (const RemoteEntry *target =
-                        m_remoteModel->entryAt(targetIndex.row());
-                    target && target->directory)
-                    destinationDirectory = target->path;
+    connect(m_remotePathBar, &PathBar::pathActivated,
+            this, &MainWindow::navigateRemote);
+    connect(m_remotePathBar, &PathBar::historyChanged,
+            this, &MainWindow::refreshNavigationButtons);
+    connect(m_remoteBack, &QPushButton::clicked,
+            m_remotePathBar, &PathBar::goBack);
+    connect(m_remoteForward, &QPushButton::clicked,
+            m_remotePathBar, &PathBar::goForward);
+    connect(m_remoteUp, &QPushButton::clicked, m_remotePathBar, &PathBar::goUp);
+    connect(remoteRefresh, &QPushButton::clicked,
+            this, &MainWindow::refreshRemote);
+    connect(remoteEdit, &QPushButton::clicked,
+            m_remotePathBar, &PathBar::beginEdit);
+    connect(m_remoteFilter, &QLineEdit::textChanged, this,
+            [this](const QString &text) {
+                m_remoteProxy->setNameFilter(text);
+                refreshPanelMeta();
+            });
+    connect(m_remoteView, &QWidget::customContextMenuRequested, this,
+            [this](const QPoint &position) {
+                const QModelIndex targetIndex = m_remoteView->indexAt(position);
+                const QString destination = remoteDestinationFor(targetIndex);
+                const int selected = static_cast<int>(
+                    m_remoteView->selectionModel()->selectedRows().size());
 
+                QMenu menu(this);
                 auto *download = menu.addAction(tr("Скачать"));
                 auto *uploadFiles = menu.addAction(tr("Загрузить файлы сюда…"));
                 auto *uploadFolder = menu.addAction(tr("Загрузить папку сюда…"));
@@ -420,9 +718,9 @@ void MainWindow::buildUi()
                 auto *rename = menu.addAction(tr("Переименовать"));
                 auto *remove = menu.addAction(tr("Удалить"));
                 menu.addSeparator();
+                auto *copyPath = menu.addAction(tr("Копировать путь"));
                 auto *refresh = menu.addAction(tr("Обновить"));
-                const int selected = static_cast<int>(
-                    m_remoteView->selectionModel()->selectedRows().size());
+
                 download->setEnabled(m_connected && selected > 0);
                 uploadFiles->setEnabled(m_connected);
                 uploadFolder->setEnabled(m_connected);
@@ -430,49 +728,47 @@ void MainWindow::buildUi()
                 newFolder->setEnabled(m_connected);
                 rename->setEnabled(m_connected && selected == 1);
                 remove->setEnabled(m_connected && selected > 0);
+                copyPath->setEnabled(selected > 0);
                 refresh->setEnabled(m_connected);
+
                 connect(download, &QAction::triggered,
                         this, &MainWindow::downloadSelected);
                 connect(uploadFiles, &QAction::triggered, this,
-                        [this, destinationDirectory] {
+                        [this, destination] {
                             const QStringList files =
                                 QFileDialog::getOpenFileNames(
                                     this, tr("Выберите файлы для загрузки"),
-                                    m_localPath->text());
-                            if (files.isEmpty())
-                                return;
-                            m_worker->beginDirectoryRequest();
+                                    m_localPathBar->path());
+                            QVector<TransferJob> jobs;
                             for (const QString &file : files) {
                                 const QFileInfo info(file);
-                                const QString remote =
-                                    (destinationDirectory.endsWith(
-                                         QLatin1Char('/'))
-                                         ? destinationDirectory
-                                         : destinationDirectory +
-                                               QLatin1Char('/'))
-                                    + info.fileName();
-                                emit uploadRequested(
-                                    info.absoluteFilePath(), remote, false);
+                                TransferJob job;
+                                job.id = m_nextJobId++;
+                                job.upload = true;
+                                job.localPath = info.absoluteFilePath();
+                                job.remotePath =
+                                    appendName(destination, info.fileName());
+                                jobs.append(job);
                             }
+                            enqueueJobs(jobs);
                         });
                 connect(uploadFolder, &QAction::triggered, this,
-                        [this, destinationDirectory] {
+                        [this, destination] {
                             const QString folder =
                                 QFileDialog::getExistingDirectory(
                                     this, tr("Выберите папку для загрузки"),
-                                    m_localPath->text());
+                                    m_localPathBar->path());
                             if (folder.isEmpty())
                                 return;
-                            m_worker->beginDirectoryRequest();
                             const QFileInfo info(folder);
-                            const QString remote =
-                                (destinationDirectory.endsWith(QLatin1Char('/'))
-                                     ? destinationDirectory
-                                     : destinationDirectory +
-                                           QLatin1Char('/'))
-                                + info.fileName();
-                            emit uploadRequested(
-                                info.absoluteFilePath(), remote, true);
+                            TransferJob job;
+                            job.id = m_nextJobId++;
+                            job.upload = true;
+                            job.directory = true;
+                            job.localPath = info.absoluteFilePath();
+                            job.remotePath =
+                                appendName(destination, info.fileName());
+                            enqueueJobs({job});
                         });
                 connect(newFile, &QAction::triggered,
                         this, &MainWindow::createRemoteFile);
@@ -482,249 +778,167 @@ void MainWindow::buildUi()
                         this, &MainWindow::renameRemoteSelected);
                 connect(remove, &QAction::triggered,
                         this, &MainWindow::removeRemoteSelected);
+                connect(copyPath, &QAction::triggered, this, [this] {
+                    QStringList paths;
+                    for (const RemoteEntry &entry : selectedRemoteEntries())
+                        paths.append(entry.path);
+                    QApplication::clipboard()->setText(
+                        paths.join(QLatin1Char('\n')));
+                });
                 connect(refresh, &QAction::triggered,
                         this, &MainWindow::refreshRemote);
                 menu.exec(m_remoteView->viewport()->mapToGlobal(position));
             });
-
     connect(m_remoteView, &RemoteFileView::localUrlsDropped, this,
             [this](const QList<QUrl> &urls, const QModelIndex &targetIndex) {
-                if (!m_connected)
+                if (!m_connected) {
+                    showNotice(tr("Сначала подключитесь к серверу."),
+                               Notice::Warning);
                     return;
-                m_worker->beginDirectoryRequest();
-                QString destinationDirectory = m_currentRemotePath;
-                if (const RemoteEntry *target =
-                        m_remoteModel->entryAt(targetIndex.row());
-                    target && target->directory)
-                    destinationDirectory = target->path;
-
-                int queued = 0;
+                }
+                const QString destination = remoteDestinationFor(targetIndex);
+                QVector<TransferJob> jobs;
+                jobs.reserve(urls.size());
                 for (const QUrl &url : urls) {
                     if (!url.isLocalFile())
                         continue;
                     const QFileInfo info(url.toLocalFile());
                     if (!info.exists())
                         continue;
-                    const QString destination =
-                        (destinationDirectory.endsWith(QLatin1Char('/'))
-                             ? destinationDirectory
-                             : destinationDirectory + QLatin1Char('/'))
-                        + info.fileName();
-                    emit uploadRequested(info.absoluteFilePath(), destination,
-                                         info.isDir());
-                    ++queued;
+                    TransferJob job;
+                    job.id = m_nextJobId++;
+                    job.upload = true;
+                    job.localPath = info.absoluteFilePath();
+                    job.remotePath = appendName(destination, info.fileName());
+                    job.directory = info.isDir() && !info.isSymLink();
+                    jobs.append(job);
                 }
-                statusBar()->showMessage(
-                    tr("Добавлено в загрузку: %1").arg(queued));
+                enqueueJobs(jobs);
             });
-
-    connect(m_localView, &LocalFileView::remoteDataDropped, this,
-            [this](const QByteArray &encodedEntries,
-                   const QModelIndex &targetIndex) {
-                if (!m_connected)
-                    return;
-                m_worker->beginDirectoryRequest();
-                QString destinationDirectory = m_localPath->text();
-                if (targetIndex.isValid()) {
-                    const QFileInfo target =
-                        m_localModel->fileInfo(targetIndex);
-                    if (target.isDir())
-                        destinationDirectory = target.absoluteFilePath();
-                }
-                QMimeData mimeData;
-                mimeData.setData(RemoteFileModel::remoteMimeType(),
-                                 encodedEntries);
-                const RemoteEntries entries =
-                    RemoteFileModel::entriesFromMimeData(&mimeData);
-                for (const auto &entry : entries) {
-                    emit downloadRequested(
-                        entry.path,
-                        QDir(destinationDirectory).filePath(entry.name),
-                        entry.directory && !entry.symlink);
-                }
-                statusBar()->showMessage(
-                    tr("Добавлено в скачивание: %1").arg(entries.size()));
-            });
-
-    splitter->addWidget(localPanel);
-    splitter->addWidget(remotePanel);
-    splitter->setSizes({560, 560});
-    workspaceLayout->addWidget(splitter, 1);
-    rootLayout->addWidget(workspace, 1);
-    setCentralWidget(root);
-
-    m_progress = new QProgressBar;
-    m_progress->setFixedWidth(170);
-    m_progress->setVisible(false);
-    statusBar()->addPermanentWidget(m_progress);
-
-    auto *refreshShortcut = new QShortcut(QKeySequence::Refresh, this);
-    connect(refreshShortcut, &QShortcut::activated,
-            this, &MainWindow::refreshRemote);
-    auto *renameShortcut = new QShortcut(QKeySequence(Qt::Key_F2), m_remoteView);
-    connect(renameShortcut, &QShortcut::activated,
-            this, &MainWindow::renameRemoteSelected);
-    auto *deleteShortcut =
-        new QShortcut(QKeySequence(Qt::Key_Delete), m_remoteView);
-    connect(deleteShortcut, &QShortcut::activated,
-            this, &MainWindow::removeRemoteSelected);
+    return m_remoteCard;
 }
 
-void MainWindow::applyTheme()
+void MainWindow::wireWorkers()
 {
-    qApp->setStyleSheet(QStringLiteral(R"(
-        * { font-family: "Segoe UI"; font-size: 13px; }
-        QMainWindow, QDialog { background: #080c14; color: #e7edf7; }
-        QWidget#appRoot, QWidget#workspace { background: #0a0f19; }
-        QFrame#sidebar {
-            background: #0d131f;
-            border: none;
-            border-right: 1px solid #1b2637;
-        }
-        QLabel { color: #b8c3d6; }
-        QLabel#brandMark {
-            color: white;
-            background: #5b5cf0;
-            border-radius: 11px;
-            font-size: 20px;
-            font-weight: 800;
-        }
-        QLabel#brandTitle { color: #f7f9fc; font-size: 17px; font-weight: 700; }
-        QLabel#brandSubtitle { color: #68758a; font-size: 11px; }
-        QLabel#sectionCaption, QLabel#eyebrow {
-            color: #657187;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        QLabel#workspaceTitle { color: #f7f9fc; font-size: 24px; font-weight: 700; }
-        QLabel#workspaceSubtitle { color: #748197; font-size: 12px; }
-        QLabel#panelTitle {
-            color: #f4f7fb;
-            font-size: 15px;
-            font-weight: 650;
-        }
-        QLabel#dialogTitle {
-            color: #f8fafc;
-            font-size: 20px;
-            font-weight: 700;
-            padding: 8px 0 14px 0;
-        }
-        QLabel#connectionLabel { color: #8b98ad; font-size: 12px; }
-        QLabel#versionLabel { color: #465268; font-size: 10px; padding-top: 5px; }
-        QFrame#connectionCard {
-            background: #111927;
-            border: 1px solid #202c3d;
-            border-radius: 10px;
-        }
-        QPushButton#navigationButton, QPushButton#navigationActive {
-            border: none;
-            border-radius: 8px;
-            padding: 10px 11px;
-            text-align: left;
-            font-weight: 600;
-        }
-        QPushButton#navigationButton { color: #7f8ba0; background: transparent; }
-        QPushButton#navigationButton:hover { color: #d9e1ee; background: #121b2a; }
-        QPushButton#navigationActive { color: #dddfff; background: #202147; }
-        QFrame#fileCard {
-            background: #0f1623;
-            border: 1px solid #202b3c;
-            border-radius: 13px;
-        }
-        QWidget#panelHeader { background: transparent; border: none; }
-        QLineEdit, QSpinBox, QComboBox {
-            background: #111a29;
-            color: #dce5f2;
-            border: 1px solid #273449;
-            border-radius: 8px;
-            padding: 9px 11px;
-            selection-background-color: #5b5cf0;
-        }
-        QLineEdit#pathInput { color: #aebbd0; background: #0c1420; }
-        QLineEdit:focus, QSpinBox:focus, QComboBox:focus { border-color: #6466f1; }
-        QPushButton {
-            background: #172235;
-            color: #dce4f0;
-            border: 1px solid #2a384d;
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-weight: 600;
-        }
-        QPushButton:hover { background: #202e44; border-color: #3a4a62; }
-        QPushButton:pressed { background: #121c2b; }
-        QPushButton:disabled { color: #4c586c; background: #111925; border-color: #202a39; }
-        QPushButton#primaryButton {
-            background: #5b5cf0;
-            border-color: #7071ff;
-            color: white;
-            padding-left: 17px;
-            padding-right: 17px;
-        }
-        QPushButton#primaryButton:hover { background: #6d6ef7; }
-        QPushButton#secondaryButton { background: transparent; }
-        QPushButton#iconButton {
-            background: #141e2e;
-            color: #9eabc0;
-            border-color: #263348;
-            padding: 0;
-            font-size: 17px;
-        }
-        QTreeView, QTableView {
-            background: #0d1420;
-            alternate-background-color: #101927;
-            color: #cbd6e6;
-            border: none;
-            border-top: 1px solid #202b3c;
-            outline: none;
-            selection-background-color: #30317a;
-            selection-color: white;
-            show-decoration-selected: 1;
-        }
-        QTreeView::item, QTableView::item {
-            min-height: 32px;
-            padding: 4px 8px;
-            border: none;
-        }
-        QTreeView::item:hover, QTableView::item:hover { background: #172236; }
-        QHeaderView::section {
-            background: #0f1724;
-            color: #66758c;
-            border: none;
-            border-bottom: 1px solid #202b3c;
-            padding: 10px 9px;
-            font-size: 11px;
-            font-weight: 650;
-        }
-        QSplitter#fileSplitter::handle { background: transparent; width: 12px; }
-        QStatusBar {
-            background: #0d131f;
-            color: #66758c;
-            border-top: 1px solid #1b2637;
-            min-height: 26px;
-        }
-        QProgressBar {
-            background: #151f30;
-            border: 1px solid #28364b;
-            border-radius: 5px;
-            text-align: center;
-            color: white;
-        }
-        QProgressBar::chunk { background: #5b5cf0; border-radius: 4px; }
-        QDialogButtonBox QPushButton { min-width: 110px; }
-        QMenu {
-            background: #121a28;
-            color: #d7dfeb;
-            border: 1px solid #2a374a;
-            border-radius: 8px;
-            padding: 6px;
-        }
-        QMenu::item { padding: 8px 28px 8px 10px; border-radius: 5px; }
-        QMenu::item:selected { background: #30317a; }
-        QScrollBar:vertical { background: #0d1420; width: 9px; margin: 2px; }
-        QScrollBar::handle:vertical { background: #2b384c; border-radius: 4px; min-height: 28px; }
-        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-    )"));
+    m_browseThread = new QThread(this);
+    m_browseWorker = new SftpWorker(SftpWorker::Role::Browsing);
+    m_browseWorker->moveToThread(m_browseThread);
+    connect(m_browseThread, &QThread::finished,
+            m_browseWorker, &QObject::deleteLater);
+
+    m_transferThread = new QThread(this);
+    m_transferWorker = new SftpWorker(SftpWorker::Role::Transfers);
+    m_transferWorker->moveToThread(m_transferThread);
+    connect(m_transferThread, &QThread::finished,
+            m_transferWorker, &QObject::deleteLater);
+
+    connect(this, &MainWindow::connectRequested,
+            m_browseWorker, &SftpWorker::connectToHost);
+    connect(this, &MainWindow::hostKeyConfirmed,
+            m_browseWorker, &SftpWorker::confirmHostKey);
+    connect(this, &MainWindow::remoteListRequested,
+            m_browseWorker, &SftpWorker::listDirectory);
+    connect(this, &MainWindow::remoteMkdirRequested,
+            m_browseWorker, &SftpWorker::createDirectory);
+    connect(this, &MainWindow::remoteFileCreateRequested,
+            m_browseWorker, &SftpWorker::createFile);
+    connect(this, &MainWindow::remoteRemoveRequested,
+            m_browseWorker, &SftpWorker::removeEntry);
+    connect(this, &MainWindow::remoteRenameRequested,
+            m_browseWorker, &SftpWorker::renameEntry);
+    connect(this, &MainWindow::disconnectRequested,
+            m_browseWorker, &SftpWorker::disconnectFromHost);
+    connect(this, &MainWindow::disconnectRequested,
+            m_transferWorker, &SftpWorker::disconnectFromHost);
+    connect(this, &MainWindow::transferConnectRequested,
+            m_transferWorker, &SftpWorker::connectToHost);
+    connect(this, &MainWindow::transfersRequested,
+            m_transferWorker, &SftpWorker::enqueueTransfers);
+
+    connect(m_browseWorker, &SftpWorker::connected,
+            this, &MainWindow::onConnected);
+    connect(m_browseWorker, &SftpWorker::disconnected,
+            this, &MainWindow::onDisconnected);
+    connect(m_browseWorker, &SftpWorker::hostKeyConfirmationRequired,
+            this, &MainWindow::onHostKeyRequired);
+    connect(m_browseWorker, &SftpWorker::directoryListed,
+            this, &MainWindow::onRemoteListed);
+    connect(m_browseWorker, &SftpWorker::directoryBatchReceived,
+            this, &MainWindow::onRemoteBatchReceived);
+    connect(m_browseWorker, &SftpWorker::errorOccurred,
+            this, &MainWindow::onError);
+    connect(m_transferWorker, &SftpWorker::errorOccurred,
+            this, &MainWindow::onError);
+
+    connect(m_browseWorker, &SftpWorker::performanceMetric, this,
+            [this](const QString &operation, qint64 milliseconds) {
+                m_statusLeft->setText(
+                    tr("%1 — %2 мс").arg(operation).arg(milliseconds));
+            });
+    connect(m_browseWorker, &SftpWorker::deletionProgress, this,
+            [this](qint64 count, const QString &path) {
+                m_statusLeft->setText(
+                    tr("Удаление… обработано: %1 — %2").arg(count).arg(path));
+            });
+    connect(m_browseWorker, &SftpWorker::reconnecting, this, [this] {
+        m_connectionLabel->setText(tr("●  Переподключение…"));
+        m_connectionLabel->setStyleSheet(
+            QStringLiteral("color:%1;").arg(Theme::palette().warning.name()));
+        showNotice(tr("Соединение потеряно. Переподключаюсь автоматически…"),
+                   Notice::Warning);
+    });
+    connect(m_browseWorker, &SftpWorker::reconnected, this, [this] {
+        setConnectionState(true);
+        showNotice(tr("Соединение восстановлено."), Notice::Success);
+    });
+
+    connect(m_transferWorker, &SftpWorker::connected, this,
+            [this](const QString &, const QString &, const QString &) {
+                m_transferSessionReady = true;
+            });
+    connect(m_transferWorker, &SftpWorker::transferQueued, this,
+            [this](const TransferStatus &status) {
+                m_transferPanel->applyStatus(status);
+            });
+    connect(m_transferWorker, &SftpWorker::transferUpdated, this,
+            [this](const TransferStatus &status) {
+                m_transferPanel->applyStatus(status);
+                if (status.state == TransferState::Running) {
+                    m_statusLeft->setText(
+                        tr("%1 «%2» — %3 из %4 — %5")
+                            .arg(status.upload ? tr("Загрузка") : tr("Скачивание"),
+                                 status.name, Format::size(status.done),
+                                 Format::size(status.total),
+                                 Format::speed(status.bytesPerSecond)));
+                }
+            });
+    connect(m_transferWorker, &SftpWorker::queueDrained, this,
+            [this](int completed, int failed, int skipped) {
+                m_progress->setVisible(false);
+                if (failed > 0) {
+                    showNotice(tr("Очередь завершена: успешно %1, с ошибками %2.")
+                                   .arg(completed)
+                                   .arg(failed),
+                               Notice::Error,
+                               tr("Подробности — на вкладке «Передачи»."));
+                } else if (completed > 0) {
+                    showNotice(tr("Передачи завершены: %1.").arg(completed),
+                               Notice::Success);
+                } else if (skipped > 0) {
+                    showNotice(tr("Передачи отменены или пропущены: %1.")
+                                   .arg(skipped),
+                               Notice::Info);
+                }
+                if (m_connected) {
+                    requestRemoteDirectory(m_currentRemotePath, false);
+                    m_localModel->setRootPath(m_localPathBar->path());
+                }
+            });
+
+    m_transferWorker->setOverwritePolicy(m_transferPanel->overwritePolicy());
+
+    m_browseThread->start();
+    m_transferThread->start();
 }
 
 void MainWindow::showConnectDialog()
@@ -732,51 +946,71 @@ void MainWindow::showConnectDialog()
     ConnectDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted)
         return;
+    m_activeProfile = dialog.profile();
     m_connectButton->setEnabled(false);
     m_connectionLabel->setText(tr("●  Подключение…"));
-    emit connectRequested(dialog.profile());
+    m_connectionDetail->setText(QStringLiteral("%1@%2:%3")
+                                    .arg(m_activeProfile.username,
+                                         m_activeProfile.host)
+                                    .arg(m_activeProfile.port));
+    emit connectRequested(m_activeProfile);
 }
 
-void MainWindow::onConnected(const QString &homePath)
+void MainWindow::onConnected(const QString &homePath, const QString &banner,
+                             const QString &fingerprint)
 {
-    m_connected = true;
     setConnectionState(true);
-    QSettings settings;
-    QString restoredPath =
-        settings.value(QStringLiteral("session/remotePath"),
-                       homePath).toString();
-    if (restoredPath.isEmpty())
-        restoredPath = homePath;
-    m_currentRemotePath = restoredPath;
-    m_remotePath->setText(restoredPath);
-    statusBar()->showMessage(tr("SFTP-подключение установлено."), 4000);
-    requestRemoteDirectory(restoredPath, false);
+    m_activeProfile.trustedFingerprint = fingerprint;
+    m_transferSessionReady = false;
+
+    emit transferConnectRequested(m_activeProfile);
+
+    m_connectionDetail->setText(
+        banner.isEmpty()
+            ? QStringLiteral("%1@%2:%3")
+                  .arg(m_activeProfile.username, m_activeProfile.host)
+                  .arg(m_activeProfile.port)
+            : banner);
+
+    QString restored =
+        QSettings().value(QStringLiteral("session/remotePath"), homePath)
+            .toString();
+    if (restored.isEmpty())
+        restored = homePath;
+    showNotice(tr("SFTP-подключение установлено."), Notice::Success);
+    requestRemoteDirectory(restored, false);
 }
 
 void MainWindow::onDisconnected()
 {
-    m_connected = false;
+    if (!m_connected && m_directoryCache.isEmpty())
+        return;
     setConnectionState(false);
-    m_remoteEntries.clear();
+    m_transferSessionReady = false;
     m_directoryCache.clear();
     m_remoteModel->clear();
-    statusBar()->showMessage(tr("Соединение закрыто."), 3000);
+    refreshPanelMeta();
+    showNotice(tr("Соединение закрыто."), Notice::Info);
 }
 
 void MainWindow::onHostKeyRequired(const QString &host,
                                    const QString &fingerprint,
-                                   bool changed)
+                                   const QString &keyType, bool changed)
 {
     QMessageBox box(this);
     box.setIcon(changed ? QMessageBox::Critical : QMessageBox::Question);
     box.setWindowTitle(changed ? tr("Ключ сервера изменился")
                                : tr("Новый сервер"));
     box.setText(changed
-        ? tr("Внимание: ключ сервера %1 отличается от сохранённого. "
-             "Это может указывать на атаку. Продолжайте только если вы "
-             "ожидали смену ключа.").arg(host)
-        : tr("Подтвердите подлинность сервера %1.").arg(host));
-    box.setInformativeText(tr("SHA-256 отпечаток:\n%1").arg(fingerprint));
+                    ? tr("Внимание: ключ сервера %1 отличается от сохранённого. "
+                         "Это может указывать на атаку. Продолжайте, только "
+                         "если вы ожидали смену ключа.")
+                          .arg(host)
+                    : tr("Подтвердите подлинность сервера %1.").arg(host));
+    box.setInformativeText(keyType.isEmpty()
+                               ? tr("SHA-256 отпечаток:\n%1").arg(fingerprint)
+                               : tr("Тип ключа: %1\nSHA-256 отпечаток:\n%2")
+                                     .arg(keyType, fingerprint));
     auto *once = box.addButton(tr("Подключиться один раз"),
                                QMessageBox::AcceptRole);
     auto *remember = box.addButton(tr("Принять и запомнить"),
@@ -791,6 +1025,91 @@ void MainWindow::onHostKeyRequired(const QString &host,
         emit hostKeyConfirmed(false, false);
 }
 
+void MainWindow::setConnectionState(bool connected)
+{
+    m_connected = connected;
+    m_connectButton->setEnabled(!connected);
+    m_disconnectButton->setEnabled(connected);
+    m_remotePathBar->setEnabled(connected);
+    m_remoteFilter->setEnabled(connected);
+    m_remoteView->setVisible(connected);
+    m_remoteEmptyState->setVisible(!connected);
+    m_connectionLabel->setText(connected ? tr("●  Подключено")
+                                         : tr("●  Не подключено"));
+    m_connectionLabel->setStyleSheet(
+        QStringLiteral("color:%1;")
+            .arg(connected ? Theme::palette().success.name()
+                           : Theme::palette().textMuted.name()));
+    if (!connected)
+        m_connectionDetail->setText(tr("Сервер не выбран"));
+    refreshNavigationButtons();
+}
+
+void MainWindow::navigateLocal(const QString &path)
+{
+    const QFileInfo info(path);
+    if (!info.isDir())
+        return;
+    m_localPathBar->setPath(info.absoluteFilePath());
+    m_localModel->setRootPath(info.absoluteFilePath());
+    m_localView->setRootIndex(m_localModel->index(info.absoluteFilePath()));
+    refreshPanelMeta();
+    refreshNavigationButtons();
+}
+
+void MainWindow::navigateRemote(const QString &path)
+{
+    if (m_connected)
+        requestRemoteDirectory(path);
+}
+
+void MainWindow::openLocal(const QModelIndex &index)
+{
+    const QFileInfo info = m_localModel->fileInfo(index);
+    if (info.isDir())
+        navigateLocal(info.absoluteFilePath());
+    else
+        uploadSelected();
+}
+
+void MainWindow::openRemote(const QModelIndex &index)
+{
+    const RemoteEntry *entry = remoteEntryAt(index);
+    if (!entry)
+        return;
+    if (entry->directory)
+        requestRemoteDirectory(entry->path);
+    else
+        downloadSelected();
+}
+
+void MainWindow::requestRemoteDirectory(const QString &path, bool useCache)
+{
+    QString cleanPath = QDir::cleanPath(QDir::fromNativeSeparators(path));
+    if (!cleanPath.startsWith(QLatin1Char('/')))
+        cleanPath.prepend(QLatin1Char('/'));
+
+    m_currentRemotePath = cleanPath;
+    m_remotePathBar->setPath(cleanPath);
+    if (m_connected)
+        QSettings().setValue(QStringLiteral("session/remotePath"), cleanPath);
+
+    const quint64 generation = m_browseWorker->beginDirectoryRequest();
+    const auto cached = m_directoryCache.constFind(cleanPath);
+    if (useCache && cached != m_directoryCache.cend()) {
+        m_showingCachedDirectory = true;
+        m_remoteModel->setEntries(cached.value());
+        m_statusLeft->setText(tr("Каталог показан из кэша, идёт обновление…"));
+    } else {
+        m_showingCachedDirectory = false;
+        m_remoteModel->clear();
+        m_statusLeft->setText(tr("Загрузка каталога…"));
+    }
+    refreshPanelMeta();
+    refreshNavigationButtons();
+    emit remoteListRequested(cleanPath, generation);
+}
+
 void MainWindow::onRemoteListed(const QString &path,
                                 const RemoteEntries &entries)
 {
@@ -798,20 +1117,9 @@ void MainWindow::onRemoteListed(const QString &path,
     if (path != m_currentRemotePath)
         return;
     m_showingCachedDirectory = false;
-    m_currentRemotePath = path;
-    m_remotePath->setText(path);
-    m_remoteEntries = entries;
     m_remoteModel->setEntries(entries);
-    m_remoteView->horizontalHeader()->setSectionResizeMode(
-        0, QHeaderView::Stretch);
-    m_remoteView->horizontalHeader()->setSectionResizeMode(
-        1, QHeaderView::ResizeToContents);
-    m_remoteView->horizontalHeader()->setSectionResizeMode(
-        2, QHeaderView::ResizeToContents);
-    m_remoteView->horizontalHeader()->setSectionResizeMode(
-        3, QHeaderView::ResizeToContents);
-    statusBar()->showMessage(
-        tr("Загружено объектов: %1").arg(entries.size()), 2000);
+    refreshPanelMeta();
+    m_statusLeft->setText(tr("Загружено объектов: %1").arg(entries.size()));
 }
 
 void MainWindow::onRemoteBatchReceived(const QString &path,
@@ -819,180 +1127,8 @@ void MainWindow::onRemoteBatchReceived(const QString &path,
 {
     if (path != m_currentRemotePath || m_showingCachedDirectory)
         return;
-    m_remoteEntries.reserve(m_remoteEntries.size() + entries.size());
-    for (const auto &entry : entries)
-        m_remoteEntries.append(entry);
     m_remoteModel->appendEntries(entries);
-    statusBar()->showMessage(
-        tr("Загрузка каталога… получено: %1").arg(m_remoteEntries.size()));
-}
-
-void MainWindow::onError(const QString &message)
-{
-    m_connectButton->setEnabled(true);
-    if (!m_connected)
-        setConnectionState(false);
-    m_progress->setVisible(false);
-    QMessageBox::critical(this, tr("Ошибка SFTP"), message);
-}
-
-void MainWindow::openLocal(const QModelIndex &index)
-{
-    const QFileInfo info = m_localModel->fileInfo(index);
-    if (!info.isDir())
-        return;
-    m_localPath->setText(info.absoluteFilePath());
-    m_localView->setRootIndex(m_localModel->index(info.absoluteFilePath()));
-}
-
-void MainWindow::openRemote(const QModelIndex &index)
-{
-    const int row = index.row();
-    if (row < 0 || row >= m_remoteEntries.size())
-        return;
-    const auto &entry = m_remoteEntries.at(row);
-    if (entry.directory)
-        requestRemoteDirectory(entry.path);
-    else
-        downloadSelected();
-}
-
-void MainWindow::goToRemotePath()
-{
-    if (m_connected)
-        requestRemoteDirectory(m_remotePath->text());
-}
-
-void MainWindow::goRemoteUp()
-{
-    if (!m_connected)
-        return;
-    QString path = QDir::cleanPath(
-        QDir::fromNativeSeparators(m_currentRemotePath));
-    if (path != QStringLiteral("/")) {
-        const qsizetype slash = path.lastIndexOf(QLatin1Char('/'));
-        path = slash <= 0 ? QStringLiteral("/") : path.left(slash);
-    }
-    requestRemoteDirectory(path);
-}
-
-void MainWindow::uploadSelected()
-{
-    if (!m_connected)
-        return;
-    const auto rows = m_localView->selectionModel()->selectedRows();
-    if (rows.isEmpty()) {
-        QMessageBox::information(this, tr("Выберите файл"),
-                                 tr("Выберите локальный файл для загрузки."));
-        return;
-    }
-    m_worker->beginDirectoryRequest();
-    for (const auto &index : rows) {
-        const QFileInfo info = m_localModel->fileInfo(index);
-        const QString destination =
-            (m_currentRemotePath.endsWith(QLatin1Char('/'))
-                 ? m_currentRemotePath : m_currentRemotePath + QLatin1Char('/'))
-            + info.fileName();
-        emit uploadRequested(info.absoluteFilePath(), destination, info.isDir());
-    }
-}
-
-void MainWindow::downloadSelected()
-{
-    if (!m_connected)
-        return;
-    const auto rows = m_remoteView->selectionModel()->selectedRows();
-    if (rows.isEmpty())
-        return;
-    m_worker->beginDirectoryRequest();
-    const QString localDirectory = m_localPath->text();
-    for (const auto &index : rows) {
-        const auto &entry = m_remoteEntries.at(index.row());
-        emit downloadRequested(
-            entry.path, QDir(localDirectory).filePath(entry.name),
-            entry.directory);
-    }
-}
-
-void MainWindow::createRemoteFolder()
-{
-    if (!m_connected)
-        return;
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, tr("Новая папка"), tr("Имя папки:"), QLineEdit::Normal,
-        QString(), &ok).trimmed();
-    if (!ok || name.isEmpty() || name.contains(QLatin1Char('/')))
-        return;
-    const QString path = (m_currentRemotePath.endsWith(QLatin1Char('/'))
-        ? m_currentRemotePath : m_currentRemotePath + QLatin1Char('/')) + name;
-    emit remoteMkdirRequested(path);
-}
-
-void MainWindow::createRemoteFile()
-{
-    if (!m_connected)
-        return;
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, tr("Новый файл"), tr("Имя файла:"), QLineEdit::Normal,
-        QString(), &ok).trimmed();
-    if (!ok || name.isEmpty() || name.contains(QLatin1Char('/')))
-        return;
-    const QString path =
-        (m_currentRemotePath.endsWith(QLatin1Char('/'))
-             ? m_currentRemotePath
-             : m_currentRemotePath + QLatin1Char('/')) + name;
-    emit remoteFileCreateRequested(path);
-}
-
-void MainWindow::removeRemoteSelected()
-{
-    if (!m_connected)
-        return;
-    const auto rows = m_remoteView->selectionModel()->selectedRows();
-    if (rows.isEmpty())
-        return;
-    QMessageBox box(this);
-    box.setIcon(QMessageBox::Warning);
-    box.setWindowTitle(tr("Подтверждение удаления"));
-    box.setText(tr("Удалить выбранные объекты?"));
-    box.setInformativeText(
-        tr("Все файлы внутри выбранных папок также будут удалены. "
-           "Это действие нельзя отменить."));
-    auto *deleteButton =
-        box.addButton(tr("Удалить"), QMessageBox::DestructiveRole);
-    box.addButton(tr("Отмена"), QMessageBox::RejectRole);
-    box.exec();
-    if (box.clickedButton() != deleteButton)
-        return;
-    for (const auto &index : rows) {
-        const auto &entry = m_remoteEntries.at(index.row());
-        emit remoteRemoveRequested(entry.path,
-                                   entry.directory && !entry.symlink);
-    }
-}
-
-void MainWindow::renameRemoteSelected()
-{
-    if (!m_connected)
-        return;
-    const auto rows = m_remoteView->selectionModel()->selectedRows();
-    if (rows.size() != 1)
-        return;
-    const auto &entry = m_remoteEntries.at(rows.first().row());
-    bool ok = false;
-    const QString name = QInputDialog::getText(
-        this, tr("Переименование"), tr("Новое имя:"), QLineEdit::Normal,
-        entry.name, &ok).trimmed();
-    if (!ok || name.isEmpty() || name == entry.name ||
-        name.contains(QLatin1Char('/')))
-        return;
-    const QString destination =
-        (m_currentRemotePath.endsWith(QLatin1Char('/'))
-             ? m_currentRemotePath : m_currentRemotePath + QLatin1Char('/'))
-        + name;
-    emit remoteRenameRequested(entry.path, destination);
+    refreshPanelMeta();
 }
 
 void MainWindow::refreshRemote()
@@ -1003,78 +1139,338 @@ void MainWindow::refreshRemote()
     requestRemoteDirectory(m_currentRemotePath, false);
 }
 
-void MainWindow::setConnectionState(bool connected)
+void MainWindow::refreshNavigationButtons()
 {
-    m_connected = connected;
-    m_connectButton->setEnabled(!connected);
-    m_disconnectButton->setEnabled(connected);
-    m_remotePath->setEnabled(connected);
-    m_connectionLabel->setText(
-        connected ? tr("●  Подключено") : tr("●  Не подключено"));
-    m_connectionLabel->setStyleSheet(
-        connected ? QStringLiteral("color:#4ade80;")
-                  : QStringLiteral("color:#94a3b8;"));
+    m_localBack->setEnabled(m_localPathBar->canGoBack());
+    m_localForward->setEnabled(m_localPathBar->canGoForward());
+    m_localUp->setEnabled(m_localPathBar->parentPath() !=
+                          m_localPathBar->path());
+    m_remoteBack->setEnabled(m_connected && m_remotePathBar->canGoBack());
+    m_remoteForward->setEnabled(m_connected && m_remotePathBar->canGoForward());
+    m_remoteUp->setEnabled(m_connected &&
+                           m_currentRemotePath != QStringLiteral("/"));
 }
 
-void MainWindow::requestRemoteDirectory(const QString &path, bool useCache)
+void MainWindow::refreshPanelMeta()
 {
-    QString cleanPath = QDir::cleanPath(QDir::fromNativeSeparators(path));
-    if (!cleanPath.startsWith(QLatin1Char('/')))
-        cleanPath.prepend(QLatin1Char('/'));
+    const int shown = m_remoteProxy->rowCount();
+    const int total = m_remoteModel->rowCount();
+    qint64 bytes = 0;
+    for (const RemoteEntry &entry : m_remoteModel->entries()) {
+        if (!entry.directory)
+            bytes += entry.size;
+    }
+    m_remoteMeta->setText(
+        shown == total
+            ? tr("%1 объектов · %2").arg(total).arg(Format::size(bytes))
+            : tr("%1 из %2 объектов").arg(shown).arg(total));
 
-    m_currentRemotePath = cleanPath;
-    m_remotePath->setText(cleanPath);
-    if (m_connected)
-        QSettings().setValue(QStringLiteral("session/remotePath"),
-                             cleanPath);
-    const quint64 generation = m_worker->beginDirectoryRequest();
-    if (useCache) {
-        const auto cached = m_directoryCache.constFind(cleanPath);
-        if (cached != m_directoryCache.cend()) {
-            m_showingCachedDirectory = true;
-            m_remoteEntries = cached.value();
-            m_remoteModel->setEntries(m_remoteEntries);
-            statusBar()->showMessage(tr("Показан каталог из кэша…"));
-        } else {
-            m_showingCachedDirectory = false;
-            m_remoteEntries.clear();
-            m_remoteModel->clear();
-            statusBar()->showMessage(tr("Загрузка каталога…"));
+    const QModelIndex localRoot = m_localModel->index(m_localPathBar->path());
+    const int localCount = m_localModel->rowCount(localRoot);
+    qint64 localBytes = 0;
+    for (int row = 0; row < localCount; ++row) {
+        const QFileInfo info =
+            m_localModel->fileInfo(m_localModel->index(row, 0, localRoot));
+        if (!info.isDir())
+            localBytes += info.size();
+    }
+    m_localMeta->setText(
+        tr("%1 объектов · %2").arg(localCount).arg(Format::size(localBytes)));
+}
+
+void MainWindow::enqueueJobs(const QVector<TransferJob> &jobs)
+{
+    if (jobs.isEmpty())
+        return;
+    if (!m_connected) {
+        showNotice(tr("Сначала подключитесь к серверу."), Notice::Warning);
+        return;
+    }
+    emit transfersRequested(jobs);
+    showNotice(tr("Добавлено в очередь: %1").arg(jobs.size()), Notice::Info);
+    updateTransferSummary();
+}
+
+void MainWindow::uploadSelected()
+{
+    if (!m_connected) {
+        showNotice(tr("Сначала подключитесь к серверу."), Notice::Warning);
+        return;
+    }
+    const auto rows = m_localView->selectionModel()->selectedRows();
+    if (rows.isEmpty()) {
+        showNotice(tr("Выберите локальные файлы для загрузки."), Notice::Info);
+        return;
+    }
+    QVector<TransferJob> jobs;
+    jobs.reserve(rows.size());
+    for (const QModelIndex &index : rows) {
+        const QFileInfo info = m_localModel->fileInfo(index);
+        TransferJob job;
+        job.id = m_nextJobId++;
+        job.upload = true;
+        job.localPath = info.absoluteFilePath();
+        job.remotePath = appendName(m_currentRemotePath, info.fileName());
+        job.directory = info.isDir() && !info.isSymLink();
+        jobs.append(job);
+    }
+    enqueueJobs(jobs);
+}
+
+void MainWindow::downloadSelected()
+{
+    if (!m_connected)
+        return;
+    const RemoteEntries entries = selectedRemoteEntries();
+    if (entries.isEmpty())
+        return;
+    const QString destination = m_localPathBar->path();
+    QVector<TransferJob> jobs;
+    jobs.reserve(entries.size());
+    for (const RemoteEntry &entry : entries)
+        jobs.append(downloadJobFor(entry, destination));
+    enqueueJobs(jobs);
+}
+
+TransferJob MainWindow::downloadJobFor(const RemoteEntry &entry,
+                                       const QString &destinationDirectory)
+{
+    TransferJob job;
+    job.id = m_nextJobId++;
+    job.upload = false;
+    job.remotePath = entry.path;
+    job.localPath = QDir(destinationDirectory).filePath(entry.name);
+    job.directory = entry.directory && !entry.symlink;
+    job.permissions = entry.permissions;
+    if (!job.directory) {
+        job.size = entry.size;
+        job.modified =
+            entry.modified.isValid() ? entry.modified.toSecsSinceEpoch() : 0;
+    }
+    return job;
+}
+
+void MainWindow::updateTransferSummary()
+{
+    TransferModel *model = m_transferPanel->model();
+    const int active = model->activeCount() + model->queuedCount();
+    if (m_navigationBadge) {
+        m_navigationBadge->setVisible(active > 0);
+        m_navigationBadge->setText(QString::number(active));
+    }
+    const int progress = model->aggregateProgress();
+    if (progress < 0) {
+        m_progress->setVisible(false);
+        return;
+    }
+    m_progress->setVisible(true);
+    m_progress->setRange(0, 100);
+    m_progress->setValue(progress);
+    m_progress->setFormat(
+        tr("%1%  ·  %2").arg(progress).arg(Format::speed(model->aggregateSpeed())));
+}
+
+const RemoteEntry *MainWindow::remoteEntryAt(const QModelIndex &proxyIndex) const
+{
+    if (!proxyIndex.isValid())
+        return nullptr;
+    const QModelIndex source = m_remoteProxy->mapToSource(proxyIndex);
+    return m_remoteModel->entryAt(source.row());
+}
+
+RemoteEntries MainWindow::selectedRemoteEntries() const
+{
+    RemoteEntries result;
+    const auto rows = m_remoteView->selectionModel()->selectedRows();
+    result.reserve(rows.size());
+    for (const QModelIndex &index : rows) {
+        if (const RemoteEntry *entry = remoteEntryAt(index))
+            result.append(*entry);
+    }
+    return result;
+}
+
+QString MainWindow::remoteDestinationFor(const QModelIndex &proxyIndex) const
+{
+    const RemoteEntry *entry = remoteEntryAt(proxyIndex);
+    return entry && entry->directory && !entry->symlink ? entry->path
+                                                        : m_currentRemotePath;
+}
+
+void MainWindow::createRemoteFolder()
+{
+    if (!m_connected)
+        return;
+    bool ok = false;
+    const QString name =
+        QInputDialog::getText(this, tr("Новая папка"), tr("Имя папки:"),
+                              QLineEdit::Normal, QString(), &ok)
+            .trimmed();
+    if (!ok || name.isEmpty() || name.contains(QLatin1Char('/')))
+        return;
+    emit remoteMkdirRequested(appendName(m_currentRemotePath, name));
+}
+
+void MainWindow::createRemoteFile()
+{
+    if (!m_connected)
+        return;
+    bool ok = false;
+    const QString name =
+        QInputDialog::getText(this, tr("Новый файл"), tr("Имя файла:"),
+                              QLineEdit::Normal, QString(), &ok)
+            .trimmed();
+    if (!ok || name.isEmpty() || name.contains(QLatin1Char('/')))
+        return;
+    emit remoteFileCreateRequested(appendName(m_currentRemotePath, name));
+}
+
+void MainWindow::removeRemoteSelected()
+{
+    if (!m_connected)
+        return;
+    const RemoteEntries entries = selectedRemoteEntries();
+    if (entries.isEmpty())
+        return;
+
+    QMessageBox box(this);
+    box.setIcon(QMessageBox::Warning);
+    box.setWindowTitle(tr("Подтверждение удаления"));
+    box.setText(tr("Удалить выбранные объекты (%1)?").arg(entries.size()));
+    QStringList names;
+    for (int i = 0; i < entries.size() && i < 8; ++i)
+        names.append(entries.at(i).name);
+    if (entries.size() > 8)
+        names.append(tr("и ещё %1…").arg(entries.size() - 8));
+    box.setDetailedText(names.join(QLatin1Char('\n')));
+    box.setInformativeText(
+        tr("Все файлы внутри выбранных папок также будут удалены. "
+           "Это действие нельзя отменить."));
+    auto *deleteButton =
+        box.addButton(tr("Удалить"), QMessageBox::DestructiveRole);
+    box.addButton(tr("Отмена"), QMessageBox::RejectRole);
+    box.exec();
+    if (box.clickedButton() != deleteButton)
+        return;
+    for (const RemoteEntry &entry : entries)
+        emit remoteRemoveRequested(entry.path, entry.directory && !entry.symlink);
+}
+
+void MainWindow::renameRemoteSelected()
+{
+    if (!m_connected)
+        return;
+    const RemoteEntries entries = selectedRemoteEntries();
+    if (entries.size() != 1)
+        return;
+    const RemoteEntry &entry = entries.first();
+    bool ok = false;
+    const QString name =
+        QInputDialog::getText(this, tr("Переименование"), tr("Новое имя:"),
+                              QLineEdit::Normal, entry.name, &ok)
+            .trimmed();
+    if (!ok || name.isEmpty() || name == entry.name ||
+        name.contains(QLatin1Char('/')))
+        return;
+    emit remoteRenameRequested(entry.path,
+                               appendName(m_currentRemotePath, name));
+}
+
+void MainWindow::applyTheme()
+{
+    qApp->setStyleSheet(Theme::styleSheet());
+    for (QWidget *widget : QApplication::allWidgets())
+        repolish(widget);
+
+    m_themeButton->setText(Theme::mode() == Theme::Mode::Dark
+                               ? QStringLiteral("☀")
+                               : QStringLiteral("☾"));
+    setConnectionState(m_connected);
+}
+
+void MainWindow::toggleTheme()
+{
+    const Theme::Mode next = Theme::mode() == Theme::Mode::Dark
+                                 ? Theme::Mode::Light
+                                 : Theme::Mode::Dark;
+    Theme::setMode(next);
+    Theme::saveMode(next);
+    applyTheme();
+    showNotice(next == Theme::Mode::Light ? tr("Включена светлая тема")
+                                          : tr("Включена тёмная тема"),
+               Notice::Info);
+}
+
+void MainWindow::setActivePage(int index)
+{
+    m_pages->setCurrentIndex(index);
+    for (int i = 0; i < m_navigationButtons.size(); ++i) {
+        m_navigationButtons.at(i)->setProperty("active", i == index);
+        repolish(m_navigationButtons.at(i));
+    }
+}
+
+void MainWindow::showNotice(const QString &text, Notice severity,
+                            const QString &detail)
+{
+    static const QHash<Notice, QString> severityNames{
+        {Notice::Info, QStringLiteral("info")},
+        {Notice::Success, QStringLiteral("success")},
+        {Notice::Warning, QStringLiteral("warning")},
+        {Notice::Error, QStringLiteral("error")}};
+
+    m_notificationText->setText(text);
+    m_notificationDetail->setText(detail);
+    m_notificationDetail->setVisible(!detail.isEmpty());
+    m_notification->setProperty("severity", severityNames.value(severity));
+    repolish(m_notification);
+    m_notification->setVisible(true);
+
+    if (severity == Notice::Error)
+        m_notificationTimer->stop();
+    else
+        m_notificationTimer->start(6000);
+    m_statusLeft->setText(text);
+}
+
+void MainWindow::onError(const QString &message)
+{
+    m_connectButton->setEnabled(!m_connected);
+    m_errorLog.append(QStringLiteral("%1  %2")
+                          .arg(QDateTime::currentDateTime().toString(
+                                   QStringLiteral("HH:mm:ss")),
+                               message));
+
+    while (m_errorLog.size() > 50)
+        m_errorLog.removeFirst();
+    const int recent = std::min<int>(3, static_cast<int>(m_errorLog.size()));
+    QStringList detail;
+    for (int i = static_cast<int>(m_errorLog.size()) - recent;
+         i < m_errorLog.size(); ++i)
+        detail.append(m_errorLog.at(i));
+    showNotice(message, Notice::Error,
+               m_errorLog.size() > 1
+                   ? tr("Последние сообщения:\n%1")
+                         .arg(detail.join(QLatin1Char('\n')))
+                   : QString());
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    TransferModel *model = m_transferPanel->model();
+    if (!m_closing && model->activeCount() + model->queuedCount() > 0) {
+        const auto answer = QMessageBox::question(
+            this, tr("Передачи не завершены"),
+            tr("Ещё выполняются передачи (%1). Закрыть Nexa и прервать их?")
+                .arg(model->activeCount() + model->queuedCount()),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (answer != QMessageBox::Yes) {
+            event->ignore();
+            return;
         }
-    } else {
-        m_showingCachedDirectory = false;
-        m_remoteEntries.clear();
-        m_remoteModel->clear();
     }
-    emit remoteListRequested(cleanPath, generation);
-}
-
-QString MainWindow::selectedRemotePath() const
-{
-    const auto rows = m_remoteView->selectionModel()->selectedRows();
-    return rows.isEmpty() ? QString()
-                          : m_remoteEntries.value(rows.first().row()).path;
-}
-
-bool MainWindow::selectedRemoteIsDirectory() const
-{
-    const auto rows = m_remoteView->selectionModel()->selectedRows();
-    return !rows.isEmpty() &&
-           m_remoteEntries.value(rows.first().row()).directory;
-}
-
-QString MainWindow::humanSize(qint64 bytes)
-{
-    static const QStringList units{
-        tr("Б"), tr("КБ"), tr("МБ"), tr("ГБ"), tr("ТБ")};
-    double value = static_cast<double>(bytes);
-    int unit = 0;
-    while (value >= 1024.0 && unit < units.size() - 1) {
-        value /= 1024.0;
-        ++unit;
-    }
-    return QStringLiteral("%1 %2")
-        .arg(unit == 0 ? QString::number(bytes)
-                       : QString::number(value, 'f', value < 10 ? 1 : 0),
-             units.at(unit));
+    m_closing = true;
+    m_browseWorker->requestStop();
+    m_transferWorker->requestStop();
+    QMainWindow::closeEvent(event);
 }

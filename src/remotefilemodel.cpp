@@ -1,16 +1,22 @@
 #include "remotefilemodel.h"
 
+#include "format.h"
+
 #include <QApplication>
 #include <QDataStream>
+#include <QDir>
+#include <QFileInfo>
 #include <QIODevice>
 #include <QMimeData>
 #include <QSet>
 #include <QStyle>
+#include <QTemporaryFile>
 
 RemoteFileModel::RemoteFileModel(QObject *parent)
     : QAbstractTableModel(parent),
-      m_folderIcon(qApp->style()->standardIcon(QStyle::SP_DirIcon)),
-      m_fileIcon(qApp->style()->standardIcon(QStyle::SP_FileIcon))
+      m_folderIcon(m_iconProvider.icon(QFileIconProvider::Folder)),
+      m_fileIcon(m_iconProvider.icon(QFileIconProvider::File)),
+      m_linkIcon(qApp->style()->standardIcon(QStyle::SP_FileLinkIcon))
 {
 }
 
@@ -21,55 +27,111 @@ int RemoteFileModel::rowCount(const QModelIndex &parent) const
 
 int RemoteFileModel::columnCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? 0 : 4;
+    return parent.isValid() ? 0 : ColumnCount;
+}
+
+QIcon RemoteFileModel::iconFor(const RemoteEntry &entry) const
+{
+    if (entry.directory)
+        return m_folderIcon;
+    if (entry.symlink)
+        return m_linkIcon;
+    const QString suffix = QFileInfo(entry.name).suffix().toLower();
+    if (suffix.isEmpty())
+        return m_fileIcon;
+    const auto cached = m_suffixIcons.constFind(suffix);
+    if (cached != m_suffixIcons.cend())
+        return cached.value();
+
+    QIcon icon = m_fileIcon;
+    QTemporaryFile probe(QDir::tempPath() +
+                         QStringLiteral("/nexa-icon-XXXXXX.") + suffix);
+    if (probe.open()) {
+        const QIcon resolved = m_iconProvider.icon(QFileInfo(probe.fileName()));
+        if (!resolved.isNull())
+            icon = resolved;
+    }
+    m_suffixIcons.insert(suffix, icon);
+    return icon;
 }
 
 QVariant RemoteFileModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() < 0 ||
-        index.row() >= m_entries.size())
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_entries.size())
         return {};
 
-    const auto &entry = m_entries.at(index.row());
-    if (role == Qt::DecorationRole && index.column() == 0)
-        return entry.directory ? m_folderIcon : m_fileIcon;
+    const RemoteEntry &entry = m_entries.at(index.row());
 
-    if (role == Qt::TextAlignmentRole && index.column() == 1)
-        return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
-
-    if (role != Qt::DisplayRole)
+    switch (role) {
+    case Qt::DecorationRole:
+        return index.column() == NameColumn ? QVariant(iconFor(entry))
+                                            : QVariant();
+    case Qt::TextAlignmentRole:
+        return index.column() == SizeColumn
+                   ? QVariant(static_cast<int>(Qt::AlignRight | Qt::AlignVCenter))
+                   : QVariant();
+    case Qt::ToolTipRole:
+        return entry.path;
+    case IsDirectoryRole:
+        return entry.directory;
+    case SortRole:
+        switch (index.column()) {
+        case NameColumn:
+            return entry.name.toLower();
+        case SizeColumn:
+            return entry.directory ? qint64(-1) : entry.size;
+        case ModifiedColumn:
+            return entry.modified.isValid() ? entry.modified.toSecsSinceEpoch()
+                                            : qint64(0);
+        case TypeColumn:
+            return QFileInfo(entry.name).suffix().toLower();
+        default:
+            return {};
+        }
+    case Qt::DisplayRole:
+        break;
+    default:
         return {};
+    }
 
     switch (index.column()) {
-    case 0:
+    case NameColumn:
         return entry.name;
-    case 1:
-        return entry.directory ? QStringLiteral("—") : humanSize(entry.size);
-    case 2:
-        return entry.modified.isValid()
-            ? entry.modified.toString(QStringLiteral("dd.MM.yyyy HH:mm"))
-            : QStringLiteral("—");
-    case 3:
-        return entry.directory ? tr("Папка")
-                               : (entry.symlink ? tr("Ссылка") : tr("Файл"));
+    case SizeColumn:
+        return entry.directory ? QStringLiteral("—") : Format::size(entry.size);
+    case ModifiedColumn:
+        return Format::timestamp(entry.modified);
+    case TypeColumn:
+        if (entry.directory)
+            return tr("Папка");
+        if (entry.symlink)
+            return tr("Ссылка");
+        {
+            const QString suffix = QFileInfo(entry.name).suffix().toUpper();
+            return suffix.isEmpty() ? tr("Файл") : suffix;
+        }
     default:
         return {};
     }
 }
 
-QVariant RemoteFileModel::headerData(int section,
-                                     Qt::Orientation orientation,
+QVariant RemoteFileModel::headerData(int section, Qt::Orientation orientation,
                                      int role) const
 {
     if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
         return QAbstractTableModel::headerData(section, orientation, role);
 
     switch (section) {
-    case 0: return tr("Имя");
-    case 1: return tr("Размер");
-    case 2: return tr("Изменён");
-    case 3: return tr("Тип");
-    default: return {};
+    case NameColumn:
+        return tr("Имя");
+    case SizeColumn:
+        return tr("Размер");
+    case ModifiedColumn:
+        return tr("Изменён");
+    case TypeColumn:
+        return tr("Тип");
+    default:
+        return {};
     }
 }
 
@@ -87,7 +149,7 @@ QStringList RemoteFileModel::mimeTypes() const
 QMimeData *RemoteFileModel::mimeData(const QModelIndexList &indexes) const
 {
     QSet<int> rows;
-    for (const auto &index : indexes) {
+    for (const QModelIndex &index : indexes) {
         if (index.isValid())
             rows.insert(index.row());
     }
@@ -97,9 +159,11 @@ QMimeData *RemoteFileModel::mimeData(const QModelIndexList &indexes) const
     stream.setVersion(QDataStream::Qt_6_5);
     stream << static_cast<quint32>(rows.size());
     for (const int row : rows) {
-        const auto &entry = m_entries.at(row);
-        stream << entry.name << entry.path << entry.size
-               << entry.modified << entry.directory << entry.symlink;
+        if (row < 0 || row >= m_entries.size())
+            continue;
+        const RemoteEntry &entry = m_entries.at(row);
+        stream << entry.name << entry.path << entry.size << entry.modified
+               << entry.directory << entry.symlink;
     }
     auto *result = new QMimeData;
     result->setData(remoteMimeType(), encoded);
@@ -131,8 +195,8 @@ RemoteEntries RemoteFileModel::entriesFromMimeData(const QMimeData *mimeData)
     result.reserve(static_cast<qsizetype>(count));
     for (quint32 i = 0; i < count && stream.status() == QDataStream::Ok; ++i) {
         RemoteEntry entry;
-        stream >> entry.name >> entry.path >> entry.size
-               >> entry.modified >> entry.directory >> entry.symlink;
+        stream >> entry.name >> entry.path >> entry.size >> entry.modified >>
+            entry.directory >> entry.symlink;
         result.append(entry);
     }
     return stream.status() == QDataStream::Ok ? result : RemoteEntries{};
@@ -153,7 +217,7 @@ void RemoteFileModel::appendEntries(const RemoteEntries &entries)
     const int last = first + static_cast<int>(entries.size()) - 1;
     beginInsertRows(QModelIndex(), first, last);
     m_entries.reserve(m_entries.size() + entries.size());
-    for (const auto &entry : entries)
+    for (const RemoteEntry &entry : entries)
         m_entries.append(entry);
     endInsertRows();
 }
@@ -172,18 +236,44 @@ const RemoteEntry *RemoteFileModel::entryAt(int row) const
     return row >= 0 && row < m_entries.size() ? &m_entries.at(row) : nullptr;
 }
 
-QString RemoteFileModel::humanSize(qint64 bytes)
+RemoteSortFilterProxy::RemoteSortFilterProxy(QObject *parent)
+    : QSortFilterProxyModel(parent)
 {
-    static const QStringList units{
-        tr("Б"), tr("КБ"), tr("МБ"), tr("ГБ"), tr("ТБ")};
-    double value = static_cast<double>(bytes);
-    int unit = 0;
-    while (value >= 1024.0 && unit < units.size() - 1) {
-        value /= 1024.0;
-        ++unit;
+    setSortRole(RemoteFileModel::SortRole);
+    setDynamicSortFilter(true);
+}
+
+void RemoteSortFilterProxy::setNameFilter(const QString &filter)
+{
+    const QString trimmed = filter.trimmed();
+    if (trimmed == m_nameFilter)
+        return;
+    beginFilterChange();
+    m_nameFilter = trimmed;
+    endFilterChange(QSortFilterProxyModel::Direction::Rows);
+}
+
+bool RemoteSortFilterProxy::lessThan(const QModelIndex &left,
+                                     const QModelIndex &right) const
+{
+    const bool leftDirectory =
+        left.data(RemoteFileModel::IsDirectoryRole).toBool();
+    const bool rightDirectory =
+        right.data(RemoteFileModel::IsDirectoryRole).toBool();
+    if (leftDirectory != rightDirectory) {
+        return sortOrder() == Qt::AscendingOrder ? leftDirectory : rightDirectory;
     }
-    return QStringLiteral("%1 %2")
-        .arg(unit == 0 ? QString::number(bytes)
-                       : QString::number(value, 'f', value < 10 ? 1 : 0),
-             units.at(unit));
+    return QSortFilterProxyModel::lessThan(left, right);
+}
+
+bool RemoteSortFilterProxy::filterAcceptsRow(int row,
+                                             const QModelIndex &parent) const
+{
+    if (m_nameFilter.isEmpty())
+        return true;
+    const QModelIndex index =
+        sourceModel()->index(row, RemoteFileModel::NameColumn, parent);
+    return index.data(Qt::DisplayRole)
+        .toString()
+        .contains(m_nameFilter, Qt::CaseInsensitive);
 }
