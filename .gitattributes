@@ -1,0 +1,14 @@
+* text=auto
+
+*.cpp text eol=lf
+*.h text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.ps1 text eol=crlf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.exe binary
+*.dll binary

@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose an improvement for Nexa
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to accomplish?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior and interface you expect.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - SFTP transfers
+        - File manager
+        - Connections and authentication
+        - User interface
+        - Terminal
+        - Build and packaging
+        - Documentation
+        - Other
+    validations:
+      required: true

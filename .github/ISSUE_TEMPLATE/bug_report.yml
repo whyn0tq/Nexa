@@ -1,0 +1,59 @@
+name: Bug report
+description: Report a reproducible problem in Nexa
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include passwords, private keys, real server addresses or sensitive logs.
+  - type: input
+    id: version
+    attributes:
+      label: Nexa version
+      placeholder: 0.1.0 or commit hash
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Problem
+      description: Describe what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Connect to...
+        2. Open...
+        3. Drag...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or sanitized logs
+      description: Remove all credentials, usernames, hostnames and private paths.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Sensitive data
+      options:
+        - label: I removed credentials and sensitive infrastructure data.
+          required: true
