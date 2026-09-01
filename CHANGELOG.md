@@ -6,6 +6,26 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- FTP connections alongside SFTP: the protocol is part of the connection
+  profile and is remembered with the recent hosts.
+- FTPS through explicit `AUTH TLS`, protecting both the control and the data
+  channel, with the TLS session reused on data connections for servers that
+  require it.
+- SHA-256 verification of the server certificate for FTPS, stored and
+  re-checked the same way SSH host keys are.
+- Passive-mode data connections negotiated with `EPSV` and a `PASV` fallback,
+  machine listings through `MLSD` with `LIST` parsing for Unix and DOS output
+  when the server has no `MLSD`.
+- FTP transfer resume through the `REST` marker, reusing the existing overwrite
+  and partial-file rules.
+
+### Changed
+
+- Session handling moved behind a shared worker interface, so the browsing
+  pane, the transfer queue and the reconnection logic are protocol independent.
+
 ## [0.2.0] - 2026-08-01
 
 ### Added

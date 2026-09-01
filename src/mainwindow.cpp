@@ -3,6 +3,7 @@
 #include "connectdialog.h"
 #include "fileviews.h"
 #include "format.h"
+#include "ftpworker.h"
 #include "pathbar.h"
 #include "remotefilemodel.h"
 #include "sftpworker.h"
@@ -157,6 +158,12 @@ public:
 private:
     enum Column { NameColumn, SizeColumn, TypeColumn, DateColumn };
 };
+
+QString protocolName(Protocol protocol)
+{
+    return protocol == Protocol::Ftp ? QStringLiteral("FTP")
+                                     : QStringLiteral("SFTP");
+}
 }
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
@@ -169,7 +176,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     Theme::setMode(Theme::loadSavedMode());
     buildUi();
     applyTheme();
-    wireWorkers();
+    createWorkers(m_workerProtocol);
 
     setConnectionState(false);
     QTimer::singleShot(0, this, [this] {
@@ -177,28 +184,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         if (!saved)
             return;
         m_activeProfile = *saved;
+        ensureWorkers(m_activeProfile.protocol);
         m_connectButton->setEnabled(false);
         m_connectionLabel->setText(tr("●  Подключение…"));
-        showNotice(tr("Восстанавливаю сохранённую SFTP-сессию…"), Notice::Info);
-        emit connectRequested(*saved);
+        showNotice(tr("Восстанавливаю сохранённую сессию %1…")
+                       .arg(protocolName(m_activeProfile.protocol)),
+                   Notice::Info);
+        emit connectRequested(m_activeProfile);
     });
 }
 
 MainWindow::~MainWindow()
 {
-    const QVector<QPair<QThread *, SftpWorker *>> sessions{
-        {m_transferThread, m_transferWorker},
-        {m_browseThread, m_browseWorker}};
-    for (const auto &[thread, worker] : sessions) {
-        if (!thread)
-            continue;
-        if (worker)
-            worker->requestStop();
-        thread->quit();
-
-        if (!thread->wait(5000))
-            thread->terminate();
-    }
+    releaseWorkers();
 }
 
 void MainWindow::buildUi()
@@ -373,7 +371,7 @@ QWidget *MainWindow::buildSidebar()
     brandText->setSpacing(0);
     auto *brand = new QLabel(QStringLiteral("Nexa"));
     brand->setObjectName(QStringLiteral("brandTitle"));
-    auto *edition = new QLabel(tr("SSH и SFTP"));
+    auto *edition = new QLabel(tr("SFTP и FTP"));
     edition->setObjectName(QStringLiteral("brandSubtitle"));
     brandText->addWidget(brand);
     brandText->addWidget(edition);
@@ -675,8 +673,9 @@ QWidget *MainWindow::buildRemotePanel()
 
     m_remoteEmptyState = emptyState(
         QStringLiteral("◈"), tr("Нет подключения"),
-        tr("Нажмите «Подключиться», чтобы открыть SFTP-сессию. Отпечаток "
-           "ключа сервера будет показан для проверки."));
+        tr("Нажмите «Подключиться», чтобы открыть сессию SFTP или FTP. "
+           "Отпечаток ключа или сертификата сервера будет показан для "
+           "проверки."));
     cardLayout->addWidget(m_remoteEmptyState, 1);
     m_remoteView->setVisible(false);
 
@@ -818,89 +817,93 @@ QWidget *MainWindow::buildRemotePanel()
     return m_remoteCard;
 }
 
-void MainWindow::wireWorkers()
+void MainWindow::createWorkers(Protocol protocol)
 {
+    const auto makeWorker = [protocol](RemoteWorker::Role role) -> RemoteWorker * {
+        if (protocol == Protocol::Ftp)
+            return new FtpWorker(role);
+        return new SftpWorker(role);
+    };
+
+    m_workerProtocol = protocol;
+
     m_browseThread = new QThread(this);
-    m_browseWorker = new SftpWorker(SftpWorker::Role::Browsing);
+    m_browseWorker = makeWorker(RemoteWorker::Role::Browsing);
     m_browseWorker->moveToThread(m_browseThread);
-    connect(m_browseThread, &QThread::finished,
-            m_browseWorker, &QObject::deleteLater);
 
     m_transferThread = new QThread(this);
-    m_transferWorker = new SftpWorker(SftpWorker::Role::Transfers);
+    m_transferWorker = makeWorker(RemoteWorker::Role::Transfers);
     m_transferWorker->moveToThread(m_transferThread);
-    connect(m_transferThread, &QThread::finished,
-            m_transferWorker, &QObject::deleteLater);
 
     connect(this, &MainWindow::connectRequested,
-            m_browseWorker, &SftpWorker::connectToHost);
+            m_browseWorker, &RemoteWorker::connectToHost);
     connect(this, &MainWindow::hostKeyConfirmed,
-            m_browseWorker, &SftpWorker::confirmHostKey);
+            m_browseWorker, &RemoteWorker::confirmHostKey);
     connect(this, &MainWindow::remoteListRequested,
-            m_browseWorker, &SftpWorker::listDirectory);
+            m_browseWorker, &RemoteWorker::listDirectory);
     connect(this, &MainWindow::remoteMkdirRequested,
-            m_browseWorker, &SftpWorker::createDirectory);
+            m_browseWorker, &RemoteWorker::createDirectory);
     connect(this, &MainWindow::remoteFileCreateRequested,
-            m_browseWorker, &SftpWorker::createFile);
+            m_browseWorker, &RemoteWorker::createFile);
     connect(this, &MainWindow::remoteRemoveRequested,
-            m_browseWorker, &SftpWorker::removeEntry);
+            m_browseWorker, &RemoteWorker::removeEntry);
     connect(this, &MainWindow::remoteRenameRequested,
-            m_browseWorker, &SftpWorker::renameEntry);
+            m_browseWorker, &RemoteWorker::renameEntry);
     connect(this, &MainWindow::disconnectRequested,
-            m_browseWorker, &SftpWorker::disconnectFromHost);
+            m_browseWorker, &RemoteWorker::disconnectFromHost);
     connect(this, &MainWindow::disconnectRequested,
-            m_transferWorker, &SftpWorker::disconnectFromHost);
+            m_transferWorker, &RemoteWorker::disconnectFromHost);
     connect(this, &MainWindow::transferConnectRequested,
-            m_transferWorker, &SftpWorker::connectToHost);
+            m_transferWorker, &RemoteWorker::connectToHost);
     connect(this, &MainWindow::transfersRequested,
-            m_transferWorker, &SftpWorker::enqueueTransfers);
+            m_transferWorker, &RemoteWorker::enqueueTransfers);
 
-    connect(m_browseWorker, &SftpWorker::connected,
+    connect(m_browseWorker, &RemoteWorker::connected,
             this, &MainWindow::onConnected);
-    connect(m_browseWorker, &SftpWorker::disconnected,
+    connect(m_browseWorker, &RemoteWorker::disconnected,
             this, &MainWindow::onDisconnected);
-    connect(m_browseWorker, &SftpWorker::hostKeyConfirmationRequired,
+    connect(m_browseWorker, &RemoteWorker::hostKeyConfirmationRequired,
             this, &MainWindow::onHostKeyRequired);
-    connect(m_browseWorker, &SftpWorker::directoryListed,
+    connect(m_browseWorker, &RemoteWorker::directoryListed,
             this, &MainWindow::onRemoteListed);
-    connect(m_browseWorker, &SftpWorker::directoryBatchReceived,
+    connect(m_browseWorker, &RemoteWorker::directoryBatchReceived,
             this, &MainWindow::onRemoteBatchReceived);
-    connect(m_browseWorker, &SftpWorker::errorOccurred,
+    connect(m_browseWorker, &RemoteWorker::errorOccurred,
             this, &MainWindow::onError);
-    connect(m_transferWorker, &SftpWorker::errorOccurred,
+    connect(m_transferWorker, &RemoteWorker::errorOccurred,
             this, &MainWindow::onError);
 
-    connect(m_browseWorker, &SftpWorker::performanceMetric, this,
+    connect(m_browseWorker, &RemoteWorker::performanceMetric, this,
             [this](const QString &operation, qint64 milliseconds) {
                 m_statusLeft->setText(
                     tr("%1 — %2 мс").arg(operation).arg(milliseconds));
             });
-    connect(m_browseWorker, &SftpWorker::deletionProgress, this,
+    connect(m_browseWorker, &RemoteWorker::deletionProgress, this,
             [this](qint64 count, const QString &path) {
                 m_statusLeft->setText(
                     tr("Удаление… обработано: %1 — %2").arg(count).arg(path));
             });
-    connect(m_browseWorker, &SftpWorker::reconnecting, this, [this] {
+    connect(m_browseWorker, &RemoteWorker::reconnecting, this, [this] {
         m_connectionLabel->setText(tr("●  Переподключение…"));
         m_connectionLabel->setStyleSheet(
             QStringLiteral("color:%1;").arg(Theme::palette().warning.name()));
         showNotice(tr("Соединение потеряно. Переподключаюсь автоматически…"),
                    Notice::Warning);
     });
-    connect(m_browseWorker, &SftpWorker::reconnected, this, [this] {
+    connect(m_browseWorker, &RemoteWorker::reconnected, this, [this] {
         setConnectionState(true);
         showNotice(tr("Соединение восстановлено."), Notice::Success);
     });
 
-    connect(m_transferWorker, &SftpWorker::connected, this,
+    connect(m_transferWorker, &RemoteWorker::connected, this,
             [this](const QString &, const QString &, const QString &) {
                 m_transferSessionReady = true;
             });
-    connect(m_transferWorker, &SftpWorker::transferQueued, this,
+    connect(m_transferWorker, &RemoteWorker::transferQueued, this,
             [this](const TransferStatus &status) {
                 m_transferPanel->applyStatus(status);
             });
-    connect(m_transferWorker, &SftpWorker::transferUpdated, this,
+    connect(m_transferWorker, &RemoteWorker::transferUpdated, this,
             [this](const TransferStatus &status) {
                 m_transferPanel->applyStatus(status);
                 if (status.state == TransferState::Running) {
@@ -912,7 +915,7 @@ void MainWindow::wireWorkers()
                                  Format::speed(status.bytesPerSecond)));
                 }
             });
-    connect(m_transferWorker, &SftpWorker::queueDrained, this,
+    connect(m_transferWorker, &RemoteWorker::queueDrained, this,
             [this](int completed, int failed, int skipped) {
                 m_progress->setVisible(false);
                 if (failed > 0) {
@@ -941,12 +944,46 @@ void MainWindow::wireWorkers()
     m_transferThread->start();
 }
 
+void MainWindow::releaseWorkers()
+{
+    const QVector<QPair<QThread *, RemoteWorker *>> sessions{
+        {m_transferThread, m_transferWorker},
+        {m_browseThread, m_browseWorker}};
+    for (const auto &[thread, worker] : sessions) {
+        if (!thread)
+            continue;
+        if (worker)
+            worker->requestStop();
+        thread->quit();
+
+        if (!thread->wait(5000)) {
+            thread->terminate();
+            thread->wait();
+        }
+        delete worker;
+        delete thread;
+    }
+    m_transferWorker = nullptr;
+    m_browseWorker = nullptr;
+    m_transferThread = nullptr;
+    m_browseThread = nullptr;
+}
+
+void MainWindow::ensureWorkers(Protocol protocol)
+{
+    if (m_browseWorker && m_transferWorker && m_workerProtocol == protocol)
+        return;
+    releaseWorkers();
+    createWorkers(protocol);
+}
+
 void MainWindow::showConnectDialog()
 {
     ConnectDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted)
         return;
     m_activeProfile = dialog.profile();
+    ensureWorkers(m_activeProfile.protocol);
     m_connectButton->setEnabled(false);
     m_connectionLabel->setText(tr("●  Подключение…"));
     m_connectionDetail->setText(QStringLiteral("%1@%2:%3")
@@ -977,7 +1014,9 @@ void MainWindow::onConnected(const QString &homePath, const QString &banner,
             .toString();
     if (restored.isEmpty())
         restored = homePath;
-    showNotice(tr("SFTP-подключение установлено."), Notice::Success);
+    showNotice(tr("Подключение %1 установлено.")
+                   .arg(protocolName(m_activeProfile.protocol)),
+               Notice::Success);
     requestRemoteDirectory(restored, false);
 }
 
@@ -997,16 +1036,22 @@ void MainWindow::onHostKeyRequired(const QString &host,
                                    const QString &fingerprint,
                                    const QString &keyType, bool changed)
 {
+    const bool ftp = m_activeProfile.protocol == Protocol::Ftp;
     QMessageBox box(this);
     box.setIcon(changed ? QMessageBox::Critical : QMessageBox::Question);
-    box.setWindowTitle(changed ? tr("Ключ сервера изменился")
+    box.setWindowTitle(changed ? (ftp ? tr("Сертификат сервера изменился")
+                                      : tr("Ключ сервера изменился"))
                                : tr("Новый сервер"));
-    box.setText(changed
-                    ? tr("Внимание: ключ сервера %1 отличается от сохранённого. "
-                         "Это может указывать на атаку. Продолжайте, только "
-                         "если вы ожидали смену ключа.")
-                          .arg(host)
-                    : tr("Подтвердите подлинность сервера %1.").arg(host));
+    box.setText(
+        changed ? (ftp ? tr("Внимание: сертификат сервера %1 отличается от "
+                            "сохранённого. Это может указывать на атаку. "
+                            "Продолжайте, только если вы ожидали его смену.")
+                             .arg(host)
+                       : tr("Внимание: ключ сервера %1 отличается от "
+                            "сохранённого. Это может указывать на атаку. "
+                            "Продолжайте, только если вы ожидали смену ключа.")
+                             .arg(host))
+                : tr("Подтвердите подлинность сервера %1.").arg(host));
     box.setInformativeText(keyType.isEmpty()
                                ? tr("SHA-256 отпечаток:\n%1").arg(fingerprint)
                                : tr("Тип ключа: %1\nSHA-256 отпечаток:\n%2")

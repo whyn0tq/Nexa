@@ -29,8 +29,12 @@ qt_add_executable(Nexa WIN32
     src/remotefilemodel.cpp
     src/fileviews.h
     src/fileviews.cpp
+    src/remoteworker.h
+    src/remoteworker.cpp
     src/sftpworker.h
     src/sftpworker.cpp
+    src/ftpworker.h
+    src/ftpworker.cpp
     src/mainwindow.h
     src/mainwindow.cpp
 )

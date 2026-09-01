@@ -23,7 +23,7 @@ class PathBar;
 class RemoteFileModel;
 class RemoteFileView;
 class RemoteSortFilterProxy;
-class SftpWorker;
+class RemoteWorker;
 class TransferPanel;
 
 class MainWindow final : public QMainWindow {
@@ -80,7 +80,9 @@ private:
     QWidget *buildFilesPage();
     QWidget *buildLocalPanel();
     QWidget *buildRemotePanel();
-    void wireWorkers();
+    void createWorkers(Protocol protocol);
+    void releaseWorkers();
+    void ensureWorkers(Protocol protocol);
     void applyTheme();
     void setConnectionState(bool connected);
     void setActivePage(int index);
@@ -99,8 +101,8 @@ private:
 
     QThread *m_browseThread = nullptr;
     QThread *m_transferThread = nullptr;
-    SftpWorker *m_browseWorker = nullptr;
-    SftpWorker *m_transferWorker = nullptr;
+    RemoteWorker *m_browseWorker = nullptr;
+    RemoteWorker *m_transferWorker = nullptr;
 
     QFileSystemModel *m_localModel = nullptr;
     LocalFileView *m_localView = nullptr;
@@ -147,6 +149,7 @@ private:
     QHash<QString, RemoteEntries> m_directoryCache;
     QStringList m_errorLog;
     ConnectionProfile m_activeProfile;
+    Protocol m_workerProtocol = Protocol::Sftp;
     QString m_currentRemotePath = QStringLiteral("/");
     quint64 m_nextJobId = 1;
     bool m_connected = false;

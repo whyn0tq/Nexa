@@ -17,6 +17,16 @@ struct RemoteEntry {
 
 using RemoteEntries = QVector<RemoteEntry>;
 
+enum class Protocol {
+    Sftp = 0,
+    Ftp
+};
+
+constexpr quint16 defaultPort(Protocol protocol) noexcept
+{
+    return protocol == Protocol::Ftp ? quint16(21) : quint16(22);
+}
+
 struct ConnectionProfile {
     QString host;
     quint16 port = 22;
@@ -26,8 +36,10 @@ struct ConnectionProfile {
     QString keyPassphrase;
 
     QString trustedFingerprint;
+    Protocol protocol = Protocol::Sftp;
     bool usePrivateKey = false;
     bool useAgent = true;
+    bool useTls = false;
 };
 
 enum class OverwritePolicy {
@@ -81,3 +93,4 @@ Q_DECLARE_METATYPE(TransferJob)
 Q_DECLARE_METATYPE(TransferStatus)
 Q_DECLARE_METATYPE(QVector<TransferJob>)
 Q_DECLARE_METATYPE(OverwritePolicy)
+Q_DECLARE_METATYPE(Protocol)

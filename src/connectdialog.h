@@ -7,6 +7,7 @@
 
 class QCheckBox;
 class QComboBox;
+class QLabel;
 class QLineEdit;
 class QSpinBox;
 class QStackedWidget;
@@ -23,11 +24,16 @@ private slots:
     void browsePrivateKey();
     void validateAndAccept();
     void loadRecentProfile(int index);
+    void applyProtocol(int index);
 
 private:
     void saveRecentProfile(const ConnectionProfile &profile);
+    Protocol selectedProtocol() const;
 
     QComboBox *m_recent = nullptr;
+    QComboBox *m_protocol = nullptr;
+    QLabel *m_title = nullptr;
+    QCheckBox *m_tls = nullptr;
     QLineEdit *m_host = nullptr;
     QSpinBox *m_port = nullptr;
     QLineEdit *m_username = nullptr;
