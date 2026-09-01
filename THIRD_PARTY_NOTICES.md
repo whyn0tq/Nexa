@@ -9,8 +9,9 @@ relicensed under Nexa's GPL license.
 |---|---|---|
 | Qt 6 Core | Application runtime | LGPL-3.0 / GPL-3.0 / commercial |
 | Qt 6 Widgets | Desktop user interface | LGPL-3.0 / GPL-3.0 / commercial |
-| Qt 6 Network | Network integration | LGPL-3.0 / GPL-3.0 / commercial |
+| Qt 6 Network | Network integration, FTP and FTPS transport | LGPL-3.0 / GPL-3.0 / commercial |
 | libssh | SSH and SFTP protocol support | LGPL |
+| OpenSSL | TLS for FTPS, loaded through the Qt TLS backend | Apache-2.0 |
 
 Windows portable packages may also contain MinGW runtime libraries and
 transitive dependencies of Qt and libssh. Every release must include the license
