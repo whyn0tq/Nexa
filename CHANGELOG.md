@@ -6,6 +6,8 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-02
+
 ### Added
 
 - FTP connections alongside SFTP: the protocol is part of the connection

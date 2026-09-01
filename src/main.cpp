@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     Q_UNUSED(app);
     QApplication::setOrganizationName(QStringLiteral("Nexa"));
     QApplication::setApplicationName(QStringLiteral("Nexa"));
-    QApplication::setApplicationVersion(QStringLiteral("0.2.0"));
+    QApplication::setApplicationVersion(QStringLiteral("0.3.0"));
     QApplication::setStyle(QStringLiteral("Fusion"));
 
     if (ssh_init() != SSH_OK)
