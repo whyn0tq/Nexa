@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Nexa — a fast SFTP, FTP and FTPS client for Windows">
+<title>Nexa — a fast SFTP, FTP and FTPS client for Windows</title>
+<defs>
+  <clipPath id="oclip"><rect width="1280" height="640" rx="0"/></clipPath>
+  <radialGradient id="oh1" cx="0" cy="0" r="793.6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity="0.3"/><stop offset=".55" stop-color="#ff4256" stop-opacity="0.07"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
+  <radialGradient id="oh2" cx="1280" cy="640" r="640" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c81e3a" stop-opacity="0.23"/><stop offset="1" stop-color="#c81e3a" stop-opacity="0"/></radialGradient>
+</defs>
+<g clip-path="url(#oclip)">
+  <rect width="1280" height="640" fill="#070709"/>
+  <rect width="1280" height="640" fill="url(#oh1)"/>
+  <rect width="1280" height="640" fill="url(#oh2)"/>
+</g>
+
+<g transform="translate(88 92) scale(1.04)">
+  <defs>
+    <linearGradient id="olb" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#222228"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
+    <radialGradient id="olg" cx="24" cy="92" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".47"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
+    <linearGradient id="olr" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".27"/><stop offset=".5" stop-color="#fff" stop-opacity=".055"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>
+    <linearGradient id="olred" x1="0" y1="24" x2="0" y2="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff707e"/><stop offset="1" stop-color="#e4223e"/></linearGradient>
+    <linearGradient id="olsilver" x1="0" y1="28" x2="0" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaaab4"/></linearGradient>
+  </defs>
+  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#olb)"/>
+  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#olg)"/>
+  <rect x="3.8" y="3.8" width="92.4" height="92.4" rx="25.2" fill="none" stroke="url(#olr)" stroke-width="1.6"/>
+  <path d="M38 70L38 25M25 38L38 25L51 38" fill="none" stroke="url(#olred)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M62 30L62 75M49 62L62 75L75 62" fill="none" stroke="url(#olsilver)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="216" y="176" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="88" font-weight="700" letter-spacing="-2" fill="#f4f4f5">Nexa</text>
+<text font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="31" fill="#a1a1aa"><tspan x="90" y="272">A fast SFTP, FTP and FTPS client</tspan><tspan x="90" y="314">for Windows. One tab per server.</tspan></text>
+<g>
+  <rect x="90.5" y="356.5" width="76" height="39" rx="19.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="128.5" y="381.95" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f4f4f5">SFTP</text>
+  <rect x="177.5" y="356.5" width="64" height="39" rx="19.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="209.5" y="381.95" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f4f4f5">FTP</text>
+  <rect x="252.5" y="356.5" width="76" height="39" rx="19.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="290.5" y="381.95" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f4f4f5">FTPS</text>
+  <rect x="339.5" y="356.5" width="160" height="39" rx="19.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="419.5" y="381.95" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f4f4f5">Windows 10 · 11</text>
+</g>
+<g>
+  <rect x="92" y="478" width="22" height="4" rx="2" fill="#ff4256"/>
+  <text x="90" y="530" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="38" font-weight="700" letter-spacing="-.8" fill="#f4f4f5">4.3<tspan font-size="21" font-weight="600" fill="#ff4256" dx="5">s</tspan></text>
+  <text x="92" y="558" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="15" fill="#71717a">3,000 small files</text>
+  <rect x="288" y="478" width="22" height="4" rx="2" fill="#ff4256"/>
+  <text x="286" y="530" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="38" font-weight="700" letter-spacing="-.8" fill="#f4f4f5">64</text>
+  <text x="288" y="558" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="15" fill="#71717a">files in flight</text>
+  <rect x="484" y="478" width="22" height="4" rx="2" fill="#ff4256"/>
+  <text x="482" y="530" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="38" font-weight="700" letter-spacing="-.8" fill="#f4f4f5">1–16</text>
+  <text x="484" y="558" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="15" fill="#71717a">parallel connections</text>
+</g>
+<g transform="translate(712 162) scale(1.02)">
+<defs>
+  <linearGradient id="hp" x1="0" x2="1"><stop offset="0" stop-color="#ff5468"/><stop offset="1" stop-color="#e52a45"/></linearGradient>
+  <radialGradient id="hmg" cx="0" cy="0" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".16"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
+  <filter id="hs" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<g filter="url(#hs)">
+  <rect x="0" y="0" width="516" height="308" rx="18" fill="#111114"/>
+</g>
+<rect x="0" y="0" width="516" height="308" rx="18" fill="url(#hmg)"/>
+<rect x="0.5" y="0.5" width="515" height="307" rx="17.5" fill="none" stroke="#fff" stroke-opacity=".12"/>
+<g>
+  <g transform="translate(12 10) scale(0.22)">
+  <defs>
+    <linearGradient id="hmb" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#222228"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
+    <radialGradient id="hmg" cx="24" cy="92" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".47"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
+    <linearGradient id="hmr" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".27"/><stop offset=".5" stop-color="#fff" stop-opacity=".055"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>
+    <linearGradient id="hmred" x1="0" y1="24" x2="0" y2="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff707e"/><stop offset="1" stop-color="#e4223e"/></linearGradient>
+    <linearGradient id="hmsilver" x1="0" y1="28" x2="0" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaaab4"/></linearGradient>
+  </defs>
+  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#hmb)"/>
+  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#hmg)"/>
+  <rect x="3.8" y="3.8" width="92.4" height="92.4" rx="25.2" fill="none" stroke="url(#hmr)" stroke-width="1.6"/>
+  <path d="M38 70L38 25M25 38L38 25L51 38" fill="none" stroke="url(#hmred)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M62 30L62 75M49 62L62 75L75 62" fill="none" stroke="url(#hmsilver)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+  <rect x="44" y="9" width="100" height="24" rx="8" fill="#fff" fill-opacity=".08"/>
+    <rect x="52" y="15" width="2.5" height="12" rx="1.25" fill="#ff8a3d"/>
+    <circle cx="63" cy="21" r="3" fill="#3ddc97"/>
+    <text x="72" y="25.5" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="12" font-weight="700" fill="#f4f4f5">web-prod</text>
+  <rect x="150" y="9" width="90" height="24" rx="8" fill="#fff" fill-opacity="0"/>
+    <rect x="158" y="15" width="2.5" height="12" rx="1.25" fill="#ffc53d"/>
+    <circle cx="169" cy="21" r="3" fill="#3ddc97"/>
+    <text x="178" y="25.5" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="12" font-weight="500" fill="#a1a1aa">Storage</text>
+  <rect x="352.5" y="9.5" width="151" height="23" rx="8" fill="#fff" fill-opacity=".04" stroke="#fff" stroke-opacity=".1"/>
+  <g transform="translate(360 13) scale(.62)" fill="none" stroke="#71717a" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></g>
+  <rect x="382" y="18" width="62" height="7" rx="3.5" fill="#fff" fill-opacity="0.1"/>
+  <rect x="458" y="14" width="38" height="14" rx="4" fill="#fff" fill-opacity=".08"/>
+  <text x="477" y="24.5" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="9" font-weight="700" fill="#a1a1aa">Ctrl K</text>
+  <rect x="12.5" y="44.5" width="491" height="34" rx="11" fill="#fff" fill-opacity=".03" stroke="#fff" stroke-opacity=".07"/>
+  <circle cx="29" cy="61.5" r="4" fill="#3ddc97"/>
+  <text x="41" y="66" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="700" fill="#f4f4f5">web-prod</text>
+  <text x="108" y="66" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="12" fill="#71717a">SFTP · ping 24 ms</text>
+  <rect x="12.5" y="88.5" width="235" height="168" rx="12" fill="#fff" fill-opacity=".025" stroke="#fff" stroke-opacity=".07"/>
+    <g transform="translate(28 104) scale(.55)" fill="none" stroke="#71717a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="11.5" rx="2.5"/><path d="M9 20h6M12 16v4"/></g>
+    <text x="50" y="114" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="700" letter-spacing=".8" fill="#71717a">THIS COMPUTER</text>
+    <path d="M28 134.5q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>
+    <rect x="56" y="136" width="70" height="7" rx="3.5" fill="#fff" fill-opacity="0.2"/>
+    <path d="M28 160.5q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>
+    <rect x="56" y="162" width="52" height="7" rx="3.5" fill="#fff" fill-opacity="0.2"/>
+    <path d="M39 183h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>
+    <rect x="56" y="188" width="92" height="7" rx="3.5" fill="#fff" fill-opacity="0.13"/>
+    <rect x="196" y="188" width="28" height="7" rx="3.5" fill="#fff" fill-opacity="0.07"/>
+    <path d="M39 209h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>
+    <rect x="56" y="214" width="64" height="7" rx="3.5" fill="#fff" fill-opacity="0.13"/>
+    <rect x="196" y="214" width="22" height="7" rx="3.5" fill="#fff" fill-opacity="0.07"/>
+    <path d="M39 235h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>
+    <rect x="56" y="240" width="80" height="7" rx="3.5" fill="#fff" fill-opacity="0.13"/>
+    <rect x="196" y="240" width="30" height="7" rx="3.5" fill="#fff" fill-opacity="0.07"/>
+  <rect x="269.5" y="88.5" width="235" height="168" rx="12" fill="#fff" fill-opacity=".025" stroke="#fff" stroke-opacity=".07"/>
+    <g transform="translate(285 104) scale(.55)" fill="none" stroke="#71717a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.5" width="16" height="6.5" rx="2.5"/><rect x="4" y="13" width="16" height="6.5" rx="2.5"/></g>
+    <text x="307" y="114" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="700" letter-spacing=".8" fill="#71717a">SERVER</text>
+    <path d="M285 134.5q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>
+    <rect x="313" y="136" width="56" height="7" rx="3.5" fill="#fff" fill-opacity="0.2"/>
+    <path d="M285 160.5q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>
+    <rect x="313" y="162" width="38" height="7" rx="3.5" fill="#fff" fill-opacity="0.2"/>
+    <path d="M285 186.5q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>
+    <rect x="313" y="188" width="72" height="7" rx="3.5" fill="#fff" fill-opacity="0.2"/>
+    <path d="M296 209h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>
+    <rect x="313" y="214" width="88" height="7" rx="3.5" fill="#fff" fill-opacity="0.13"/>
+    <rect x="453" y="214" width="26" height="7" rx="3.5" fill="#fff" fill-opacity="0.07"/>
+    <path d="M296 235h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>
+    <rect x="313" y="240" width="60" height="7" rx="3.5" fill="#fff" fill-opacity="0.13"/>
+    <rect x="453" y="240" width="34" height="7" rx="3.5" fill="#fff" fill-opacity="0.07"/>
+  <rect x="12.5" y="266.5" width="491" height="30" rx="10" fill="#fff" fill-opacity=".03" stroke="#fff" stroke-opacity=".07"/>
+  <g transform="translate(22 273) scale(.7)" fill="none" stroke="#ff4256" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19V5M5.31 7.69L8 5l2.69 2.69M16 5v14M13.31 16.31L16 19l2.69-2.69"/></g>
+  <text x="44" y="286" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="12" font-weight="700" fill="#f4f4f5">Transfers</text>
+  <rect x="140" y="279" width="260" height="5" rx="2.5" fill="#fff" fill-opacity=".09"/>
+  <rect x="140" y="279" width="161.2" height="5" rx="2.5" fill="url(#hp)"/>
+  <text x="492" y="286" text-anchor="end" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="12" font-weight="700" fill="#f4f4f5">38 MB/s</text>
+</g>
+</g>
+</svg>

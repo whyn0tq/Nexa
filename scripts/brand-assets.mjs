@@ -55,7 +55,7 @@ function backdrop(id, w, h, r = 28, glow = 1) {
   <rect width="${w}" height="${h}" fill="url(#${id}h1)"/>
   <rect width="${w}" height="${h}" fill="url(#${id}h2)"/>
 </g>
-<rect x=".5" y=".5" width="${w - 1}" height="${h - 1}" rx="${r - 0.5}" fill="none" stroke="#fff" stroke-opacity=".09"/>`;
+${r ? `<rect x=".5" y=".5" width="${w - 1}" height="${h - 1}" rx="${r - 0.5}" fill="none" stroke="#fff" stroke-opacity=".09"/>` : ''}`;
 }
 
 const textWidth = (s, size, weight = 400) =>
@@ -80,9 +80,8 @@ function chips(x, y, labels, opts) {
   }).join('\n  ');
 }
 
-function hero(L) {
-  const W = 1280, H = 420;
-  const mx = 700, my = 56, mw = 516, mh = 308;
+function mockWindow(L, mx, my) {
+  const mw = 516, mh = 308;
   const bar = (x, y, w, o = 0.13) => `<rect x="${x}" y="${y}" width="${w}" height="7" rx="3.5" fill="#fff" fill-opacity="${o}"/>`;
   const folder = (x, y) => `<path d="M${x} ${y + 2.5}q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>`;
   const file = (x, y) => `<path d="M${x + 9} ${y}h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>`;
@@ -102,20 +101,11 @@ function hero(L) {
     <circle cx="${x + 19}" cy="${my + 21}" r="3" fill="${T.success}"/>
     <text x="${x + 28}" y="${my + 25.5}" font-family="${FONT}" font-size="12" font-weight="${active ? 700 : 500}" fill="${active ? T.text : T.text2}">${name}</text>`;
   const progress = 0.62;
-  const body = `${backdrop('h', W, H)}
-<defs>
+  return { defs: `<defs>
   <linearGradient id="hp" x1="0" x2="1"><stop offset="0" stop-color="#ff5468"/><stop offset="1" stop-color="#e52a45"/></linearGradient>
   <radialGradient id="hmg" cx="${mx}" cy="${my}" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".16"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
   <filter id="hs" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
-</defs>
-${logo('hl', 72, 78, 92)}
-<text x="186" y="149" font-family="${FONT}" font-size="76" font-weight="700" letter-spacing="-1.5" fill="${T.text}">Nexa</text>
-<text font-family="${FONT}" font-size="26" fill="${T.text2}"><tspan x="74" y="226">${L.tag1}</tspan><tspan x="74" y="262">${L.tag2}</tspan></text>
-<g>
-  ${chips(74, 302, ['SFTP', 'FTP', 'FTPS', L.windows], { accentFirst: false })}
-</g>
-<text x="76" y="374" font-family="${FONT}" font-size="15" fill="${T.muted}">${L.look}</text>
-<g filter="url(#hs)">
+</defs>`, body: `<g filter="url(#hs)">
   <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="18" fill="${T.sheet}"/>
 </g>
 <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="18" fill="url(#hmg)"/>
@@ -141,6 +131,47 @@ ${logo('hl', 72, 78, 92)}
   <rect x="${mx + 140}" y="${my + 279}" width="260" height="5" rx="2.5" fill="#fff" fill-opacity=".09"/>
   <rect x="${mx + 140}" y="${my + 279}" width="${260 * progress}" height="5" rx="2.5" fill="url(#hp)"/>
   <text x="${mx + mw - 24}" y="${my + 286}" text-anchor="end" font-family="${FONT}" font-size="12" font-weight="700" fill="${T.text}">${L.speed}</text>
+</g>` };
+}
+
+function hero(L) {
+  const W = 1280, H = 420;
+  const mock = mockWindow(L, 700, 56);
+  const body = `${backdrop('h', W, H)}
+${mock.defs}
+${logo('hl', 72, 78, 92)}
+<text x="186" y="149" font-family="${FONT}" font-size="76" font-weight="700" letter-spacing="-1.5" fill="${T.text}">Nexa</text>
+<text font-family="${FONT}" font-size="26" fill="${T.text2}"><tspan x="74" y="226">${L.tag1}</tspan><tspan x="74" y="262">${L.tag2}</tspan></text>
+<g>
+  ${chips(74, 302, ['SFTP', 'FTP', 'FTPS', L.windows], { accentFirst: false })}
+</g>
+<text x="76" y="374" font-family="${FONT}" font-size="15" fill="${T.muted}">${L.look}</text>
+${mock.body}`;
+  return svg(W, H, body, L.title);
+}
+
+function social(L) {
+  const W = 1280, H = 640;
+  const mock = mockWindow(L, 0, 0);
+  const facts = L.cards.slice(0, 3).map(([value, unit, label], i) => {
+    const x = 92 + i * 196;
+    return `<rect x="${x}" y="478" width="22" height="4" rx="2" fill="#ff4256"/>
+  <text x="${x - 2}" y="530" font-family="${FONT}" font-size="38" font-weight="700" letter-spacing="-.8" fill="${T.text}">${value}${unit ? `<tspan font-size="21" font-weight="600" fill="#ff4256" dx="5">${unit}</tspan>` : ''}</text>
+  <text x="${x}" y="558" font-family="${FONT}" font-size="15" fill="${T.muted}">${label}</text>`;
+  }).join('\n  ');
+  const body = `${backdrop('o', W, H, 0, 1.15)}
+${logo('ol', 88, 92, 104)}
+<text x="216" y="176" font-family="${FONT}" font-size="88" font-weight="700" letter-spacing="-2" fill="${T.text}">Nexa</text>
+<text font-family="${FONT}" font-size="31" fill="${T.text2}"><tspan x="90" y="272">${L.social1}</tspan><tspan x="90" y="314">${L.social2}</tspan></text>
+<g>
+  ${chips(90, 356, ['SFTP', 'FTP', 'FTPS', L.windows], { h: 40, size: 17 })}
+</g>
+<g>
+  ${facts}
+</g>
+<g transform="translate(712 162) scale(1.02)">
+${mock.defs}
+${mock.body}
 </g>`;
   return svg(W, H, body, L.title);
 }
@@ -234,6 +265,8 @@ const EN = {
   title: 'Nexa — a fast SFTP, FTP and FTPS client for Windows',
   tag1: 'A fast SFTP, FTP and FTPS client for Windows.',
   tag2: 'One tab per server. Transfers that never drop.',
+  social1: 'A fast SFTP, FTP and FTPS client',
+  social2: 'for Windows. One tab per server.',
   windows: 'Windows 10 · 11',
   look: 'Onyx black · frosted glass · red accent · no sidebars',
   local: 'THIS COMPUTER', server: 'SERVER', transfers: 'Transfers', ping: 'ping 24 ms', speed: '38 MB/s',
@@ -265,6 +298,7 @@ writeFileSync(join(out, 'logo.svg'), svg(100, 100, logo('l', 0, 0, 100), 'Nexa')
 writeFileSync(join(out, 'hero.svg'), hero(EN));
 writeFileSync(join(out, 'ru', 'hero.svg'), hero(RU));
 writeFileSync(join(out, 'stats.svg'), stats(EN));
+writeFileSync(join(out, 'social.svg'), social(EN));
 writeFileSync(join(out, 'ru', 'stats.svg'), stats(RU));
 writeFileSync(join(out, 'header.svg'), header());
 writeFileSync(join(out, 'divider.svg'), divider());
