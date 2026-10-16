@@ -108,8 +108,9 @@ The project uses Semantic Versioning: `MAJOR.MINOR.PATCH`. Pre-releases use the
 6. If the interface changed, regenerate the screenshots in both languages
    (`--demo-shots`); if the numbers or artwork texts changed, run
    `node scripts\brand-assets.mjs`.
-7. Build the portable folder: `.\scripts\build.ps1 -OutputDirectory dist-release`.
-8. Add a Git tag such as `v1.0.0`.
+7. Add a Git tag such as `v1.0.0` and push it: GitHub Actions builds the
+   package and drafts the release with the archive and its SHA-256.
+8. Paste the release notes into the draft and publish it.
 
 ## <img src="docs/assets/brand/icons/forward.svg" width="28" height="28" alt=""> Plan for 1.1
 

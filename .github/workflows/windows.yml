@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
   pull_request:
     branches:
       - main
@@ -23,6 +25,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Set up MSYS2 UCRT64
+        id: msys2
         uses: msys2/setup-msys2@v2
         with:
           msystem: UCRT64
@@ -46,3 +49,50 @@ jobs:
       - name: Test
         shell: msys2 {0}
         run: ctest --test-dir build --output-on-failure
+
+      - name: Package
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        run: |
+          $msys = '${{ steps.msys2.outputs.msys2-location }}'
+          $env:PATH = "$msys\ucrt64\bin;$msys\usr\bin;$env:PATH"
+          .\scripts\build.ps1 -OutputDirectory dist-release
+          .\scripts\package.ps1 -DistDirectory dist-release -OutputDirectory dist -Zip
+          New-Item -ItemType Directory -Force release | Out-Null
+          Move-Item dist\*.zip release
+          Get-ChildItem release\*.zip | ForEach-Object {
+            "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash)  $($_.Name)" | Out-File -Encoding ascii "$($_.FullName).sha256"
+          }
+
+      - name: Upload release package
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download release package
+        uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: release
+
+      - name: Draft the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" release/* --clobber
+          else
+            gh release create "$TAG" release/* --draft --verify-tag --title "Nexa ${TAG#v}" --notes ""
+          fi

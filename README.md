@@ -263,10 +263,13 @@ cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 .\scripts\build.ps1 -OutputDirectory dist-release
+.\scripts\package.ps1 -Zip
 ```
 
 `dist-release` is a portable folder: it runs on any Windows 10 or 11 x64 machine
-without MSYS2.
+without MSYS2. `package.ps1` adds the license texts of every shipped library and
+packs `dist\Nexa-<version>-windows-x64.zip`. Pushing a `v*` tag does the same in
+GitHub Actions and drafts the release with the archive and its SHA-256.
 
 <details>
 <summary><strong>Regenerating the screenshots and artwork</strong></summary>
@@ -331,6 +334,10 @@ What changed and when: [CHANGELOG.md](CHANGELOG.md) · [VERSION.md](VERSION.md).
 > [!WARNING]
 > Do not post credentials, private keys, host addresses or sensitive logs in
 > public issues. Report vulnerabilities privately — see [SECURITY.md](SECURITY.md).
+
+**Privacy.** Nexa connects only to the servers you add, has no telemetry and
+checks for nothing in the background. Release archives are built by
+[GitHub Actions](.github/workflows/windows.yml) from this repository.
 
 ## <img src="docs/assets/brand/icons/info.svg" width="28" height="28" alt=""> License
 

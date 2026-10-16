@@ -30,7 +30,13 @@
 
 ## [Unreleased]
 
-Пока ничего — здесь появятся изменения после 1.0.0.
+### <img src="docs/assets/brand/icons/plus.svg" width="22" height="22" alt=""> Добавлено
+
+- В `Nexa.exe` записаны название продукта и версия из `CMakeLists.txt`.
+- `scripts/package.ps1` упаковывает архив выпуска вместе с текстами лицензий
+  всех поставляемых библиотек.
+- Тег `v*` запускает в GitHub Actions сборку пакета и черновик релиза с
+  архивом и его SHA-256.
 
 <img src="docs/assets/brand/divider.svg" alt="" width="100%">
 

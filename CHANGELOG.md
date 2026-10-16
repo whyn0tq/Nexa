@@ -30,7 +30,13 @@ All notable changes to Nexa are documented in this file. The project follows
 
 ## [Unreleased]
 
-Nothing yet — changes since 1.0.0 will appear here.
+### <img src="docs/assets/brand/icons/plus.svg" width="22" height="22" alt=""> Added
+
+- `Nexa.exe` carries its product name and version, taken from `CMakeLists.txt`.
+- `scripts/package.ps1` packs the release archive with the license texts of
+  every shipped library.
+- Pushing a `v*` tag builds the package in GitHub Actions and drafts the
+  release with the archive and its SHA-256.
 
 <img src="docs/assets/brand/divider.svg" alt="" width="100%">
 
