@@ -1,190 +1,120 @@
-# Версия Nexa
+<p align="center">
+  <a href="README.md"><img src="docs/assets/brand/header.svg" alt="Nexa" width="100%"></a>
+</p>
 
-## Текущий релиз
+<p align="center">
+  <strong>English</strong> · <a href="VERSION.ru.md">Русский</a>
+</p>
 
-| Поле | Значение |
+<p align="center"><sub>
+  <a href="README.md">Overview</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <strong>Version</strong> ·
+  <a href="CONTRIBUTING.md">Contributing</a> ·
+  <a href="SECURITY.md">Security</a> ·
+  <a href="CODE_OF_CONDUCT.md">Code of Conduct</a> ·
+  <a href="THIRD_PARTY_NOTICES.md">Third-party notices</a>
+</sub></p>
+
+# <img src="docs/assets/brand/icons/info.svg" width="32" height="32" alt=""> Nexa version
+
+## Current release
+
+| | |
 |---|---|
-| Версия | **0.3.0** |
-| Канал | Preview |
-| Дата | 2 сентября 2026 года |
-| Платформа | Windows 10/11 x64 |
-| Язык | C++20 |
-| Интерфейс | Qt 6 Widgets |
-| SFTP/SSH | libssh 0.12 |
-| FTP/FTPS | Qt 6 Network, TLS через OpenSSL |
-| Состояние | Активная разработка |
+| **Version** | **1.0.0** |
+| Channel | Stable |
+| Date | October 15, 2026 |
+| Platform | Windows 10/11 x64 |
+| Language | C++20 |
+| Interface | Qt 6 Widgets |
+| SFTP/SSH | own pipelined SFTP v3 client on top of libssh 0.12 |
+| FTP/FTPS | Qt 6 Network, TLS through OpenSSL |
+| Localization | English (US), Russian |
 
-Номер версии указан в двух местах и должен меняться одновременно:
+> [!IMPORTANT]
+> The version number is written in several places that must change together:
+>
+> - `project(Nexa VERSION 1.0.0 ...)` in `CMakeLists.txt`;
+> - `QApplication::setApplicationVersion("1.0.0")` in `src/main.cpp`;
+> - the version badge in `README.md` and `README.ru.md`;
+> - the table above in `VERSION.md` and `VERSION.ru.md`.
 
-- `project(Nexa VERSION 0.3.0 ...)` в `CMakeLists.txt`;
-- `QApplication::setApplicationVersion("0.3.0")` в `src/main.cpp`.
+The full history is in [CHANGELOG.md](CHANGELOG.md).
 
-Полная история изменений — в [CHANGELOG.md](CHANGELOG.md). Здесь описан
-состав текущего релиза и правила выпуска.
+<img src="docs/assets/brand/divider.svg" alt="" width="100%">
 
-## Состав версии 0.3.0
+## What is in 1.0.0
 
-### Добавлено — протокол FTP
+### <img src="docs/assets/brand/icons/sliders.svg" width="22" height="22" alt=""> Interface
 
-- выбор протокола в профиле подключения: SFTP поверх SSH или FTP;
-- порт по умолчанию подставляется при смене протокола: 22 для SFTP, 21 для FTP;
-- схемы `ftp://`, `ftps://` и `sftp://` в поле адреса переключают протокол;
-- протокол и признак шифрования сохраняются вместе с недавними подключениями;
-- листинг через `MLSD`, а при его отсутствии — разбор вывода `LIST` в формате
-  Unix и MS-DOS;
-- кодировка путей UTF-8, если сервер объявляет её в `FEAT`, иначе Latin-1;
-- пассивный режим через `EPSV` с откатом на `PASV`; при нерутируемом адресе в
-  ответе сервера используется адрес управляющего соединения;
-- возобновление прерванной передачи командой `REST` по тем же правилам докачки
-  и перезаписи, что и в SFTP;
-- рекурсивная выгрузка, скачивание и удаление каталогов;
-- время изменения через `MFMT` и права через `SITE CHMOD`;
-- создание файлов и папок, переименование, удаление и обновление листинга.
+- new design: onyx black, frosted glass panels, a red accent and medium
+  rounding on every element;
+- own title bar instead of the system one: session tabs live right in it, with
+  own window buttons, while resizing, Windows 11 Snap layouts, the system
+  shadow and rounded corners are kept;
+- no sidebars: a start page with quick connect and server cards, the two file
+  panes of a session and the transfer dock at the bottom;
+- command palette `Ctrl+K`, in-window sheets over a blurred backdrop and
+  notifications in the corner;
+- interface in English and Russian, switched in Settings;
+- new app icon.
 
-### Добавлено — FTPS
+### <img src="docs/assets/brand/icons/server.svg" width="22" height="22" alt=""> Sessions
 
-- явное шифрование `AUTH TLS` с защитой канала команд и канала данных
-  (`PBSZ 0`, `PROT P`);
-- переиспользование TLS-сессии на канале данных для серверов, которые этого
-  требуют;
-- проверка SHA-256-отпечатка сертификата сервера с подтверждением при первом
-  подключении и повторным запросом при смене сертификата;
-- соединение для передач открывается только с уже подтверждённым отпечатком.
+- several servers at once, each in a tab with its own connections;
+- saved servers with names and color labels, passwords encrypted with DPAPI;
+  the old "recent connections" are migrated automatically;
+- open tabs are restored on start in the same folder.
 
-### Изменено
+### <img src="docs/assets/brand/icons/bolt.svg" width="22" height="22" alt=""> Speed
 
-- работа с сессией вынесена за общий интерфейс `RemoteWorker`: очередь передач,
-  отмена, публикация прогресса и переподключение больше не зависят от
-  протокола;
-- `SftpWorker` переведён на этот интерфейс без изменения поведения;
-- воркеры пересоздаются при смене протокола подключения.
+- own SFTP client: up to 64 files and 24 MB of requests in flight per
+  connection, pipelined folder creation, tree walks and deletes;
+- 1–16 parallel connections per session (4 by default), big files are split
+  into segments;
+- a larger socket send buffer and AES-GCM preferred.
 
-### Тестирование
+### <img src="docs/assets/brand/icons/plug.svg" width="22" height="22" alt=""> Reliability
 
-- стенд с локальным FTP-сервером в трёх конфигурациях: с `MLSD`, без `MLSD`
-  и с FTPS;
-- проверены подключение, листинг, выгрузка файла и дерева, скачивание,
-  докачка через `REST`, создание, переименование и рекурсивное удаление.
+- an idle session is pinged every 15 seconds, and TCP keep-alive is tuned;
+- endless reconnection with a growing pause once the first login has
+  succeeded; transfers reconnect by themselves and resume files where they
+  broke off.
 
-## Состав версии 0.2.0
+### <img src="docs/assets/brand/icons/check.svg" width="22" height="22" alt=""> Testing
 
-### Добавлено — движок передач
+- unit tests for the resume rules and the SFTP codec;
+- the `NexaTransferBench` rig: OpenSSH 9.6 in WSL, 50 ms latency through
+  `tc netem`, 3,000 small files and a 200 MB file, hashes checked after a round
+  trip, and the connection cut in the middle of a 200 MB upload with a
+  successful resume.
 
-- отдельное SSH-соединение для передач: навигация по каталогам больше не ждёт
-  завершения выгрузки или загрузки;
-- очередь передач с прогрессом, скоростью и состоянием каждого элемента;
-- отмена отдельной передачи и отмена всей очереди;
-- возобновление прерванной передачи с достигнутого байта, а не с начала файла;
-- политики поведения, когда файл уже существует: продолжить, перезаписать,
-  пропустить, переименовать — выбор сохраняется между запусками;
-- скачивание во временный файл `.nexapart` с переименованием только после
-  успешного завершения, поэтому недокачанный файл нельзя принять за целый;
-- сохранение времени изменения и бита исполнения при передаче;
-- предупреждение при закрытии приложения с незавершёнными передачами.
+<img src="docs/assets/brand/divider.svg" alt="" width="100%">
 
-### Добавлено — аутентификация
+## Versioning rules
 
-- поддержка SSH-агента;
-- поддержка клавиатурного диалога (`keyboard-interactive`), который требуется
-  части хостингов;
-- метод выбирается по списку, который объявляет сервер, а не жёстко задан;
-- при неудаче в сообщении перечисляются методы, доступные на сервере.
+The project uses Semantic Versioning: `MAJOR.MINOR.PATCH`. Pre-releases use the
+`-alpha.1`, `-beta.1` and `-rc.1` suffixes.
 
-### Добавлено — интерфейс
+## <img src="docs/assets/brand/icons/terminal.svg" width="28" height="28" alt=""> Release procedure
 
-- светлая тема в дополнение к тёмной, выбор запоминается (`Ctrl+T`);
-- навигация по «хлебным крошкам» с историей «назад» и «вперёд» в обеих панелях;
-- фильтр по имени и сортировка по любому столбцу;
-- раздел «Передачи» со сводкой и очередью;
-- заглушки для пустых состояний и отсутствующего подключения;
-- горячие клавиши: `Alt` + стрелки, `Ctrl` + `L`, `Ctrl` + `Shift` + `L`,
-  `Ctrl` + `F`, `Ctrl` + `1`, `Ctrl` + `2`, `Ctrl` + `T`.
+1. Update the version in every place listed above.
+2. Move the changes from `Unreleased` in `CHANGELOG.md` and `CHANGELOG.ru.md`.
+3. Make a clean Release build without warnings and run the tests.
+4. Run `NexaTransferBench` against a test server with added latency.
+5. Check connecting, several tabs, reconnection after a dropped link, and
+   dragging from Explorer and from a ZIP.
+6. If the interface changed, regenerate the screenshots in both languages
+   (`--demo-shots`); if the numbers or artwork texts changed, run
+   `node scripts\brand-assets.mjs`.
+7. Build the portable folder: `.\scripts\build.ps1 -OutputDirectory dist-release`.
+8. Add a Git tag such as `v1.0.0`.
 
-### Изменено
+## <img src="docs/assets/brand/icons/forward.svg" width="28" height="28" alt=""> Plan for 1.1
 
-- ошибки показываются встроенным уведомлением с историей последних сообщений
-  вместо отдельного модального окна на каждый сбой;
-- цвета, отступы и радиусы вынесены в единый набор дизайн-токенов
-  (`src/theme.h`) вместо разрозненных значений внутри разметки;
-- обход дерева каталогов при передаче и удалении стал итеративным: одновременно
-  открыт один дескриптор вместо одного на каждый уровень вложенности;
-- лимиты SFTP запрашиваются один раз за сессию, а не перед каждым файлом;
-- размер и время изменения берутся из уже полученного листинга, что убирает
-  лишний запрос и работает с серверами, чей `stat` ненадёжен;
-- локальная панель отображает размер, тип и дату так же, как удалённая;
-- `ssh_init` вызывается один раз на процесс, а не на каждую сессию.
-
-### Исправлено
-
-- повреждение скачанных файлов при коротком SFTP-чтении: конвейер запросов
-  пересинхронизируется по фактически полученному байту, а не по запрошенному;
-- файлы, размер которых сервер не сообщает, скачивались пустыми;
-- ошибка сервера во время листинга воспринималась как конец каталога, из-за
-  чего список молча обрезался;
-- удаление глубокого дерева могло исчерпать дескрипторы сервера и стек.
-
-### Тестирование
-
-- модульные тесты правил докачки и перезаписи (`tests/transferplan_test.cpp`);
-- существующий smoke-тест Drag and Drop сохранён.
-
-## Состав версии 0.1.0
-
-Первый функциональный предварительный релиз: двухпанельный интерфейс,
-SFTP-подключение по паролю и приватному ключу, проверка SHA-256-отпечатка,
-защита сохранённых паролей через Windows DPAPI, автоматическое переподключение,
-рекурсивная загрузка, скачивание и удаление, кэш и фоновая предзагрузка
-каталогов, Drag and Drop между панелями и из Проводника Windows, включая
-виртуальные файлы из ZIP, асинхронная передача с окном до 64 запросов,
-переносимая Windows-сборка.
-
-Подробности — в [CHANGELOG.md](CHANGELOG.md).
-
-## Правила версионирования
-
-Проект использует Semantic Versioning:
-
-```text
-MAJOR.MINOR.PATCH
-```
-
-- `MAJOR` — несовместимые изменения формата настроек, поведения или API;
-- `MINOR` — новые возможности с сохранением совместимости;
-- `PATCH` — исправления ошибок и небольшие улучшения.
-
-Для предварительных выпусков используются суффиксы `-alpha.1`, `-beta.1`,
-`-rc.1`.
-
-## Процедура выпуска
-
-1. Обновить версию в `CMakeLists.txt` и `src/main.cpp`.
-2. Перенести изменения из раздела `Unreleased` в `CHANGELOG.md`.
-3. Обновить состав релиза и дату в этом файле.
-4. Выполнить чистую Release-сборку без предупреждений.
-5. Запустить все тесты.
-6. Проверить подключение, навигацию и переподключение после обрыва.
-7. Проверить загрузку и скачивание файлов и каталогов.
-8. Проверить возобновление прерванной передачи и политики перезаписи.
-9. Проверить Drag and Drop с диска и из ZIP.
-10. Проверить обе темы.
-11. Собрать переносимую папку релиза.
-12. Присвоить Git-тег вида `v0.3.0`.
-
-```powershell
-cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
-cmake --build build --parallel
-ctest --test-dir build --output-on-failure
-.\scripts\build.ps1 -OutputDirectory dist-release
-```
-
-## План версии 0.4.0
-
-- сохранение очереди передач между запусками приложения;
-- несколько одновременных файловых передач;
-- пауза и продолжение по требованию;
-- менеджер сохранённых серверов и закладки удалённых каталогов;
-- журнал операций и диагностический лог;
-- SSH-терминал с вкладками;
-- установщик Windows и автоматическая проверка обновлений.
-
-Состав версии `0.4.0` может изменяться по мере разработки.
+- [ ] SSH terminal in a tab
+- [ ] Transfer queue that survives a restart
+- [ ] Pausing transfers
+- [ ] Port forwarding and jump hosts
+- [ ] Installer and automatic updates

@@ -1,9 +1,27 @@
-# Third-party notices
+<p align="center">
+  <a href="README.md"><img src="docs/assets/brand/header.svg" alt="Nexa" width="100%"></a>
+</p>
+
+<p align="center">
+  <strong>English</strong> · <a href="THIRD_PARTY_NOTICES.ru.md">Русский</a>
+</p>
+
+<p align="center"><sub>
+  <a href="README.md">Overview</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="VERSION.md">Version</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a> ·
+  <a href="SECURITY.md">Security</a> ·
+  <a href="CODE_OF_CONDUCT.md">Code of Conduct</a> ·
+  <strong>Third-party notices</strong>
+</sub></p>
+
+# <img src="docs/assets/brand/icons/info.svg" width="32" height="32" alt=""> Third-party notices
 
 Nexa dynamically links to third-party software. Those components are not
 relicensed under Nexa's GPL license.
 
-## Direct dependencies
+## <img src="docs/assets/brand/icons/link.svg" width="28" height="28" alt=""> Direct dependencies
 
 | Component | Purpose | License |
 |---|---|---|
@@ -17,7 +35,7 @@ Windows portable packages may also contain MinGW runtime libraries and
 transitive dependencies of Qt and libssh. Every release must include the license
 texts corresponding to the exact binaries shipped in that release.
 
-## Distribution requirements
+## <img src="docs/assets/brand/icons/check.svg" width="28" height="28" alt=""> Distribution requirements
 
 When packaging Nexa:
 
@@ -28,5 +46,6 @@ When packaging Nexa:
 5. document any modifications made to LGPL-covered libraries;
 6. generate and review a dependency inventory before publishing a release.
 
-This file is an inventory aid and not a substitute for the complete license
-terms distributed with each dependency.
+> [!NOTE]
+> This file is an inventory aid and not a substitute for the complete license
+> terms distributed with each dependency.

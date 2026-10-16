@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="104" viewBox="0 0 1280 104" role="img" aria-label="Nexa">
+<title>Nexa</title>
+<defs>
+  <clipPath id="dclip"><rect width="1280" height="104" rx="22"/></clipPath>
+  <radialGradient id="dh1" cx="0" cy="0" r="793.6" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity="0.23"/><stop offset=".55" stop-color="#ff4256" stop-opacity="0.05"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
+  <radialGradient id="dh2" cx="1280" cy="104" r="640" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c81e3a" stop-opacity="0.18"/><stop offset="1" stop-color="#c81e3a" stop-opacity="0"/></radialGradient>
+</defs>
+<g clip-path="url(#dclip)">
+  <rect width="1280" height="104" fill="#070709"/>
+  <rect width="1280" height="104" fill="url(#dh1)"/>
+  <rect width="1280" height="104" fill="url(#dh2)"/>
+</g>
+<rect x=".5" y=".5" width="1279" height="103" rx="21.5" fill="none" stroke="#fff" stroke-opacity=".09"/>
+<g transform="translate(28 22) scale(0.6)">
+  <defs>
+    <linearGradient id="dlb" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#222228"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
+    <radialGradient id="dlg" cx="24" cy="92" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".47"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
+    <linearGradient id="dlr" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".27"/><stop offset=".5" stop-color="#fff" stop-opacity=".055"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>
+    <linearGradient id="dlred" x1="0" y1="24" x2="0" y2="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff707e"/><stop offset="1" stop-color="#e4223e"/></linearGradient>
+    <linearGradient id="dlsilver" x1="0" y1="28" x2="0" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaaab4"/></linearGradient>
+  </defs>
+  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#dlb)"/>
+  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#dlg)"/>
+  <rect x="3.8" y="3.8" width="92.4" height="92.4" rx="25.2" fill="none" stroke="url(#dlr)" stroke-width="1.6"/>
+  <path d="M38 70L38 25M25 38L38 25L51 38" fill="none" stroke="url(#dlred)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M62 30L62 75M49 62L62 75L75 62" fill="none" stroke="url(#dlsilver)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="104" y="66" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="34" font-weight="700" letter-spacing="-.5" fill="#f4f4f5">Nexa</text>
+<g>
+  <rect x="1182.5" y="35.5" width="67" height="31" rx="15.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="1216" y="55.9" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="600" fill="#f4f4f5">FTPS</text>
+  <rect x="1115.5" y="35.5" width="58" height="31" rx="15.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="1144.5" y="55.9" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="600" fill="#f4f4f5">FTP</text>
+  <rect x="1039.5" y="35.5" width="67" height="31" rx="15.5" fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"/>
+  <text x="1073" y="55.9" text-anchor="middle" font-family="'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif" font-size="14" font-weight="600" fill="#f4f4f5">SFTP</text>
+</g>
+</svg>
