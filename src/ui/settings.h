@@ -21,7 +21,6 @@ private:
     QVector<QWidget *> m_options;
     QVector<QWidget *> m_policies;
     QVector<QWidget *> m_languages;
-    QWidget *m_restartRow = nullptr;
     Segmented *m_connections = nullptr;
     QLineEdit *m_customPath = nullptr;
     QLabel *m_effective = nullptr;

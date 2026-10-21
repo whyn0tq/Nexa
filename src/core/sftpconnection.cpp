@@ -134,10 +134,20 @@ RemoteConnection::OpenResult SftpConnection::open(const ConnectionProfile &profi
     ssh_set_blocking(m_session, 1);
 
     if (ssh_connect(m_session) != SSH_OK) {
-        fail(sshError(tr("Не удалось подключиться к %1:%2")
-                          .arg(m_profile.host)
-                          .arg(m_profile.port)),
-             true);
+        const QString details = QString::fromUtf8(ssh_get_error(m_session));
+        if (details.contains(QLatin1String("SSH_MSG_DISCONNECT"))) {
+            fail(tr("Сервер %1:%2 сразу закрыл соединение. Скорее всего, он временно "
+                    "заблокировал ваш IP из-за частых подключений или SFTP на нём "
+                    "сейчас выключен.")
+                     .arg(m_profile.host)
+                     .arg(m_profile.port),
+                 true);
+        } else {
+            fail(sshError(tr("Не удалось подключиться к %1:%2")
+                              .arg(m_profile.host)
+                              .arg(m_profile.port)),
+                 true);
+        }
         close();
         return OpenResult::Failed;
     }

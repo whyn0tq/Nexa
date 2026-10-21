@@ -22,23 +22,26 @@
 
 | | |
 |---|---|
-| **Version** | **1.0.0** |
+| **Version** | **1.1.0** |
 | Channel | Stable |
-| Date | October 15, 2026 |
+| Date | October 21, 2026 |
 | Platform | Windows 10/11 x64 |
 | Language | C++20 |
 | Interface | Qt 6 Widgets |
 | SFTP/SSH | own pipelined SFTP v3 client on top of libssh 0.12 |
 | FTP/FTPS | Qt 6 Network, TLS through OpenSSL |
-| Localization | English (US), Russian |
+| Localization | English (US), Russian, German |
 
 > [!IMPORTANT]
-> The version number is written in several places that must change together:
+> The version number is written by hand in two places that must change
+> together:
 >
-> - `project(Nexa VERSION 1.0.0 ...)` in `CMakeLists.txt`;
-> - `QApplication::setApplicationVersion("1.0.0")` in `src/main.cpp`;
-> - the version badge in `README.md` and `README.ru.md`;
+> - `project(Nexa VERSION 1.1.0 ...)` in `CMakeLists.txt`;
 > - the table above in `VERSION.md` and `VERSION.ru.md`.
+>
+> The app and the `Nexa.exe` file details take the number from `CMakeLists.txt`
+> at build time, and the badge in `README.md` and `README.ru.md` shows the
+> latest published GitHub release by itself.
 
 The full history is in [CHANGELOG.md](CHANGELOG.md).
 
@@ -112,7 +115,7 @@ The project uses Semantic Versioning: `MAJOR.MINOR.PATCH`. Pre-releases use the
    package and drafts the release with the archive and its SHA-256.
 8. Paste the release notes into the draft and publish it.
 
-## <img src="docs/assets/brand/icons/forward.svg" width="28" height="28" alt=""> Plan for 1.1
+## <img src="docs/assets/brand/icons/forward.svg" width="28" height="28" alt=""> Plan for 1.2
 
 - [ ] SSH terminal in a tab
 - [ ] Transfer queue that survives a restart

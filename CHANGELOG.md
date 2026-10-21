@@ -23,20 +23,39 @@ All notable changes to Nexa are documented in this file. The project follows
 
 | Version | Date | In one line |
 |---|---|---|
-| [**1.0.0**](#100---2026-10-15) | 2026-10-15 | Tabs, the new transfer engine and the onyx look |
+| [**1.1.0**](#110---2026-10-21) | 2026-10-21 | German interface, dropping files from a ZIP |
+| [1.0.0](#100---2026-10-15) | 2026-10-15 | Tabs, the new transfer engine and the onyx look |
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP and FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Transfer queue, resume and overwrite rules |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | First two-pane SFTP client |
 
 ## [Unreleased]
 
+<img src="docs/assets/brand/divider.svg" alt="" width="100%">
+
+## [1.1.0] - 2026-10-21
+
 ### <img src="docs/assets/brand/icons/plus.svg" width="22" height="22" alt=""> Added
 
+- German interface: pick it in Settings or start `Nexa.exe --language de`.
 - `Nexa.exe` carries its product name and version, taken from `CMakeLists.txt`.
 - `scripts/package.ps1` packs the release archive with the license texts of
   every shipped library.
 - Pushing a `v*` tag builds the package in GitHub Actions and drafts the
   release with the archive and its SHA-256.
+
+### <img src="docs/assets/brand/icons/edit.svg" width="22" height="22" alt=""> Changed
+
+- Picking another language in Settings asks right away whether to restart
+  Nexa or cancel, instead of a quiet hint under the flags.
+
+### <img src="docs/assets/brand/icons/check.svg" width="22" height="22" alt=""> Fixed
+
+- Files dragged straight out of a ZIP opened in Explorer upload again instead
+  of failing with "Could not read the dragged files".
+- When a server drops the connection before the handshake (usually a
+  temporary IP block or SFTP turned off), Nexa says so in plain words instead
+  of showing "Received SSH_MSG_DISCONNECT: 11".
 
 <img src="docs/assets/brand/divider.svg" alt="" width="100%">
 

@@ -68,7 +68,8 @@ in Russian, with a language switch at the top. When you change one, change the
 other in the same pull request.
 
 - Interface texts are written in Russian in the sources and translated to
-  English in `src/ui/i18n_en.cpp`; keep the README wording in line with what
+  English in `src/ui/i18n_en.cpp` and German in `src/ui/i18n_de.cpp` (the
+  `i18n` test checks that both have every string); keep the README wording in line with what
   the app actually says in each language.
 - Screenshots are taken by the app itself: `Nexa.exe --demo-shots docs\assets`
   and `Nexa.exe --demo-shots docs\assets\ru --language ru`.

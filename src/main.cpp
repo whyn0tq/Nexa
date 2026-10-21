@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QApplication::setOrganizationName(QStringLiteral("Nexa"));
     QApplication::setApplicationName(QStringLiteral("Nexa"));
-    QApplication::setApplicationVersion(QStringLiteral("1.0.0"));
+    QApplication::setApplicationVersion(QStringLiteral(NEXA_VERSION));
 
     const QStringList arguments = QApplication::arguments();
     const auto option = [&arguments](const char *name) {
@@ -80,8 +80,7 @@ int main(int argc, char *argv[])
         return exportIcon(arguments.at(exportAt + 1)) ? 0 : 1;
 
     if (const QString language = option("--language"); !language.isEmpty())
-        I18n::setLanguage(language == QLatin1String("ru") ? I18n::Language::Russian
-                                                          : I18n::Language::English);
+        I18n::setLanguage(I18n::fromCode(language));
     I18n::install();
     QApplication::setStyle(QStringLiteral("Fusion"));
     QApplication::styleHints()->setColorScheme(Qt::ColorScheme::Dark);

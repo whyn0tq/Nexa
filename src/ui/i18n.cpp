@@ -15,11 +15,11 @@ Language g_active = Language::English;
 
 class TableTranslator final : public QTranslator {
 public:
-    TableTranslator()
+    TableTranslator(const Pair *pairs, int count)
     {
-        m_table.reserve(EnglishCount);
-        for (int i = 0; i < EnglishCount; ++i)
-            m_table.insert(QByteArray(English[i].ru), QString::fromUtf8(English[i].en));
+        m_table.reserve(count);
+        for (int i = 0; i < count; ++i)
+            m_table.insert(QByteArray(pairs[i].ru), QString::fromUtf8(pairs[i].text));
     }
 
     QString translate(const char *context, const char *sourceText, const char *disambiguation,
@@ -37,19 +37,38 @@ private:
     QHash<QByteArray, QString> m_table;
 };
 
+QString codeOf(Language language)
+{
+    switch (language) {
+    case Language::Russian:
+        return QStringLiteral("ru");
+    case Language::German:
+        return QStringLiteral("de");
+    case Language::English:
+        break;
+    }
+    return QStringLiteral("en");
+}
+
+}
+
+Language fromCode(const QString &code)
+{
+    if (code == QLatin1String("ru"))
+        return Language::Russian;
+    if (code == QLatin1String("de"))
+        return Language::German;
+    return Language::English;
 }
 
 Language current()
 {
-    return QSettings().value(LanguageKey, QStringLiteral("en")).toString() == QLatin1String("ru")
-               ? Language::Russian
-               : Language::English;
+    return fromCode(QSettings().value(LanguageKey, QStringLiteral("en")).toString());
 }
 
 void setLanguage(Language language)
 {
-    QSettings().setValue(LanguageKey, language == Language::Russian ? QStringLiteral("ru")
-                                                                    : QStringLiteral("en"));
+    QSettings().setValue(LanguageKey, codeOf(language));
 }
 
 Language active()
@@ -60,13 +79,20 @@ Language active()
 void install()
 {
     g_active = current();
-    if (current() == Language::Russian) {
+    if (g_active == Language::Russian) {
         QLocale::setDefault(QLocale(QLocale::Russian, QLocale::Russia));
         return;
     }
+    // Translators are asked newest first, so German falls back to English for missing strings.
+    static TableTranslator english(English, EnglishCount);
+    QCoreApplication::installTranslator(&english);
+    if (g_active == Language::German) {
+        QLocale::setDefault(QLocale(QLocale::German, QLocale::Germany));
+        static TableTranslator german(German, GermanCount);
+        QCoreApplication::installTranslator(&german);
+        return;
+    }
     QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedStates));
-    static TableTranslator translator;
-    QCoreApplication::installTranslator(&translator);
 }
 
 void requestRestart()

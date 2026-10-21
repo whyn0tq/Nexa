@@ -2,6 +2,7 @@
 
 #include "controls.h"
 #include "i18n.h"
+#include "sheets.h"
 #include "theme.h"
 #include "transferprefs.h"
 
@@ -223,12 +224,17 @@ void paintFlag(QPainter &painter, const QRectF &r, I18n::Language language)
     painter.save();
     painter.setClipPath(shape);
     painter.setPen(Qt::NoPen);
-    if (language == I18n::Language::Russian) {
+    if (language == I18n::Language::Russian || language == I18n::Language::German) {
+        const bool russian = language == I18n::Language::Russian;
+        const QColor stripes[3] = {
+            russian ? QColor(255, 255, 255) : QColor(0, 0, 0),
+            russian ? QColor(0, 57, 166) : QColor(221, 0, 0),
+            russian ? QColor(213, 43, 30) : QColor(255, 206, 0)};
         const qreal h = r.height() / 3;
-        painter.fillRect(QRectF(r.left(), r.top(), r.width(), h), QColor(255, 255, 255));
-        painter.fillRect(QRectF(r.left(), r.top() + h, r.width(), h), QColor(0, 57, 166));
+        painter.fillRect(QRectF(r.left(), r.top(), r.width(), h), stripes[0]);
+        painter.fillRect(QRectF(r.left(), r.top() + h, r.width(), h), stripes[1]);
         painter.fillRect(QRectF(r.left(), r.top() + 2 * h, r.width(), r.height() - 2 * h),
-                         QColor(213, 43, 30));
+                         stripes[2]);
     } else {
         const qreal stripe = r.height() / 13;
         for (int i = 0; i < 13; ++i)
@@ -329,41 +335,45 @@ SettingsSheet::SettingsSheet(QWidget *host) : Sheet(host, 560)
     form->setSpacing(12);
 
     form->addWidget(makeLabel(tr("Язык интерфейса"), 13.5, Theme::Text, QFont::DemiBold));
-    auto *languages = new QHBoxLayout;
-    languages->setSpacing(8);
-    const bool russianNow = I18n::active() == I18n::Language::Russian;
-    const QVector<LanguageOption *> options{
-        new LanguageOption(I18n::Language::English, tr("Американский"),
-                           QStringLiteral("English (US)")),
-        new LanguageOption(I18n::Language::Russian, tr("Русский"),
-                           russianNow ? QStringLiteral("Russian") : QStringLiteral("Русский"))};
-    for (LanguageOption *option : options) {
-        const I18n::Language language = option->language();
-        option->onClick = [this, language] {
-            I18n::setLanguage(language);
-            refreshLanguage();
+    const I18n::Language now = I18n::active();
+    struct Choice {
+        I18n::Language language;
+        QString title;
+        QString native;
+        QString name;
+    };
+    const Choice choices[] = {
+        {I18n::Language::English, tr("Американский"), QStringLiteral("English (US)"),
+         QStringLiteral("English")},
+        {I18n::Language::Russian, tr("Русский"),
+         now == I18n::Language::Russian ? QStringLiteral("Russian") : QStringLiteral("Русский"),
+         QStringLiteral("Русский")},
+        {I18n::Language::German, tr("Немецкий"),
+         now == I18n::Language::German ? QStringLiteral("German") : QStringLiteral("Deutsch"),
+         QStringLiteral("Deutsch")}};
+    for (const Choice &choice : choices) {
+        auto *option = new LanguageOption(choice.language, choice.title, choice.native);
+        const I18n::Language language = choice.language;
+        const QString name = choice.name;
+        option->onClick = [this, host, language, name] {
+            if (language == I18n::active()) {
+                I18n::setLanguage(language);
+                refreshLanguage();
+                return;
+            }
+            Sheets::confirm(host, tr("Перезапустить Nexa?"),
+                            tr("Чтобы переключить язык на %1, Nexa перезапустится. Открытые "
+                               "вкладки вернутся сами.")
+                                .arg(name),
+                            tr("Перезапустить"), false, [host, language] {
+                                I18n::setLanguage(language);
+                                I18n::requestRestart();
+                                host->window()->close();
+                            });
         };
         m_languages.append(option);
-        languages->addWidget(option, 1);
+        form->addWidget(option);
     }
-    form->addLayout(languages);
-    m_restartRow = new QWidget;
-    auto *restartRow = new QHBoxLayout(m_restartRow);
-    restartRow->setContentsMargins(0, 0, 0, 0);
-    restartRow->setSpacing(10);
-    auto *restartHint =
-        makeLabel(tr("Язык сменится после перезапуска Nexa. Открытые вкладки вернутся сами."), 12,
-                  Theme::TextSecondary);
-    restartHint->setWordWrap(true);
-    restartRow->addWidget(restartHint, 1);
-    auto *restart = makeButton(tr("Перезапустить"), QStringLiteral("primary"));
-    restart->setStyleSheet(QStringLiteral("min-height:32px;border-radius:9px;"));
-    restartRow->addWidget(restart);
-    form->addWidget(m_restartRow);
-    connect(restart, &QPushButton::clicked, this, [host] {
-        I18n::requestRestart();
-        host->window()->close();
-    });
     refreshLanguage();
     form->addSpacing(6);
 
@@ -471,9 +481,6 @@ void SettingsSheet::refreshLanguage()
         auto *option = static_cast<LanguageOption *>(widget);
         option->setSelected(option->language() == chosen);
     }
-    m_restartRow->setVisible(chosen != I18n::active());
-    if (isVisible())
-        relayout();
 }
 
 void SettingsSheet::refreshTransfers()

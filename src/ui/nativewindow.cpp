@@ -219,10 +219,11 @@ public:
         if (mimeType != Mime::Virtual || !data)
             return false;
         FORMATETC format{m_descriptor, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
-        if (FAILED(data->QueryGetData(&format)))
+        if (data->QueryGetData(&format) != S_OK)
             return false;
         FORMATETC drop{CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
-        return FAILED(data->QueryGetData(&drop));
+        // Explorer's zip folder answers S_FALSE here, which FAILED() counts as success.
+        return data->QueryGetData(&drop) != S_OK;
     }
 
     QString mimeForFormat(const FORMATETC &format) const override

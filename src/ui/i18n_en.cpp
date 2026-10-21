@@ -81,6 +81,12 @@ const Pair English[] = {
     {"ошибка сервера (%1)", "server error (%1)"},
     {"Не удалось создать SSH-сессию.", "Could not create an SSH session."},
     {"Не удалось подключиться к %1:%2", "Could not connect to %1:%2"},
+    {"Сервер %1:%2 сразу закрыл соединение. Скорее всего, он временно "
+     "заблокировал ваш IP из-за частых подключений или SFTP на нём "
+     "сейчас выключен.",
+     "The server %1:%2 closed the connection right away. It has most likely "
+     "blocked your IP for a while after too many connections, or SFTP is "
+     "turned off on it."},
     {"Не удалось получить ключ сервера", "Could not get the server key"},
     {"Ключ сервера %1 не совпадает с подтверждённым.",
      "The key of %1 does not match the confirmed one."},
@@ -387,8 +393,9 @@ const Pair English[] = {
     {"Язык интерфейса", "Language"},
     {"Русский", "Russian"},
     {"Американский", "American English"},
-    {"Язык сменится после перезапуска Nexa. Открытые вкладки вернутся сами.",
-     "The language changes after Nexa restarts. Open tabs come back by themselves."},
+    {"Немецкий", "German"},
+    {"Чтобы переключить язык на %1, Nexa перезапустится. Открытые вкладки вернутся сами.",
+     "Nexa restarts to switch the language to %1. Open tabs come back by themselves."},
     {"Перезапустить", "Restart"},
     {"Позже", "Later"},
     {"Перезапустить Nexa?", "Restart Nexa?"},

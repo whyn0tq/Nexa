@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(Nexa VERSION 1.0.0 LANGUAGES CXX)
+project(Nexa VERSION 1.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -64,6 +64,7 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/src/ui/mainwindow.cpp)
         target_sources(Nexa PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/nexa.rc)
     endif()
     target_include_directories(Nexa PRIVATE src/ui)
+    target_compile_definitions(Nexa PRIVATE NEXA_VERSION="${PROJECT_VERSION}")
     target_link_libraries(Nexa PRIVATE nexa_core Qt6::Gui Qt6::Widgets)
     if(WIN32)
         target_link_libraries(Nexa PRIVATE dwmapi shell32 ole32 uxtheme)
@@ -85,6 +86,11 @@ if(BUILD_TESTING)
     qt_add_executable(NexaSftpCodecTest tests/sftpcodec_test.cpp)
     target_link_libraries(NexaSftpCodecTest PRIVATE nexa_core)
     add_test(NAME sftp_codec COMMAND NexaSftpCodecTest)
+
+    qt_add_executable(NexaI18nTest tests/i18n_test.cpp src/ui/i18n_en.cpp src/ui/i18n_de.cpp)
+    target_include_directories(NexaI18nTest PRIVATE src/ui)
+    target_link_libraries(NexaI18nTest PRIVATE Qt6::Core)
+    add_test(NAME i18n COMMAND NexaI18nTest)
 endif()
 
 if(BUILD_TESTING)

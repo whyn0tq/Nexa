@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version 1.0.0" src="https://img.shields.io/badge/version-1.0.0-ff4256?style=flat-square&labelColor=18181b">
+  <a href="https://github.com/whyn0tq/Nexa/releases/latest"><img alt="Version" src="https://img.shields.io/github/v/release/whyn0tq/Nexa?sort=semver&display_name=tag&label=version&color=ff4256&style=flat-square&labelColor=18181b"></a>
   <img alt="Windows 10 | 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-ff4256?style=flat-square&labelColor=18181b">
   <img alt="C++20" src="https://img.shields.io/badge/C%2B%2B-20-ff4256?style=flat-square&labelColor=18181b">
   <img alt="Qt 6" src="https://img.shields.io/badge/Qt-6-ff4256?style=flat-square&labelColor=18181b">
@@ -150,9 +150,10 @@ edit, the rule for existing files and the number of parallel connections per
 server.
 
 > [!TIP]
-> Nexa speaks **American English** by default and **Russian** on request: pick
-> the flag in Settings and press Restart — open tabs come back by themselves.
-> `Nexa.exe --language ru` (or `en`) does the same from the command line.
+> Nexa speaks **American English** by default, and **Russian** or **German** on
+> request: pick the flag in Settings and confirm the restart — open tabs come
+> back by themselves. `Nexa.exe --language ru` (or `de`, `en`) does the same from
+> the command line.
 
 <a name="performance"></a>
 
@@ -222,7 +223,7 @@ was killed in the middle of a 200 MB upload and Nexa resumed it on its own.
         <li>Own title bar with Windows 11 rounded corners, Snap layouts and resizing</li>
         <li>Frosted glass menus, sheets and notifications over a blurred backdrop</li>
         <li>Animations at the monitor's real refresh rate (144 Hz included)</li>
-        <li>English (US) and Russian, switched in Settings</li>
+        <li>English (US), Russian and German, switched in Settings</li>
       </ul>
     </td>
   </tr>

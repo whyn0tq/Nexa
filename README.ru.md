@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <img alt="Версия 1.0.0" src="https://img.shields.io/badge/%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F-1.0.0-ff4256?style=flat-square&labelColor=18181b">
+  <a href="https://github.com/whyn0tq/Nexa/releases/latest"><img alt="Версия" src="https://img.shields.io/github/v/release/whyn0tq/Nexa?sort=semver&display_name=tag&label=%D0%B2%D0%B5%D1%80%D1%81%D0%B8%D1%8F&color=ff4256&style=flat-square&labelColor=18181b"></a>
   <img alt="Windows 10 | 11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-ff4256?style=flat-square&labelColor=18181b">
   <img alt="C++20" src="https://img.shields.io/badge/C%2B%2B-20-ff4256?style=flat-square&labelColor=18181b">
   <img alt="Qt 6" src="https://img.shields.io/badge/Qt-6-ff4256?style=flat-square&labelColor=18181b">
@@ -157,9 +157,9 @@ SFTP, FTP или FTPS; пароль, приватный ключ или SSH-аг
 
 > [!TIP]
 > По умолчанию Nexa говорит на **американском английском**, по желанию — на
-> **русском**: выберите флаг в настройках и нажмите «Перезапустить», открытые
-> вкладки вернутся сами. То же из командной строки: `Nexa.exe --language ru`
-> (или `en`).
+> **русском** или **немецком**: выберите флаг в настройках и подтвердите
+> перезапуск, открытые вкладки вернутся сами. То же из командной строки:
+> `Nexa.exe --language ru` (или `de`, `en`).
 
 <a name="performance"></a>
 
@@ -229,7 +229,7 @@ SFTP, FTP или FTPS; пароль, приватный ключ или SSH-аг
         <li>Свой заголовок окна со скруглёнными углами Windows 11, макетами Snap и изменением размера</li>
         <li>Матовые стеклянные меню, окна и уведомления поверх размытого фона</li>
         <li>Анимации с реальной частотой монитора (в том числе 144 Гц)</li>
-        <li>Английский (США) и русский, переключаются в настройках</li>
+        <li>Английский (США), русский и немецкий, переключаются в настройках</li>
       </ul>
     </td>
   </tr>
