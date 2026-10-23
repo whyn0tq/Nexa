@@ -3,6 +3,7 @@
 #include "controls.h"
 #include "theme.h"
 
+#include <QApplication>
 #include <QEvent>
 #include <QGraphicsOpacityEffect>
 #include <QHBoxLayout>
@@ -13,6 +14,7 @@
 #include <QPainterPath>
 #include <QPropertyAnimation>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -97,39 +99,34 @@ void paintPanel(QPainter &painter, const QRectF &rect, qreal radius, Tone tone)
     QPainterPath path;
     path.addRoundedRect(r, radius, radius);
 
-    QLinearGradient fill(r.topLeft(), r.bottomLeft());
-    QLinearGradient rim(r.topLeft(), r.bottomLeft());
+    QColor fill;
+    QColor rim;
     switch (tone) {
     case Tone::Panel:
-        fill.setColorAt(0, QColor(255, 255, 255, 13));
-        fill.setColorAt(1, QColor(255, 255, 255, 6));
-        rim.setColorAt(0, QColor(255, 255, 255, 34));
-        rim.setColorAt(1, QColor(255, 255, 255, 12));
+        fill = Theme::Surface;
+        rim = QColor(39, 39, 41);
         break;
     case Tone::Raised:
-        fill.setColorAt(0, QColor(255, 255, 255, 22));
-        fill.setColorAt(1, QColor(255, 255, 255, 11));
-        rim.setColorAt(0, QColor(255, 255, 255, 48));
-        rim.setColorAt(1, QColor(255, 255, 255, 16));
+        fill = Theme::SurfaceHover;
+        rim = QColor(46, 46, 50);
         break;
     case Tone::Bar:
-        fill.setColorAt(0, QColor(22, 22, 26, 215));
-        fill.setColorAt(1, QColor(14, 14, 17, 215));
-        rim.setColorAt(0, QColor(255, 255, 255, 40));
-        rim.setColorAt(1, QColor(255, 255, 255, 14));
+        fill = Theme::Input;
+        rim = QColor(37, 37, 41);
         break;
     case Tone::Sheet:
-        fill.setColorAt(0, QColor(26, 26, 30, 236));
-        fill.setColorAt(1, QColor(15, 15, 18, 240));
-        rim.setColorAt(0, QColor(255, 255, 255, 52));
-        rim.setColorAt(1, QColor(255, 255, 255, 14));
+        fill = QColor(18, 18, 20);
+        rim = QColor(44, 44, 48);
         break;
+    case Tone::Flat:
+        painter.restore();
+        return;
     }
     painter.setPen(Qt::NoPen);
     painter.setBrush(fill);
     painter.drawPath(path);
     painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QBrush(rim), 1));
+    painter.setPen(QPen(rim, 1));
     painter.drawPath(path);
     painter.restore();
 }
@@ -155,24 +152,7 @@ void Backdrop::paintEvent(QPaintEvent *event)
         m_cache = QPixmap(size() * ratio);
         m_cache.setDevicePixelRatio(ratio);
         QPainter p(&m_cache);
-        p.setRenderHint(QPainter::Antialiasing);
-        const QRectF r = rect();
-        p.fillRect(r, Theme::Base);
-
-        const auto glow = [&p, &r](QPointF center, qreal radius, QColor color) {
-            QRadialGradient gradient(center, radius);
-            gradient.setColorAt(0, color);
-            color.setAlpha(color.alpha() / 3);
-            gradient.setColorAt(0.45, color);
-            color.setAlpha(0);
-            gradient.setColorAt(1, color);
-            p.fillRect(r, gradient);
-        };
-        const qreal w = r.width();
-        const qreal h = r.height();
-        glow({w * 0.08, -h * 0.05}, std::max(w, h) * 0.55, QColor(255, 50, 72, 58));
-        glow({w * 0.98, h * 1.02}, std::max(w, h) * 0.6, QColor(150, 18, 40, 70));
-        glow({w * 0.62, h * 0.35}, std::max(w, h) * 0.45, QColor(255, 255, 255, 7));
+        p.fillRect(rect(), Theme::Base);
     }
     QPainter painter(this);
     painter.drawPixmap(0, 0, m_cache);
@@ -210,9 +190,9 @@ protected:
         for (int i = 0; i < 6; ++i) {
             painter.setPen(Qt::NoPen);
             painter.setBrush(QColor(0, 0, 0, 14));
-            painter.drawRoundedRect(rect().adjusted(6 - i, 10 - i, i - 6, i - 2), 18, 18);
+            painter.drawRoundedRect(rect().adjusted(6 - i, 10 - i, i - 6, i - 2), 12, 12);
         }
-        Glass::paintPanel(painter, rect().adjusted(6, 6, -6, -6), 18, Glass::Tone::Sheet);
+        Glass::paintPanel(painter, rect().adjusted(6, 6, -6, -6), 12, Glass::Tone::Sheet);
     }
 };
 }
@@ -233,9 +213,25 @@ Sheet::Sheet(QWidget *host, int width) : QWidget(host), m_host(host), m_width(wi
     m_header->hide();
     outer->addWidget(m_header);
 
-    m_body = new QVBoxLayout;
+    m_page = new QWidget;
+    m_page->setObjectName(QStringLiteral("sheetPage"));
+    m_page->setAutoFillBackground(false);
+    m_body = new QVBoxLayout(m_page);
+    m_body->setContentsMargins(0, 0, 0, 0);
     m_body->setSpacing(12);
-    outer->addLayout(m_body);
+    m_scroll = new QScrollArea;
+    m_scroll->setWidget(m_page);
+    m_scroll->setWidgetResizable(true);
+    m_scroll->setFrameShape(QFrame::NoFrame);
+    m_scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_scroll->setStyleSheet(QStringLiteral("QScrollArea, #qt_scrollarea_viewport, #sheetPage "
+                                           "{ background: transparent; }"));
+    m_scroll->viewport()->setAutoFillBackground(false);
+    outer->addWidget(m_scroll, 1);
+    connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
+        if (now && m_page->isAncestorOf(now))
+            m_scroll->ensureWidgetVisible(now, 0, 12);
+    });
 
     m_animation = new FrameAnimation(this);
     connect(m_animation, &FrameAnimation::valueChanged, this, &Sheet::setProgress);
@@ -271,8 +267,8 @@ void Sheet::setTitle(const QString &title, const QString &subtitle, Icon icon,
         fill.setAlpha(36);
         p.setPen(QPen(QColor(color.red(), color.green(), color.blue(), 80), 1));
         p.setBrush(fill);
-        p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 12, 12);
-        Icons::paint(p, icon, QRectF(9, 9, 22, 22), color, 1.8);
+        p.drawRoundedRect(QRectF(0.5, 0.5, 39, 39), 20, 20);
+        Icons::paintFilled(p, icon, QRectF(9, 9, 22, 22), color);
     }
     badge->setPixmap(pixmap);
     badge->setFixedSize(40, 40);
@@ -297,15 +293,15 @@ void Sheet::open()
 {
     if (!m_host)
         return;
-    const QPixmap grab = m_host->grab();
-    m_plain = grab;
-    QImage image = grab.toImage();
-    QImage backdrop = Glass::blurred(image, 36);
-    {
-        QPainter dim(&backdrop);
-        dim.fillRect(backdrop.rect(), QColor(4, 4, 6, 120));
+    captureBackdrop();
+    QWidget *focus = QApplication::focusWidget();
+    for (QWidget *w = focus; w; w = w->parentWidget()) {
+        if (qobject_cast<Sheet *>(w)) {
+            focus = nullptr;
+            break;
+        }
     }
-    m_snapshot = QPixmap::fromImage(backdrop);
+    m_returnFocus = focus;
     setGeometry(m_host->rect());
     layoutCard();
     show();
@@ -313,6 +309,46 @@ void Sheet::open()
     setFocus();
     freezeCard();
     m_animation->start(0.0, 1.0, 240, QEasingCurve::OutCubic);
+}
+
+void Sheet::captureBackdrop()
+{
+    const qreal ratio = m_host->devicePixelRatioF();
+    QPixmap plain(m_host->size() * ratio);
+    plain.setDevicePixelRatio(ratio);
+    plain.fill(Qt::transparent);
+    {
+        QPainter painter(&plain);
+        m_host->render(&painter, QPoint(), QRegion(), QWidget::DrawWindowBackground);
+        for (QObject *object : m_host->children()) {
+            auto *child = qobject_cast<QWidget *>(object);
+            if (!child || child == this || !child->isVisible() || child->isWindow())
+                continue;
+            child->render(&painter, child->pos(), QRegion(),
+                          QWidget::DrawWindowBackground | QWidget::DrawChildren);
+        }
+    }
+    m_plain = plain;
+    QPixmap dimmed = plain;
+    {
+        QPainter dim(&dimmed);
+        dim.fillRect(QRect(QPoint(), m_host->size()), QColor(0, 0, 0, 180));
+    }
+    m_snapshot = dimmed;
+}
+
+void Sheet::refreshBackdrop()
+{
+    if (m_backdropPending)
+        return;
+    m_backdropPending = true;
+    QTimer::singleShot(0, this, [this] {
+        m_backdropPending = false;
+        if (!m_host || m_closing)
+            return;
+        captureBackdrop();
+        update();
+    });
 }
 
 void Sheet::dismiss()
@@ -334,6 +370,8 @@ void Sheet::freezeCard()
     m_card->render(&image, QPoint(), QRegion(), QWidget::DrawChildren);
     m_cardImage = image;
     m_cardFrozen = true;
+    if (m_card->isAncestorOf(QApplication::focusWidget()))
+        setFocus(Qt::OtherFocusReason);
     m_card->hide();
     update();
 }
@@ -355,8 +393,14 @@ void Sheet::layoutCard()
     m_card->setFixedWidth(width);
     QLayout *layout = m_card->layout();
     layout->activate();
-    const int wanted = layout->hasHeightForWidth() ? layout->totalHeightForWidth(width)
-                                                   : m_card->sizeHint().height();
+    const QMargins margins = layout->contentsMargins();
+    const int inner = width - margins.left() - margins.right();
+    const auto heightOf = [inner](QWidget *w) {
+        return w->hasHeightForWidth() ? w->heightForWidth(inner) : w->sizeHint().height();
+    };
+    int wanted = margins.top() + margins.bottom() + heightOf(m_page);
+    if (!m_header->isHidden())
+        wanted += heightOf(m_header) + layout->spacing();
     const int height = std::min(wanted, this->height() - 32);
     m_card->resize(width, height);
     positionCard();
@@ -401,11 +445,19 @@ void Sheet::keyPressEvent(QKeyEvent *event)
     QWidget::keyPressEvent(event);
 }
 
+void Sheet::hideEvent(QHideEvent *event)
+{
+    if (m_returnFocus && m_returnFocus->isVisible())
+        m_returnFocus->setFocus(Qt::OtherFocusReason);
+    QWidget::hideEvent(event);
+}
+
 bool Sheet::eventFilter(QObject *watched, QEvent *event)
 {
     if (watched == m_host && event->type() == QEvent::Resize) {
         setGeometry(m_host->rect());
         layoutCard();
+        refreshBackdrop();
     }
     return QWidget::eventFilter(watched, event);
 }
@@ -422,7 +474,7 @@ public:
         layout->setContentsMargins(16, 12, 10, 12);
         layout->setSpacing(12);
         auto *icon = new QLabel;
-        icon->setPixmap(Icons::pixmap(iconFor(kind), colorFor(kind), 18));
+        icon->setPixmap(Icons::pixmap(iconFor(kind), colorFor(kind), 18, 0, true));
         icon->setFixedSize(18, 18);
         layout->addWidget(icon, 0, Qt::AlignTop);
         auto *texts = new QVBoxLayout;
@@ -484,7 +536,7 @@ protected:
     void paintEvent(QPaintEvent *) override
     {
         QPainter painter(this);
-        Glass::paintPanel(painter, rect(), 14, Glass::Tone::Sheet);
+        Glass::paintPanel(painter, rect(), 8, Glass::Tone::Sheet);
         painter.setRenderHint(QPainter::Antialiasing);
         QColor accent = colorFor(m_kind);
         accent.setAlpha(m_kind == ToastHost::Kind::Info ? 0 : 200);

@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 #ifdef Q_OS_WIN
 #include <qt_windows.h>
@@ -29,6 +30,28 @@ QString protocolName(const ConnectionProfile &profile)
     return QStringLiteral("sftp");
 }
 
+constexpr std::pair<HostKind, const char *> KindKeys[] = {
+    {HostKind::Server, "server"},     {HostKind::Web, "web"},
+    {HostKind::Game, "game"},         {HostKind::Database, "database"},
+    {HostKind::Storage, "storage"},   {HostKind::Desktop, "desktop"},
+};
+
+QString kindKey(HostKind kind)
+{
+    for (const auto &[value, key] : KindKeys)
+        if (value == kind)
+            return QString::fromLatin1(key);
+    return QStringLiteral("server");
+}
+
+HostKind kindFromKey(const QString &key)
+{
+    for (const auto &[value, name] : KindKeys)
+        if (key == QLatin1String(name))
+            return value;
+    return HostKind::Server;
+}
+
 QJsonObject toJson(const SavedHost &host)
 {
     const ConnectionProfile &p = host.profile;
@@ -36,6 +59,7 @@ QJsonObject toJson(const SavedHost &host)
         {QStringLiteral("id"), host.id},
         {QStringLiteral("name"), host.name},
         {QStringLiteral("color"), host.color},
+        {QStringLiteral("kind"), kindKey(host.kind)},
         {QStringLiteral("lastUsed"), host.lastUsed.toString(Qt::ISODate)},
         {QStringLiteral("lastPath"), host.lastPath},
         {QStringLiteral("protocol"), protocolName(p)},
@@ -56,6 +80,7 @@ SavedHost fromJson(const QJsonObject &object)
     host.id = object.value(QStringLiteral("id")).toString();
     host.name = object.value(QStringLiteral("name")).toString();
     host.color = object.value(QStringLiteral("color")).toInt();
+    host.kind = kindFromKey(object.value(QStringLiteral("kind")).toString());
     host.lastUsed = QDateTime::fromString(
         object.value(QStringLiteral("lastUsed")).toString(), Qt::ISODate);
     host.lastPath = object.value(QStringLiteral("lastPath")).toString();

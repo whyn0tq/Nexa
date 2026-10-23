@@ -51,14 +51,25 @@ enum class Icon {
     Retry,
     ExternalLink,
     Sliders,
+    Gear,
+    Globe,
+    Gamepad,
+    Database,
+    HardDrive,
 };
 
-namespace Icons {
+enum class HostKind;
 
+namespace Icons {
 void paint(QPainter &painter, Icon icon, const QRectF &rect, const QColor &color,
-           qreal strokeWidth = 1.7);
-QPixmap pixmap(Icon icon, const QColor &color, int size, qreal devicePixelRatio = 0);
+           qreal strokeWidth = 0);
+void paintFilled(QPainter &painter, Icon icon, const QRectF &rect, const QColor &color);
+QPixmap pixmap(Icon icon, const QColor &color, int size, qreal devicePixelRatio = 0,
+               bool filled = false);
 QIcon icon(Icon icon, const QColor &color, int size = 16);
+
+Icon hostIcon(HostKind kind);
+QString hostKindName(HostKind kind);
 
 void paintFolder(QPainter &painter, const QRectF &rect, bool open = false);
 void paintFile(QPainter &painter, const QRectF &rect, const QString &suffix);

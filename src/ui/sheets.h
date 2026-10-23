@@ -53,5 +53,7 @@ private:
     QWidget *m_authRow = nullptr;
     QLabel *m_error = nullptr;
     int m_color = 0;
+    HostKind m_kind = HostKind::Server;
     QVector<QWidget *> m_swatches;
+    QVector<QWidget *> m_kinds;
 };

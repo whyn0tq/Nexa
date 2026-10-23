@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="THIRD_PARTY_NOTICES.ru.md">Русский</a>
+  <strong>English</strong> · <a href="THIRD_PARTY_NOTICES.ru.md">Русский</a> · <a href="THIRD_PARTY_NOTICES.de.md">Deutsch</a>
 </p>
 
 <p align="center"><sub>
@@ -18,34 +18,27 @@
 
 # <img src="docs/assets/brand/icons/info.svg" width="32" height="32" alt=""> Third-party notices
 
-Nexa dynamically links to third-party software. Those components are not
-relicensed under Nexa's GPL license.
+Nexa uses other people's libraries as separate DLLs. Their licenses stay as they
+are and do not change to Nexa's GPL.
 
-## <img src="docs/assets/brand/icons/link.svg" width="28" height="28" alt=""> Direct dependencies
-
-| Component | Purpose | License |
+| Component | What it is for | License |
 |---|---|---|
-| Qt 6 Core | Application runtime | LGPL-3.0 / GPL-3.0 / commercial |
-| Qt 6 Widgets | Desktop user interface | LGPL-3.0 / GPL-3.0 / commercial |
-| Qt 6 Network | Network integration, FTP and FTPS transport | LGPL-3.0 / GPL-3.0 / commercial |
-| libssh | SSH and SFTP protocol support | LGPL |
-| OpenSSL | TLS for FTPS, loaded through the Qt TLS backend | Apache-2.0 |
+| Qt 6 Core | The base of the app | LGPL-3.0 / GPL-3.0 / commercial |
+| Qt 6 Widgets | Windows and controls | LGPL-3.0 / GPL-3.0 / commercial |
+| Qt 6 Network | Networking, FTP and FTPS | LGPL-3.0 / GPL-3.0 / commercial |
+| libssh | SSH and SFTP | LGPL |
+| OpenSSL | TLS for FTPS | Apache-2.0 |
 
-Windows portable packages may also contain MinGW runtime libraries and
-transitive dependencies of Qt and libssh. Every release must include the license
-texts corresponding to the exact binaries shipped in that release.
+The archive also contains the MinGW libraries and the ones Qt and libssh need
+themselves. Their license texts are in the `licenses` folder next to `Nexa.exe`.
 
-## <img src="docs/assets/brand/icons/check.svg" width="28" height="28" alt=""> Distribution requirements
+## If you build your own package
 
-When packaging Nexa:
-
-1. keep Qt and libssh as replaceable dynamic libraries;
-2. include the applicable LGPL license texts;
-3. provide notices and source availability information required by Qt;
-4. include licenses for all transitive runtime DLLs;
-5. document any modifications made to LGPL-covered libraries;
-6. generate and review a dependency inventory before publishing a release.
+1. Keep Qt and libssh as separate DLLs, so they can be replaced.
+2. Include the license texts of every library you put in the package.
+3. Say where to get the Qt source code, as its license requires.
+4. Describe your own changes to LGPL libraries, if you made any.
 
 > [!NOTE]
-> This file is an inventory aid and not a substitute for the complete license
-> terms distributed with each dependency.
+> This list is only a reminder. The full terms are in the licenses of the
+> libraries themselves.

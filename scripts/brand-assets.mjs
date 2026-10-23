@@ -5,35 +5,52 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'docs', 'assets', 'brand');
 mkdirSync(join(out, 'ru'), { recursive: true });
+mkdirSync(join(out, 'de'), { recursive: true });
 mkdirSync(join(out, 'icons'), { recursive: true });
 
+// The app's own tokens (src/ui/theme.h), so the docs look like the window they describe.
 const T = {
-  base: '#070709', text: '#f4f4f5', text2: '#a1a1aa', muted: '#71717a', faint: '#52525b',
-  accent: '#ff4256', success: '#3ddc97', sheet: '#111114',
+  base: '#000000', card: '#111113', text: '#f2f3f5', text2: '#b5bac1', muted: '#949ba4', faint: '#80838c',
+  accent: '#5865f2', accentText: '#8b95f7', success: '#23a55a', divider: '#1e1e20',
+  orange: '#ff8a3d', green: '#3ddc97',
 };
-const FONT = `'Segoe UI Variable Display','Segoe UI',Inter,'Helvetica Neue',Arial,sans-serif`;
+const FONT = `'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif`;
+const DISPLAY = `'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif`;
 const MONO = `'Cascadia Mono',Consolas,'SFMono-Regular',Menlo,monospace`;
 const f = (n) => +n.toFixed(2);
+const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-function logo(id, x, y, size) {
+// Rough Segoe UI advance widths; good enough to place text after text without measuring.
+const charWidth = (c) =>
+  /[mwMWжшщыюМШЩЖЮ]/.test(c) ? 0.8 : /[A-ZА-ЯЁÄÖÜ]/.test(c) ? 0.62 : /[0-9]/.test(c) ? 0.53 : /[ijltfrI.,:;'!|]/.test(c) ? 0.3
+    : /s/.test(c) ? 0.27 : /[a-zа-яёäöüß]/.test(c) ? 0.53 : 0.56;
+const textWidth = (s, size, weight = 400) =>
+  [...s].reduce((a, c) => a + charWidth(c), 0) * size * (weight >= 600 ? 1.05 : 1);
+
+function text(x, y, s, { size = 13, weight = 400, fill = T.text, anchor, font = FONT, ls } = {}) {
+  return `<text x="${f(x)}" y="${f(y)}"${anchor ? ` text-anchor="${anchor}"` : ''} font-family="${font}" font-size="${size}"${weight !== 400 ? ` font-weight="${weight}"` : ''}${ls ? ` letter-spacing="${ls}"` : ''} fill="${fill}">${esc(s)}</text>`;
+}
+
+// Squircle of the app icon, kept so the docs mark and the taskbar icon share a silhouette.
+const SQUIRCLE = (() => {
+  const pts = [];
+  for (let i = 0; i < 120; i++) {
+    const t = (2 * Math.PI * i) / 120, c = Math.cos(t), s = Math.sin(t);
+    pts.push(`${f(50 + 47 * Math.sign(c) * Math.abs(c) ** 0.4)} ${f(50 + 47 * Math.sign(s) * Math.abs(s) ** 0.4)}`);
+  }
+  return `M${pts.join('L')}Z`;
+})();
+
+// Flat mark: an "N" drawn as one stroke between two endpoints, this computer and the server.
+// Same geometry as the app icon, without the glow, so it holds up from 16 px to the hero.
+function logo(x, y, size) {
   const s = size / 100;
-  const arrow = (ax, top, bottom, up, grad) => {
-    const tip = up ? top : bottom, tail = up ? bottom : top, h = 13, d = up ? h : -h;
-    return `<path d="M${ax} ${tail}L${ax} ${tip}M${ax - h} ${tip + d}L${ax} ${tip}L${ax + h} ${tip + d}" fill="none" stroke="url(#${id}${grad})" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>`;
-  };
-  return `<g transform="translate(${x} ${y}) scale(${f(s)})">
-  <defs>
-    <linearGradient id="${id}b" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#222228"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
-    <radialGradient id="${id}g" cx="24" cy="92" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".47"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
-    <linearGradient id="${id}r" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".27"/><stop offset=".5" stop-color="#fff" stop-opacity=".055"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>
-    <linearGradient id="${id}red" x1="0" y1="24" x2="0" y2="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff707e"/><stop offset="1" stop-color="#e4223e"/></linearGradient>
-    <linearGradient id="${id}silver" x1="0" y1="28" x2="0" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaaab4"/></linearGradient>
-  </defs>
-  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#${id}b)"/>
-  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#${id}g)"/>
-  <rect x="3.8" y="3.8" width="92.4" height="92.4" rx="25.2" fill="none" stroke="url(#${id}r)" stroke-width="1.6"/>
-  ${arrow(38, 25, 70, true, 'red')}
-  ${arrow(62, 30, 75, false, 'silver')}
+  const sw = size < 28 ? 9.5 : 8;
+  return `<g transform="translate(${f(x)} ${f(y)}) scale(${f(s)})">
+  <path d="${SQUIRCLE}" fill="#18181b" stroke="#fff" stroke-opacity=".14" stroke-width="${f(1 / s)}"/>
+  <path d="M31 72.3V27.7L68.9 72.3V27.7" fill="none" stroke="${T.text}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="72.3" r="10" fill="#18181b"/><circle cx="31" cy="72.3" r="6.6" fill="${T.accent}"/>
+  <circle cx="68.9" cy="27.7" r="10" fill="#18181b"/><circle cx="68.9" cy="27.7" r="6.6" fill="${T.accent}"/>
 </g>`;
 }
 
@@ -44,185 +61,195 @@ ${body}
 </svg>
 `;
 
-function backdrop(id, w, h, r = 28, glow = 1) {
-  return `<defs>
-  <clipPath id="${id}clip"><rect width="${w}" height="${h}" rx="${r}"/></clipPath>
-  <radialGradient id="${id}h1" cx="0" cy="0" r="${Math.max(w, h) * 0.62}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity="${f(0.26 * glow)}"/><stop offset=".55" stop-color="#ff4256" stop-opacity="${f(0.06 * glow)}"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
-  <radialGradient id="${id}h2" cx="${w}" cy="${h}" r="${Math.max(w, h) * 0.5}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#c81e3a" stop-opacity="${f(0.2 * glow)}"/><stop offset="1" stop-color="#c81e3a" stop-opacity="0"/></radialGradient>
-</defs>
-<g clip-path="url(#${id}clip)">
-  <rect width="${w}" height="${h}" fill="${T.base}"/>
-  <rect width="${w}" height="${h}" fill="url(#${id}h1)"/>
-  <rect width="${w}" height="${h}" fill="url(#${id}h2)"/>
-</g>
-${r ? `<rect x=".5" y=".5" width="${w - 1}" height="${h - 1}" rx="${r - 0.5}" fill="none" stroke="#fff" stroke-opacity=".09"/>` : ''}`;
-}
+// Docs surfaces: one flat card colour and one hairline, readable on GitHub's light and dark themes.
+const card = (w, h, r = 12) => `<rect width="${w}" height="${h}" rx="${r}" fill="${T.card}"/>
+${r ? `<rect x=".5" y=".5" width="${w - 1}" height="${h - 1}" rx="${r - 0.5}" fill="none" stroke="#fff" stroke-opacity=".08"/>` : ''}`;
 
-const textWidth = (s, size, weight = 400) =>
-  [...s].reduce((a, c) => a + (/[A-ZА-ЯЁ]/.test(c) ? 0.66 : /[a-zа-яё]/.test(c) ? 0.53 : /\s/.test(c) ? 0.27 : 0.55), 0) * size * (weight >= 600 ? 1.04 : 1);
+// 24 px glyphs from the app's line icon set, stroked at the size they are drawn.
+const glyph = (x, y, size, color, d, sw = 1.6) =>
+  `<g transform="translate(${f(x)} ${f(y)}) scale(${f(size / 24)})" fill="none" stroke="${color}" stroke-width="${f(sw * 24 / size)}" stroke-linecap="round" stroke-linejoin="round">${d}</g>`;
+const G = {
+  computer: '<rect x="3.5" y="4.5" width="17" height="11.5" rx="2"/><path d="M9 20h6M12 16v4"/>',
+  server: '<rect x="4" y="4.5" width="16" height="6.5" rx="2"/><rect x="4" y="13" width="16" height="6.5" rx="2"/>',
+  back: '<path d="M14.5 6l-6 6 6 6"/>', fwd: '<path d="M9.5 6l6 6-6 6"/>', up: '<path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/>',
+  chevron: '<path d="M10 7.5l4.5 4.5-4.5 4.5"/>', refresh: '<path d="M18.5 12a6.5 6.5 0 1 1-1.9-4.6M18.5 5v4h-4"/>',
+  search: '<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/>', plus: '<path d="M12 5v14M5 12h14"/>',
+  close: '<path d="M7 7l10 10M17 7L7 17"/>', min: '<path d="M6 12h12"/>', max: '<rect x="6.5" y="6.5" width="11" height="11" rx="1"/>',
+  upload: '<path d="M12 15V4.5M7.5 9L12 4.5 16.5 9M5 15v3.5h14V15"/>', download: '<path d="M12 4.5V15M7.5 10.5L12 15l4.5-4.5M5 15v3.5h14V15"/>',
+  newFolder: '<path d="M3.5 7.5q0-2 2-2h3.7l2 2h7.3q2 0 2 2v7q0 2-2 2h-13q-2 0-2-2zM12 10.5v5M9.5 13h5"/>',
+  trash: '<path d="M5 7h14M9.5 7V5h5v2M7 7l.8 12h8.4L17 7"/>', transfers: '<path d="M8 19V5M5 8l3-3 3 3M16 5v14M13 16l3 3 3-3"/>',
+};
+const folderIcon = (x, y) => `<path d="M${f(x)} ${f(y + 2)}q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="${T.accent}" fill-opacity=".9"/><path d="M${f(x)} ${f(y + 5.5)}h16" stroke="#000" stroke-opacity=".25"/>`;
+const fileIcon = (x, y) => `<path d="M${f(x + 8)} ${f(y)}h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="${T.faint}" stroke-width="1.2" stroke-linejoin="round"/>`;
 
-function chip(x, y, label, { accent = false, h = 34, size = 15 } = {}) {
-  const w = Math.round(textWidth(label, size, 600) + 30);
-  const fill = accent ? `fill="#ff4256" fill-opacity=".15" stroke="#ff4256" stroke-opacity=".45"` : `fill="#fff" fill-opacity=".05" stroke="#fff" stroke-opacity=".14"`;
-  return {
-    w,
-    s: `<rect x="${x + 0.5}" y="${y + 0.5}" width="${w - 1}" height="${h - 1}" rx="${(h - 1) / 2}" ${fill}/>
-  <text x="${x + w / 2}" y="${y + h / 2 + size * 0.35}" text-anchor="middle" font-family="${FONT}" font-size="${size}" font-weight="600" fill="${accent ? '#ff7b8a' : T.text}">${label}</text>`,
+// The session window, drawn from the real layout at 1:1: title bar, connection strip,
+// two file panes and the transfer dock. Rows and numbers come from the demo profile.
+function windowMock(L, wx, wy) {
+  const ww = 656, wh = 512;
+  const X = (x) => wx + x, Y = (y) => wy + y;
+  const line = (y, x1 = 0, x2 = ww) => `<rect x="${X(x1)}" y="${Y(y)}" width="${x2 - x1}" height="1" fill="${T.divider}"/>`;
+
+  const tabs = (() => {
+    let x = 40;
+    return [['web-prod', T.orange, true], ['Storage', T.green, false]].map(([name, label, active]) => {
+      const w = Math.round(32 + textWidth(name, 12.5, active ? 600 : 400) + (active ? 30 : 14));
+      const s = `${active ? `<rect x="${X(x)}" y="${Y(6)}" width="${w}" height="28" rx="6" fill="#fff" fill-opacity=".08"/>` : ''}
+  <rect x="${X(x + 10)}" y="${Y(14)}" width="2" height="12" rx="1" fill="${label}"/>
+  <circle cx="${X(x + 20)}" cy="${Y(20)}" r="3" fill="${T.success}"/>
+  ${text(X(x + 29), Y(24.5), name, { size: 12.5, weight: active ? 600 : 400, fill: active ? T.text : T.text2 })}
+  ${active ? glyph(X(x + w - 22), Y(14), 12, T.muted, G.close, 1.3) : ''}`;
+      x += w + 4;
+      return s;
+    }).join('\n  ') + `\n  ${glyph(X(x + 6), Y(13), 14, T.muted, G.plus, 1.4)}`;
+  })();
+
+  const searchX = ww - 332;
+  const titleBar = `${logo(X(12), Y(10), 20)}
+  ${tabs}
+  <rect x="${X(searchX) + 0.5}" y="${Y(7) + 0.5}" width="199" height="25" rx="6" fill="none" stroke="#fff" stroke-opacity=".12"/>
+  ${text(X(searchX + 11), Y(24), L.search, { size: 12, fill: T.muted })}
+  <rect x="${X(searchX + 154)}" y="${Y(12)}" width="38" height="16" rx="4" fill="#fff" fill-opacity=".09"/>
+  ${text(X(searchX + 173), Y(23.8), 'Ctrl K', { size: 10, weight: 600, fill: T.text2, anchor: 'middle' })}
+  ${glyph(X(ww - 106), Y(14), 12, T.text2, G.min, 1.2)}${glyph(X(ww - 66), Y(14), 12, T.text2, G.max, 1.2)}${glyph(X(ww - 26), Y(14), 12, T.text2, G.close, 1.2)}`;
+
+  const addrX = 32 + textWidth('web-prod', 15, 600) + 10;
+  const stateX = addrX + textWidth(`deploy@web-01.example.com:22 · SFTP`, 13) + 12;
+  const strip = `<circle cx="${X(19)}" cy="${Y(62)}" r="4" fill="${T.success}"/>
+  ${text(X(32), Y(67), 'web-prod', { size: 15, weight: 600 })}
+  ${text(X(addrX), Y(66.5), 'deploy@web-01.example.com:22 · SFTP', { size: 13, fill: T.text2 })}
+  ${text(X(stateX), Y(66), L.connected, { size: 12, fill: T.muted })}
+  ${[G.upload, G.newFolder, G.download, G.trash].map((d, i) => glyph(X(ww - 112 + i * 26), Y(54), 16, T.text2, d, 1.4)).join('')}`;
+
+  const pane = (px, pw, { label, icon, crumbs, rows, footer, focused }) => {
+    const sizeR = pw - 112, modX = pw - 100;
+    const body = rows.map(([kind, name, size, mod, sel], i) => {
+      const y = 180 + i * 30;
+      return `${sel ? `<rect x="${X(px + 6)}" y="${Y(y + 1)}" width="${pw - 12}" height="28" rx="6" fill="${T.accent}" fill-opacity=".2"/>` : ''}
+  ${kind === 'd' ? folderIcon(X(px + 16), Y(y + 8)) : fileIcon(X(px + 17), Y(y + 7.5))}
+  ${text(X(px + 42), Y(y + 19.5), name, { size: 13, fill: T.text })}
+  ${size ? text(X(px + sizeR), Y(y + 19.5), L.kb(size), { size: 11.5, fill: T.muted, anchor: 'end' }) : ''}
+  ${text(X(px + modX), Y(y + 19.5), mod, { size: 11.5, fill: T.muted })}`;
+    }).join('\n  ');
+    let cx = px + 92;
+    const trail = crumbs.map((c, i) => {
+      const last = i === crumbs.length - 1;
+      const s = `${text(X(cx), Y(141), c, { size: 13, fill: last ? T.text : T.text2 })}${last ? '' : glyph(X(cx + textWidth(c, 13) + 3), Y(130), 12, T.faint, G.chevron, 1.3)}`;
+      cx += textWidth(c, 13) + 20;
+      return s;
+    }).join('');
+    return `${focused ? `<rect x="${X(px + 8)}" y="${Y(85)}" width="${pw - 16}" height="2" rx="1" fill="${T.accent}"/>` : ''}
+  ${glyph(X(px + 16), Y(95), 14, T.text2, icon, 1.5)}
+  ${text(X(px + 37), Y(106.5), label, { size: 11, weight: 600, fill: focused ? T.text : T.text2, ls: '.6' })}
+  <rect x="${X(px + pw - 108) + 0.5}" y="${Y(91) + 0.5}" width="95" height="23" rx="6" fill="none" stroke="#fff" stroke-opacity=".2"/>
+  ${glyph(X(px + pw - 100), Y(97), 12, T.faint, G.search, 1.3)}
+  ${text(X(px + pw - 82), Y(107), L.filter, { size: 11.5, fill: T.faint })}
+  ${glyph(X(px + 12), Y(130), 12, T.muted, G.back, 1.4)}${glyph(X(px + 32), Y(130), 12, T.muted, G.fwd, 1.4)}${glyph(X(px + 52), Y(130), 12, T.muted, G.up, 1.4)}
+  ${glyph(X(px + 72), Y(129), 14, T.muted, icon, 1.4)}
+  ${trail}
+  ${glyph(X(px + pw - 26), Y(130), 12, T.muted, G.refresh, 1.4)}
+  ${text(X(px + 16), Y(170), L.cols[0], { size: 10.5, weight: 600, fill: T.muted, ls: '.5' })}
+  ${text(X(px + sizeR), Y(170), L.cols[1], { size: 10.5, weight: 600, fill: T.muted, ls: '.5', anchor: 'end' })}
+  ${text(X(px + modX), Y(170), L.cols[2], { size: 10.5, weight: 600, fill: T.muted, ls: '.5' })}
+  ${body}
+  ${text(X(px + 16), Y(407), footer, { size: 11, fill: T.faint })}`;
   };
+
+  const d = L.dates;
+  const left = pane(0, 328, {
+    label: L.local, icon: G.computer, crumbs: ['D:', 'Projects', 'website'], focused: true, footer: L.footerLocal,
+    rows: [['d', 'app', '', d[0]], ['d', 'public', '', d[1], 1], ['d', 'resources', '', d[2]],
+      ['f', 'composer.json', '2.4', d[3]], ['f', 'deploy.sh', '3.1', d[4]], ['f', 'package.json', '1.8', d[5]], ['f', 'vite.config.js', '1.1', d[6]]],
+  });
+  const right = pane(329, 327, {
+    label: L.server, icon: G.server, crumbs: ['var', 'www', 'shop'], footer: L.footerServer,
+    rows: [['d', 'app', '', d[1]], ['d', 'bootstrap', '', d[7]], ['d', 'config', '', d[8]], ['d', 'public', '', d[1]],
+      ['d', 'resources', '', d[2]], ['f', 'composer.json', '2.4', d[3]], ['f', 'deploy.sh', '3.1', d[4]]],
+  });
+
+  const progress = 0.34, bx = 372, bw = 232;
+  const chipW = textWidth('web-prod', 11, 600) + 14, nameW = textWidth('public', 13.5, 600);
+  const dock = `<rect x="${X(16)}" y="${Y(429)}" width="28" height="28" rx="6" fill="${T.accent}" fill-opacity=".16"/>
+  ${glyph(X(22), Y(435), 16, T.accentText, G.upload, 1.5)}
+  ${text(X(56), Y(440), 'public', { size: 13.5, weight: 600 })}
+  <rect x="${f(X(64 + nameW)) + 0.5}" y="${Y(427) + 0.5}" width="${f(chipW)}" height="17" rx="4" fill="none" stroke="#fff" stroke-opacity=".16"/>
+  ${text(X(64 + nameW + chipW / 2), Y(439.5), 'web-prod', { size: 11, weight: 600, fill: T.text2, anchor: 'middle' })}
+  ${text(X(56), Y(458), '/var/www/shop/public', { size: 11.5, fill: T.muted })}
+  <rect x="${X(bx)}" y="${Y(432)}" width="${bw}" height="4" rx="2" fill="#fff" fill-opacity=".1"/>
+  <rect x="${X(bx)}" y="${Y(432)}" width="${f(bw * progress)}" height="4" rx="2" fill="${T.accent}"/>
+  ${text(X(bx), Y(455), L.done, { size: 11.5, fill: T.muted })}
+  ${text(X(bx + bw), Y(455), L.rate, { size: 11.5, weight: 600, anchor: 'end' })}
+  ${glyph(X(ww - 34), Y(437), 12, T.muted, G.close, 1.3)}
+  <rect x="${X(0)}" y="${Y(470)}" width="${ww}" height="1" fill="${T.divider}"/>
+  <rect x="${X(0)}" y="${Y(470)}" width="${f(ww * progress)}" height="2" fill="${T.accent}"/>
+  ${glyph(X(15), Y(484), 15, T.accentText, G.transfers, 1.5)}
+  ${text(X(38), Y(495.5), L.transfers, { size: 13, weight: 600 })}
+  ${text(X(50 + textWidth(L.transfers, 13, 600)), Y(495.5), L.active, { size: 12, fill: T.muted })}
+  ${text(X(ww - 16), Y(495.5), L.rule, { size: 12, weight: 600, anchor: 'end' })}
+  ${text(X(ww - 22 - textWidth(L.rule, 12, 600)), Y(495.5), L.ifExists, { size: 12, fill: T.muted, anchor: 'end' })}`;
+
+  return `<rect x="${wx}" y="${wy}" width="${ww}" height="${wh}" rx="8" fill="${T.base}"/>
+${line(40)}
+${line(84)}
+<rect x="${X(328)}" y="${Y(85)}" width="1" height="331" fill="${T.divider}"/>
+${line(416)}
+${titleBar}
+${strip}
+${left}
+${right}
+${dock}
+<rect x="${wx + 0.5}" y="${wy + 0.5}" width="${ww - 1}" height="${wh - 1}" rx="7.5" fill="none" stroke="#fff" stroke-opacity=".14"/>`;
 }
 
-function chips(x, y, labels, opts) {
-  let cx = x;
-  return labels.map((l, i) => {
-    const c = chip(cx, y, l, { ...opts, accent: opts?.accentFirst && i === 0 });
-    cx += c.w + 10;
-    return c.s;
-  }).join('\n  ');
-}
-
-function mockWindow(L, mx, my) {
-  const mw = 516, mh = 308;
-  const bar = (x, y, w, o = 0.13) => `<rect x="${x}" y="${y}" width="${w}" height="7" rx="3.5" fill="#fff" fill-opacity="${o}"/>`;
-  const folder = (x, y) => `<path d="M${x} ${y + 2.5}q0-2.5 2.5-2.5h3.7l2 2h7.3q2.5 0 2.5 2.5v7q0 2.5-2.5 2.5h-13q-2.5 0-2.5-2.5z" fill="#ff4256" transform="translate(0 0)"/>`;
-  const file = (x, y) => `<path d="M${x + 9} ${y}h-6.5q-2.5 0-2.5 2.5v11q0 2.5 2.5 2.5h9q2.5 0 2.5-2.5v-8.5z" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.3"/>`;
-  const rows = (x, y, items) => items.map(([kind, w, size], i) => {
-    const ry = y + i * 26;
-    return `${kind === 'd' ? folder(x, ry) : file(x + 2, ry - 1)}
-    ${bar(x + 28, ry + 4, w, kind === 'd' ? 0.2 : 0.13)}${size ? `\n    ${bar(x + 168, ry + 4, size, 0.07)}` : ''}`;
-  }).join('\n    ');
-  const pane = (x, label, icon, items) => `<rect x="${x + 0.5}" y="${my + 88.5}" width="235" height="168" rx="12" fill="#fff" fill-opacity=".025" stroke="#fff" stroke-opacity=".07"/>
-    ${icon(x + 16, my + 104)}
-    <text x="${x + 38}" y="${my + 114}" font-family="${FONT}" font-size="10.5" font-weight="700" letter-spacing=".8" fill="${T.muted}">${label}</text>
-    ${rows(x + 16, my + 132, items)}`;
-  const computer = (x, y) => `<g transform="translate(${x} ${y}) scale(.55)" fill="none" stroke="${T.muted}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="11.5" rx="2.5"/><path d="M9 20h6M12 16v4"/></g>`;
-  const server = (x, y) => `<g transform="translate(${x} ${y}) scale(.55)" fill="none" stroke="${T.muted}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.5" width="16" height="6.5" rx="2.5"/><rect x="4" y="13" width="16" height="6.5" rx="2.5"/></g>`;
-  const tab = (x, w, name, color, active) => `<rect x="${x}" y="${my + 9}" width="${w}" height="24" rx="8" fill="#fff" fill-opacity="${active ? '.08' : '0'}"/>
-    <rect x="${x + 8}" y="${my + 15}" width="2.5" height="12" rx="1.25" fill="${color}"/>
-    <circle cx="${x + 19}" cy="${my + 21}" r="3" fill="${T.success}"/>
-    <text x="${x + 28}" y="${my + 25.5}" font-family="${FONT}" font-size="12" font-weight="${active ? 700 : 500}" fill="${active ? T.text : T.text2}">${name}</text>`;
-  const progress = 0.62;
-  return { defs: `<defs>
-  <linearGradient id="hp" x1="0" x2="1"><stop offset="0" stop-color="#ff5468"/><stop offset="1" stop-color="#e52a45"/></linearGradient>
-  <radialGradient id="hmg" cx="${mx}" cy="${my}" r="420" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".16"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
-  <filter id="hs" x="-10%" y="-10%" width="120%" height="130%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
-</defs>`, body: `<g filter="url(#hs)">
-  <rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="18" fill="${T.sheet}"/>
-</g>
-<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="18" fill="url(#hmg)"/>
-<rect x="${mx + 0.5}" y="${my + 0.5}" width="${mw - 1}" height="${mh - 1}" rx="17.5" fill="none" stroke="#fff" stroke-opacity=".12"/>
-<g>
-  ${logo('hm', mx + 12, my + 10, 22)}
-  ${tab(mx + 44, 100, 'web-prod', '#ff8a3d', true)}
-  ${tab(mx + 150, 90, 'Storage', '#ffc53d', false)}
-  <rect x="${mx + 352.5}" y="${my + 9.5}" width="151" height="23" rx="8" fill="#fff" fill-opacity=".04" stroke="#fff" stroke-opacity=".1"/>
-  <g transform="translate(${mx + 360} ${my + 13}) scale(.62)" fill="none" stroke="${T.muted}" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></g>
-  ${bar(mx + 382, my + 18, 62, 0.1)}
-  <rect x="${mx + 458}" y="${my + 14}" width="38" height="14" rx="4" fill="#fff" fill-opacity=".08"/>
-  <text x="${mx + 477}" y="${my + 24.5}" text-anchor="middle" font-family="${FONT}" font-size="9" font-weight="700" fill="${T.text2}">Ctrl K</text>
-  <rect x="${mx + 12.5}" y="${my + 44.5}" width="${mw - 25}" height="34" rx="11" fill="#fff" fill-opacity=".03" stroke="#fff" stroke-opacity=".07"/>
-  <circle cx="${mx + 29}" cy="${my + 61.5}" r="4" fill="${T.success}"/>
-  <text x="${mx + 41}" y="${my + 66}" font-family="${FONT}" font-size="13" font-weight="700" fill="${T.text}">web-prod</text>
-  <text x="${mx + 108}" y="${my + 66}" font-family="${FONT}" font-size="12" fill="${T.muted}">SFTP · ${L.ping}</text>
-  ${pane(mx + 12, L.local, computer, [['d', 70, 0], ['d', 52, 0], ['f', 92, 28], ['f', 64, 22], ['f', 80, 30]])}
-  ${pane(mx + 269, L.server, server, [['d', 56, 0], ['d', 38, 0], ['d', 72, 0], ['f', 88, 26], ['f', 60, 34]])}
-  <rect x="${mx + 12.5}" y="${my + 266.5}" width="${mw - 25}" height="30" rx="10" fill="#fff" fill-opacity=".03" stroke="#fff" stroke-opacity=".07"/>
-  <g transform="translate(${mx + 22} ${my + 273}) scale(.7)" fill="none" stroke="#ff4256" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19V5M5.31 7.69L8 5l2.69 2.69M16 5v14M13.31 16.31L16 19l2.69-2.69"/></g>
-  <text x="${mx + 44}" y="${my + 286}" font-family="${FONT}" font-size="12" font-weight="700" fill="${T.text}">${L.transfers}</text>
-  <rect x="${mx + 140}" y="${my + 279}" width="260" height="5" rx="2.5" fill="#fff" fill-opacity=".09"/>
-  <rect x="${mx + 140}" y="${my + 279}" width="${260 * progress}" height="5" rx="2.5" fill="url(#hp)"/>
-  <text x="${mx + mw - 24}" y="${my + 286}" text-anchor="end" font-family="${FONT}" font-size="12" font-weight="700" fill="${T.text}">${L.speed}</text>
-</g>` };
-}
-
-function hero(L) {
-  const W = 1280, H = 420;
-  const mock = mockWindow(L, 700, 56);
-  const body = `${backdrop('h', W, H)}
-${mock.defs}
-${logo('hl', 72, 78, 92)}
-<text x="186" y="149" font-family="${FONT}" font-size="76" font-weight="700" letter-spacing="-1.5" fill="${T.text}">Nexa</text>
-<text font-family="${FONT}" font-size="26" fill="${T.text2}"><tspan x="74" y="226">${L.tag1}</tspan><tspan x="74" y="262">${L.tag2}</tspan></text>
-<g>
-  ${chips(74, 302, ['SFTP', 'FTP', 'FTPS', L.windows], { accentFirst: false })}
-</g>
-<text x="76" y="374" font-family="${FONT}" font-size="15" fill="${T.muted}">${L.look}</text>
-${mock.body}`;
-  return svg(W, H, body, L.title);
-}
-
-function social(L) {
+// README banner and social preview share one 2:1 layout: the claim on the left, the window on the right,
+// drawn 10% over 1:1 so its 13 px rows still read when GitHub scales the banner to the README column.
+function banner(L, { radius = 12 } = {}) {
   const W = 1280, H = 640;
-  const mock = mockWindow(L, 0, 0);
-  const facts = L.cards.slice(0, 3).map(([value, unit, label], i) => {
-    const x = 92 + i * 196;
-    return `<rect x="${x}" y="478" width="22" height="4" rx="2" fill="#ff4256"/>
-  <text x="${x - 2}" y="530" font-family="${FONT}" font-size="38" font-weight="700" letter-spacing="-.8" fill="${T.text}">${value}${unit ? `<tspan font-size="21" font-weight="600" fill="#ff4256" dx="5">${unit}</tspan>` : ''}</text>
-  <text x="${x}" y="558" font-family="${FONT}" font-size="15" fill="${T.muted}">${label}</text>`;
-  }).join('\n  ');
-  const body = `${backdrop('o', W, H, 0, 1.15)}
-${logo('ol', 88, 92, 104)}
-<text x="216" y="176" font-family="${FONT}" font-size="88" font-weight="700" letter-spacing="-2" fill="${T.text}">Nexa</text>
-<text font-family="${FONT}" font-size="31" fill="${T.text2}"><tspan x="90" y="272">${L.social1}</tspan><tspan x="90" y="314">${L.social2}</tspan></text>
-<g>
-  ${chips(90, 356, ['SFTP', 'FTP', 'FTPS', L.windows], { h: 40, size: 17 })}
-</g>
-<g>
-  ${facts}
-</g>
-<g transform="translate(712 162) scale(1.02)">
-${mock.defs}
-${mock.body}
-</g>`;
-  return svg(W, H, body, L.title);
+  const lead = L.lead.map((t, i) => `<tspan x="64" y="${334 + i * 38}">${esc(t)}</tspan>`).join('');
+  const rest = L.rest.map((t, i) => `<tspan x="64" y="${418 + i * 30}">${esc(t)}</tspan>`).join('');
+  return svg(W, H, `${card(W, H, radius)}
+${logo(64, 200, 60)}
+${text(144, 250, 'Nexa', { size: 60, weight: 700, ls: '-1.2', font: DISPLAY })}
+<text font-family="${DISPLAY}" font-size="27" font-weight="500" fill="${T.text}">${lead}</text>
+<text font-family="${FONT}" font-size="20" fill="${T.muted}">${rest}</text>
+<g transform="translate(518 38) scale(1.1)">
+${windowMock(L, 0, 0)}
+</g>`, L.title);
 }
 
 function stats(L) {
-  const W = 1280, H = 188, gap = 16, cw = (W - gap * 3) / 4;
-  const cards = L.cards.map(([value, unit, label, sub], i) => {
-    const x = i * (cw + gap);
-    const vw = textWidth(value, 50, 700);
-    return `<g>
-  <defs>
-    <radialGradient id="s${i}" cx="${x}" cy="0" r="300" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".2"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
-  </defs>
-  <rect x="${x}" y="0" width="${cw}" height="${H}" rx="20" fill="${T.base}"/>
-  <rect x="${x}" y="0" width="${cw}" height="${H}" rx="20" fill="url(#s${i})"/>
-  <rect x="${x + 0.5}" y=".5" width="${cw - 1}" height="${H - 1}" rx="19.5" fill="none" stroke="#fff" stroke-opacity=".09"/>
-  <rect x="${x + 28}" y="28" width="26" height="4" rx="2" fill="#ff4256"/>
-  <text x="${x + 26}" y="98" font-family="${FONT}" font-size="50" font-weight="700" letter-spacing="-1" fill="${T.text}">${value}${unit ? `<tspan font-size="26" font-weight="600" fill="#ff4256" dx="6">${unit}</tspan>` : ''}</text>
-  <text x="${x + 28}" y="134" font-family="${FONT}" font-size="18" font-weight="600" fill="${T.text}">${label}</text>
-  <text x="${x + 28}" y="160" font-family="${FONT}" font-size="15" fill="${T.muted}">${sub}</text>
-</g>`;
+  const W = 1280, H = 168, cw = W / 4;
+  const cells = L.cards.map(([value, unit, label, sub], i) => {
+    const x = i * cw + 32;
+    const vw = textWidth(value, 46, 700);
+    return `${i ? `<rect x="${i * cw}" y="24" width="1" height="${H - 48}" fill="#fff" fill-opacity=".08"/>` : ''}
+${text(x, 80, value, { size: 46, weight: 700, ls: '-.8', font: DISPLAY })}${unit ? text(x + vw + 6, 80, unit, { size: 22, weight: 600, fill: T.accentText }) : ''}
+${text(x, 114, label, { size: 17, weight: 600 })}
+${text(x, 139, sub, { size: 14, fill: T.muted })}`;
   }).join('\n');
-  return svg(W, H, cards, L.statsTitle);
+  return svg(W, H, `${card(W, H)}\n${cells}`, L.statsTitle);
 }
 
 function header() {
-  const W = 1280, H = 104;
+  const W = 1280, H = 96;
   let x = W - 32;
-  const labels = ['FTPS', 'FTP', 'SFTP'];
-  const parts = labels.map((l) => {
-    const w = Math.round(textWidth(l, 14, 600) + 28);
+  const protocols = ['FTPS', 'FTP', 'SFTP'].map((p, i) => {
+    const w = textWidth(p, 15, 500);
     x -= w;
-    const c = chip(x, 35, l, { h: 32, size: 14 }).s;
-    x -= 10;
-    return c;
-  }).join('\n  ');
-  return svg(W, H, `${backdrop('d', W, H, 22, 0.9)}
-${logo('dl', 28, 22, 60)}
-<text x="104" y="66" font-family="${FONT}" font-size="34" font-weight="700" letter-spacing="-.5" fill="${T.text}">Nexa</text>
-<g>
-  ${parts}
-</g>`, 'Nexa');
+    const s = `${text(x, 54, p, { size: 15, weight: 500, fill: T.text2, font: MONO })}${i ? `<rect x="${f(x + w + 13)}" y="38" width="1" height="20" fill="#fff" fill-opacity=".14"/>` : ''}`;
+    x -= 27;
+    return s;
+  }).join('');
+  return svg(W, H, `${card(W, H)}
+${logo(28, 24, 48)}
+${text(92, 59, 'Nexa', { size: 32, weight: 700, ls: '-.5', font: DISPLAY })}
+${protocols}`, 'Nexa');
 }
 
+// A hairline with the 2 px accent bar the app draws over the focused pane.
 function divider() {
   const W = 1280, H = 24;
-  return svg(W, H, `<defs><linearGradient id="dv" x1="0" x2="${W}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity="0"/><stop offset=".5" stop-color="#ff4256" stop-opacity=".85"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></linearGradient>
-<radialGradient id="dg" cx="${W / 2}" cy="12" r="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".45"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient></defs>
-<rect x="${W / 2 - 60}" y="0" width="120" height="24" fill="url(#dg)"/>
-<rect x="0" y="11.5" width="${W}" height="1" fill="url(#dv)"/>
-<rect x="${W / 2 - 4}" y="8" width="8" height="8" rx="2" transform="rotate(45 ${W / 2} 12)" fill="#ff4256"/>`, '');
+  return svg(W, H, `<rect x="0" y="11.5" width="${W}" height="1" fill="#8b949e" fill-opacity=".3"/>
+<rect x="${W / 2 - 24}" y="11" width="48" height="2" rx="1" fill="${T.accent}"/>`, '');
 }
 
 function arrow(from, to, head) {
@@ -255,21 +282,24 @@ const ICONS = {
   trash: `<path d="M4.5 7L19.5 7"/><path d="${pl([[9.5, 7], [9.5, 4.5], [14.5, 4.5], [14.5, 7]])}"/><path d="${pl([[6.5, 7], [7.3, 18.2], [8.8, 19.5], [15.2, 19.5], [16.7, 18.2], [17.5, 7]])}"/><path d="M10.3 10.5L10.3 16M13.7 10.5L13.7 16"/>`,
   plug: `<path d="M9 3.5L9 7.5M15 3.5L15 7.5"/><path d="${pl([[6, 7.5], [18, 7.5], [18, 11], [12, 17], [6, 11], [6, 7.5]])}M12 17L12 20.5"/>`,
 };
+// Heading icons sit on the same dark card as the header, so they read the same in both GitHub themes.
 function iconTile(name) {
   const S = 32;
-  return svg(S, S, `<rect x=".5" y=".5" width="31" height="31" rx="9" fill="#ff4256" fill-opacity=".14" stroke="#ff4256" stroke-opacity=".4"/>
-<g transform="translate(6.4 6.4) scale(.8)" fill="none" stroke="#ff4256" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</g>`, '');
+  return svg(S, S, `<rect x=".5" y=".5" width="31" height="31" rx="8" fill="${T.card}" stroke="#fff" stroke-opacity=".1"/>
+<g transform="translate(7 7) scale(.75)" fill="none" stroke="${T.accentText}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</g>`, '');
 }
 
 const EN = {
   title: 'Nexa — a fast SFTP, FTP and FTPS client for Windows',
-  tag1: 'A fast SFTP, FTP and FTPS client for Windows.',
-  tag2: 'One tab per server. Transfers that never drop.',
-  social1: 'A fast SFTP, FTP and FTPS client',
-  social2: 'for Windows. One tab per server.',
-  windows: 'Windows 10 · 11',
-  look: 'Onyx black · frosted glass · red accent · no sidebars',
-  local: 'THIS COMPUTER', server: 'SERVER', transfers: 'Transfers', ping: 'ping 24 ms', speed: '38 MB/s',
+  lead: ['A fast SFTP, FTP and FTPS', 'client for Windows.'],
+  rest: ['One tab per server.', 'Transfers that never drop.'],
+  local: 'THIS COMPUTER', server: 'SERVER', cols: ['NAME', 'SIZE', 'MODIFIED'],
+  search: 'Search and commands', filter: 'Filter', connected: 'Connected · ping 24 ms',
+  dates: ['today 00:11', 'today 00:09', 'Oct 22, 21:14', 'Oct 22, 00:02', 'today 00:42', 'Oct 22, 22:11', 'Oct 21, 23:15', 'Oct 21, 00:45', 'Oct 22, 00:43'],
+  kb: (v) => `${v} KB`,
+  footerLocal: 'Folders: 3 · Files: 4 · 8.4 KB', footerServer: 'Folders: 5 · Files: 2 · 5.5 KB',
+  done: '412 MB / 1.2 GB · 1186/3240', rate: '38 MB/s · 22 s',
+  transfers: 'Transfers', active: 'active: 1 · 38 MB/s · 22 s left', ifExists: 'If the file exists:', rule: 'Resume',
   statsTitle: 'Nexa in numbers',
   cards: [
     ['4.3', 's', '3,000 small files', 'scp needs 673 s at 50 ms'],
@@ -280,11 +310,15 @@ const EN = {
 };
 const RU = {
   title: 'Nexa — быстрый SFTP-, FTP- и FTPS-клиент для Windows',
-  tag1: 'Быстрый SFTP-, FTP- и FTPS-клиент для Windows.',
-  tag2: 'Вкладка на каждый сервер. Передачи без обрывов.',
-  windows: 'Windows 10 · 11',
-  look: 'Чёрный оникс · матовое стекло · красный акцент · без боковых панелей',
-  local: 'ЭТОТ КОМПЬЮТЕР', server: 'СЕРВЕР', transfers: 'Передачи', ping: 'пинг 24 мс', speed: '38 МБ/с',
+  lead: ['Быстрый SFTP-, FTP- и FTPS-', 'клиент для Windows.'],
+  rest: ['Вкладка на каждый сервер.', 'Передачи без обрывов.'],
+  local: 'ЭТОТ КОМПЬЮТЕР', server: 'СЕРВЕР', cols: ['ИМЯ', 'РАЗМЕР', 'ИЗМЕНЁН'],
+  search: 'Поиск и команды', filter: 'Фильтр', connected: 'Подключено · ping 24 мс',
+  dates: ['сегодня 00:11', 'сегодня 00:09', '22 окт. 21:14', '22 окт. 00:02', 'сегодня 00:42', '22 окт. 22:11', '21 окт. 23:15', '21 окт. 00:45', '22 окт. 00:43'],
+  kb: (v) => `${v.replace('.', ',')} КБ`,
+  footerLocal: 'Папок: 3 · Файлов: 4 · 8,4 КБ', footerServer: 'Папок: 5 · Файлов: 2 · 5,5 КБ',
+  done: '412 МБ / 1,2 ГБ · 1186/3240', rate: '38 МБ/с · 22 с',
+  transfers: 'Передачи', active: 'активно: 1 · 38 МБ/с · осталось 22 с', ifExists: 'Если файл есть:', rule: 'Докачать',
   statsTitle: 'Nexa в цифрах',
   cards: [
     ['4,3', 'с', '3000 мелких файлов', 'scp — 673 с при 50 мс'],
@@ -293,13 +327,34 @@ const RU = {
     ['0,44', 'с', 'до первого списка папки', 'после входа при 200 мс'],
   ],
 };
+const DE = {
+  title: 'Nexa — ein schneller SFTP-, FTP- und FTPS-Client für Windows',
+  lead: ['Schneller SFTP-, FTP- und', 'FTPS-Client für Windows.'],
+  rest: ['Ein Tab pro Server.', 'Übertragungen ohne Abbrüche.'],
+  local: 'DIESER PC', server: 'SERVER', cols: ['NAME', 'GRÖSSE', 'GEÄNDERT'],
+  search: 'Suche und Befehle', filter: 'Filter', connected: 'Verbunden · Ping 24 ms',
+  dates: ['heute 00:11', 'heute 00:09', '22.10. 21:14', '22.10. 00:02', 'heute 00:42', '22.10. 22:11', '21.10. 23:15', '21.10. 00:45', '22.10. 00:43'],
+  kb: (v) => `${v.replace('.', ',')} KB`,
+  footerLocal: 'Ordner: 3 · Dateien: 4 · 8,4 KB', footerServer: 'Ordner: 5 · Dateien: 2 · 5,5 KB',
+  done: '412 MB / 1,2 GB · 1186/3240', rate: '38 MB/s · 22 s',
+  transfers: 'Übertragungen', active: 'aktiv: 1 · 38 MB/s · noch 22 s', ifExists: 'Wenn die Datei existiert:', rule: 'Fortsetzen',
+  statsTitle: 'Nexa in Zahlen',
+  cards: [
+    ['4,3', 's', '3.000 kleine Dateien', 'scp braucht 673 s bei 50 ms'],
+    ['64', '', 'Dateien gleichzeitig', 'pro Verbindung'],
+    ['1–16', '', 'parallele Verbindungen', 'pro Server'],
+    ['0,44', 's', 'bis zur ersten Liste', 'nach der Anmeldung bei 200 ms'],
+  ],
+};
 
-writeFileSync(join(out, 'logo.svg'), svg(100, 100, logo('l', 0, 0, 100), 'Nexa'));
-writeFileSync(join(out, 'hero.svg'), hero(EN));
-writeFileSync(join(out, 'ru', 'hero.svg'), hero(RU));
+writeFileSync(join(out, 'logo.svg'), svg(100, 100, logo(0, 0, 100), 'Nexa'));
+writeFileSync(join(out, 'hero.svg'), banner(EN));
+writeFileSync(join(out, 'ru', 'hero.svg'), banner(RU));
+writeFileSync(join(out, 'de', 'hero.svg'), banner(DE));
+writeFileSync(join(out, 'social.svg'), banner(EN, { radius: 0 }));
 writeFileSync(join(out, 'stats.svg'), stats(EN));
-writeFileSync(join(out, 'social.svg'), social(EN));
 writeFileSync(join(out, 'ru', 'stats.svg'), stats(RU));
+writeFileSync(join(out, 'de', 'stats.svg'), stats(DE));
 writeFileSync(join(out, 'header.svg'), header());
 writeFileSync(join(out, 'divider.svg'), divider());
 for (const name of Object.keys(ICONS)) writeFileSync(join(out, 'icons', `${name}.svg`), iconTile(name));

@@ -299,6 +299,7 @@ void DemoTour::closeSheets(MainWindow &window)
 void DemoTour::run(MainWindow &window, const QString &directory)
 {
     QDir().mkpath(directory);
+    window.m_compact = false;
     window.resize(1440, 900);
 
     struct Step {
@@ -377,7 +378,7 @@ void install()
     const QDateTime now = QDateTime::currentDateTime();
     const auto add = [&now](const QString &key, const QString &name, const QString &user,
                             const QString &host, Protocol protocol, bool tls, int color,
-                            qint64 minutesAgo) {
+                            HostKind kind, qint64 minutesAgo) {
         SavedHost saved;
         saved.name = name;
         saved.profile.host = host;
@@ -386,19 +387,22 @@ void install()
         saved.profile.useTls = tls;
         saved.profile.port = protocol == Protocol::Ftp ? 21 : 22;
         saved.color = color;
+        saved.kind = kind;
         if (minutesAgo >= 0)
             saved.lastUsed = now.addSecs(-60 * minutesAgo);
         saved.lastPath = homeOf(host);
         demoHosts().insert(key, HostStore::instance().save(saved));
     };
     add(QStringLiteral("cs2"), QStringLiteral("CS2 Server"), QStringLiteral("steam"),
-        QStringLiteral("cs2.example.net"), Protocol::Sftp, false, 0, 42);
+        QStringLiteral("cs2.example.net"), Protocol::Sftp, false, 0, HostKind::Game, 42);
     add(QStringLiteral("web"), QStringLiteral("web-prod"), QStringLiteral("deploy"),
-        QStringLiteral("web-01.example.com"), Protocol::Sftp, false, 1, 17 * Hour);
+        QStringLiteral("web-01.example.com"), Protocol::Sftp, false, 1, HostKind::Web,
+        17 * Hour);
     add(QStringLiteral("storage"), QStringLiteral("Storage"), QStringLiteral("backup"),
-        QStringLiteral("files.example.org"), Protocol::Ftp, true, 2, 5 * Day + 3 * Hour);
+        QStringLiteral("files.example.org"), Protocol::Ftp, true, 2, HostKind::Storage,
+        5 * Day + 3 * Hour);
     add(QStringLiteral("nas"), QStringLiteral("Home NAS"), QStringLiteral("admin"),
-        QStringLiteral("10.0.0.15"), Protocol::Sftp, false, 3, -1);
+        QStringLiteral("10.0.0.15"), Protocol::Sftp, false, 3, HostKind::Storage, -1);
 }
 
 void tour(MainWindow &window, const QString &directory)

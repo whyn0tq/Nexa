@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="168" viewBox="0 0 1280 168" role="img" aria-label="Nexa in Zahlen">
+<title>Nexa in Zahlen</title>
+<rect width="1280" height="168" rx="12" fill="#111113"/>
+<rect x=".5" y=".5" width="1279" height="167" rx="11.5" fill="none" stroke="#fff" stroke-opacity=".08"/>
+
+<text x="32" y="80" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="46" font-weight="700" letter-spacing="-.8" fill="#f2f3f5">4,3</text><text x="103.69" y="80" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="22" font-weight="600" fill="#8b95f7">s</text>
+<text x="32" y="114" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f2f3f5">3.000 kleine Dateien</text>
+<text x="32" y="139" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" fill="#949ba4">scp braucht 673 s bei 50 ms</text>
+<rect x="320" y="24" width="1" height="120" fill="#fff" fill-opacity=".08"/>
+<text x="352" y="80" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="46" font-weight="700" letter-spacing="-.8" fill="#f2f3f5">64</text>
+<text x="352" y="114" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f2f3f5">Dateien gleichzeitig</text>
+<text x="352" y="139" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" fill="#949ba4">pro Verbindung</text>
+<rect x="640" y="24" width="1" height="120" fill="#fff" fill-opacity=".08"/>
+<text x="672" y="80" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="46" font-weight="700" letter-spacing="-.8" fill="#f2f3f5">1–16</text>
+<text x="672" y="114" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f2f3f5">parallele Verbindungen</text>
+<text x="672" y="139" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" fill="#949ba4">pro Server</text>
+<rect x="960" y="24" width="1" height="120" fill="#fff" fill-opacity=".08"/>
+<text x="992" y="80" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="46" font-weight="700" letter-spacing="-.8" fill="#f2f3f5">0,44</text><text x="1089.29" y="80" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="22" font-weight="600" fill="#8b95f7">s</text>
+<text x="992" y="114" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="17" font-weight="600" fill="#f2f3f5">bis zur ersten Liste</text>
+<text x="992" y="139" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="14" fill="#949ba4">nach der Anmeldung bei 200 ms</text>
+</svg>

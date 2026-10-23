@@ -83,7 +83,6 @@ void install()
         QLocale::setDefault(QLocale(QLocale::Russian, QLocale::Russia));
         return;
     }
-    // Translators are asked newest first, so German falls back to English for missing strings.
     static TableTranslator english(English, EnglishCount);
     QCoreApplication::installTranslator(&english);
     if (g_active == Language::German) {

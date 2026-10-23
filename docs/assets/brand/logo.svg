@@ -1,17 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" role="img" aria-label="Nexa">
 <title>Nexa</title>
 <g transform="translate(0 0) scale(1)">
-  <defs>
-    <linearGradient id="lb" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#222228"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
-    <radialGradient id="lg" cx="24" cy="92" r="70" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".47"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient>
-    <linearGradient id="lr" x1="0" y1="3" x2="0" y2="97" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff" stop-opacity=".27"/><stop offset=".5" stop-color="#fff" stop-opacity=".055"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>
-    <linearGradient id="lred" x1="0" y1="24" x2="0" y2="72" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff707e"/><stop offset="1" stop-color="#e4223e"/></linearGradient>
-    <linearGradient id="lsilver" x1="0" y1="28" x2="0" y2="76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#aaaab4"/></linearGradient>
-  </defs>
-  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#lb)"/>
-  <rect x="3" y="3" width="94" height="94" rx="26" fill="url(#lg)"/>
-  <rect x="3.8" y="3.8" width="92.4" height="92.4" rx="25.2" fill="none" stroke="url(#lr)" stroke-width="1.6"/>
-  <path d="M38 70L38 25M25 38L38 25L51 38" fill="none" stroke="url(#lred)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M62 30L62 75M49 62L62 75L75 62" fill="none" stroke="url(#lsilver)" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M97 50L96.97 64.44L96.9 69.05L96.77 72.38L96.59 75.08L96.35 77.37L96.07 79.38L95.73 81.18L95.33 82.8L94.88 84.27L94.37 85.62L93.81 86.86L93.18 88L92.49 89.05L91.74 90.02L90.92 90.92L90.02 91.74L89.05 92.49L88 93.18L86.86 93.81L85.62 94.37L84.27 94.88L82.8 95.33L81.18 95.73L79.38 96.07L77.37 96.35L75.08 96.59L72.38 96.77L69.05 96.9L64.44 96.97L50 97L35.56 96.97L30.95 96.9L27.62 96.77L24.92 96.59L22.63 96.35L20.62 96.07L18.82 95.73L17.2 95.33L15.73 94.88L14.38 94.37L13.14 93.81L12 93.18L10.95 92.49L9.98 91.74L9.08 90.92L8.26 90.02L7.51 89.05L6.82 88L6.19 86.86L5.63 85.62L5.12 84.27L4.67 82.8L4.27 81.18L3.93 79.38L3.65 77.37L3.41 75.08L3.23 72.38L3.1 69.05L3.03 64.44L3 50L3.03 35.56L3.1 30.95L3.23 27.62L3.41 24.92L3.65 22.63L3.93 20.62L4.27 18.82L4.67 17.2L5.12 15.73L5.63 14.38L6.19 13.14L6.82 12L7.51 10.95L8.26 9.98L9.08 9.08L9.98 8.26L10.95 7.51L12 6.82L13.14 6.19L14.38 5.63L15.73 5.12L17.2 4.67L18.82 4.27L20.62 3.93L22.63 3.65L24.92 3.41L27.62 3.23L30.95 3.1L35.56 3.03L50 3L64.44 3.03L69.05 3.1L72.38 3.23L75.08 3.41L77.37 3.65L79.38 3.93L81.18 4.27L82.8 4.67L84.27 5.12L85.62 5.63L86.86 6.19L88 6.82L89.05 7.51L90.02 8.26L90.92 9.08L91.74 9.98L92.49 10.95L93.18 12L93.81 13.14L94.37 14.38L94.88 15.73L95.33 17.2L95.73 18.82L96.07 20.62L96.35 22.63L96.59 24.92L96.77 27.62L96.9 30.95L96.97 35.56Z" fill="#18181b" stroke="#fff" stroke-opacity=".14" stroke-width="1"/>
+  <path d="M31 72.3V27.7L68.9 72.3V27.7" fill="none" stroke="#f2f3f5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="72.3" r="10" fill="#18181b"/><circle cx="31" cy="72.3" r="6.6" fill="#5865f2"/>
+  <circle cx="68.9" cy="27.7" r="10" fill="#18181b"/><circle cx="68.9" cy="27.7" r="6.6" fill="#5865f2"/>
 </g>
 </svg>

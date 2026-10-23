@@ -12,6 +12,7 @@
 
 class QLabel;
 class QPropertyAnimation;
+class QScrollArea;
 class FrameAnimation;
 class QVBoxLayout;
 class QTimer;
@@ -20,7 +21,7 @@ namespace Glass {
 
 QImage blurred(const QImage &source, int radius);
 
-enum class Tone { Panel, Raised, Sheet, Bar };
+enum class Tone { Panel, Raised, Sheet, Bar, Flat };
 void paintPanel(QPainter &painter, const QRectF &rect, qreal radius,
                 Tone tone = Tone::Panel);
 
@@ -81,6 +82,7 @@ protected:
     void paintEvent(QPaintEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
     bool eventFilter(QObject *watched, QEvent *event) override;
     virtual void rejected() { dismiss(); }
 
@@ -88,10 +90,15 @@ private:
     void layoutCard();
     void positionCard();
     void freezeCard();
+    void captureBackdrop();
+    void refreshBackdrop();
 
     QPointer<QWidget> m_host;
+    QPointer<QWidget> m_returnFocus;
     QWidget *m_card = nullptr;
     QVBoxLayout *m_body = nullptr;
+    QWidget *m_page = nullptr;
+    QScrollArea *m_scroll = nullptr;
     QWidget *m_header = nullptr;
     QPixmap m_snapshot;
     QPixmap m_plain;
@@ -101,6 +108,7 @@ private:
     qreal m_progress = 0;
     int m_width;
     bool m_closing = false;
+    bool m_backdropPending = false;
 };
 
 class ToastHost final : public QWidget {

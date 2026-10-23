@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="CONTRIBUTING.md">English</a> · <strong>Русский</strong>
+  <a href="CONTRIBUTING.md">English</a> · <strong>Русский</strong> · <a href="CONTRIBUTING.de.md">Deutsch</a>
 </p>
 
 <p align="center"><sub>
@@ -16,34 +16,24 @@
   <a href="THIRD_PARTY_NOTICES.ru.md">Сторонние компоненты</a>
 </sub></p>
 
-# <img src="docs/assets/brand/icons/edit.svg" width="32" height="32" alt=""> Участие в разработке Nexa
+# <img src="docs/assets/brand/icons/edit.svg" width="32" height="32" alt=""> Участие в разработке
 
-Спасибо, что помогаете сделать Nexa лучше.
+Спасибо, что хотите помочь Nexa.
 
-## <img src="docs/assets/brand/icons/check.svg" width="28" height="28" alt=""> Перед началом
+## Прежде чем начать
 
-- Прежде чем открыть issue, поищите среди существующих.
-- Для воспроизводимых ошибок используйте шаблон bug report.
-- Для предложений по продукту — шаблон feature request.
+- Сначала поищите свою тему среди открытых issue.
+- Ошибку оформляйте по шаблону bug report, идею — по шаблону feature request.
 - Один pull request — одно изменение.
 
 > [!WARNING]
-> Не публикуйте пароли, приватные ключи, настоящие адреса серверов и
-> чувствительные логи — ни в issue, ни в pull request, ни на скриншотах.
+> Не выкладывайте пароли, приватные ключи, настоящие адреса серверов и логи с
+> личными данными: ни в issue, ни в pull request, ни на скриншотах.
 
-## <img src="docs/assets/brand/icons/terminal.svg" width="28" height="28" alt=""> Окружение
+## Сборка
 
-Сейчас Nexa собирается под Windows в MSYS2 UCRT64. Нужные пакеты:
-
-| Пакет | Зачем |
-|---|---|
-| GCC с поддержкой C++20 | Компилятор |
-| CMake, Ninja | Сборка |
-| Qt 6 Base | Интерфейс, сеть, FTP и FTPS |
-| libssh | SSH и SFTP |
-| pkg-config | Поиск libssh |
-
-Сборка и тесты:
+Nexa собирается под Windows в MSYS2 UCRT64. Нужны GCC с C++20, CMake, Ninja,
+Qt 6 Base, libssh и pkg-config.
 
 ```powershell
 cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
@@ -51,53 +41,52 @@ cmake --build build --parallel
 ctest --test-dir build --output-on-failure
 ```
 
-## <img src="docs/assets/brand/icons/command.svg" width="28" height="28" alt=""> Стиль кода
+## Код
 
-- C++20.
-- На границах интерфейса и сигналов предпочитайте значимые типы Qt.
-- Сетевую работу и блокирующие операции с файлами держите вне потока
-  интерфейса.
-- Для нативных, SSH- и SFTP-ресурсов используйте RAII.
-- Не добавляйте секреты, пути конкретной машины и собранные бинарники.
-- Пишите в стиле окружающего файла.
-- При изменении поведения добавляйте или обновляйте тесты.
+- Пишите на C++20 и в стиле файла, который правите.
+- Сеть и долгую работу с файлами держите вне потока интерфейса.
+- Ресурсы SSH, SFTP и системные закрывайте через RAII.
+- Не добавляйте в репозиторий секреты, пути вашей машины и собранные файлы.
+- Меняете поведение — добавьте или поправьте тест.
 
-## <img src="docs/assets/brand/icons/folder.svg" width="28" height="28" alt=""> Документация
+## Документация
 
-Каждый документ существует на двух языках: `NAME.md` на английском и
-`NAME.ru.md` на русском, с переключателем языка вверху. Меняете один — меняйте
-и второй в том же pull request.
+У каждого документа три версии: `NAME.md` на английском, `NAME.ru.md` на
+русском и `NAME.de.md` на немецком. Меняете одну — меняйте и остальные в том же
+pull request. Структура и содержание у них одинаковые, различается только язык.
 
-- Тексты интерфейса пишутся по-русски прямо в исходниках, а английский и немецкий
-  переводы лежат в `src/ui/i18n_en.cpp` и `src/ui/i18n_de.cpp` (тест `i18n`
-  проверяет, что в обоих есть все строки); формулировки в README должны совпадать с тем,
-  что на самом деле пишет приложение на каждом языке.
-- Скриншоты снимает само приложение: `Nexa.exe --demo-shots docs\assets` и
-  `Nexa.exe --demo-shots docs\assets\ru --language ru`.
-- Баннер, цифры, иконки разделов и шапки документов в `docs/assets/brand`
-  создаёт `node scripts\brand-assets.mjs` по цветам из `src/ui/theme.h` и
-  формам иконок из `src/ui/icons.cpp`. Правьте скрипт, а не SVG-файлы.
+- Тексты интерфейса пишутся по-русски в исходниках, переводы лежат в
+  `src/ui/i18n_en.cpp` и `src/ui/i18n_de.cpp`. Названия кнопок в документации
+  должны совпадать с тем, что видно в приложении.
+- Скриншоты снимает само приложение:
 
-## <img src="docs/assets/brand/icons/refresh.svg" width="28" height="28" alt=""> Сообщения коммитов
+  ```powershell
+  .\build\Nexa.exe --demo-shots docs\assets --language en
+  .\build\Nexa.exe --demo-shots docs\assets\ru --language ru
+  .\build\Nexa.exe --demo-shots docs\assets\de --language de
+  ```
 
-Короткие повелительные фразы на английском:
+- Баннер, цифры и иконки в `docs/assets/brand` создаёт скрипт. Правьте его, а
+  не SVG-файлы:
+
+  ```powershell
+  node scripts\brand-assets.mjs
+  ```
+
+## Коммиты
+
+Короткая фраза на английском в повелительном наклонении:
 
 ```text
 Fix reconnect when listing a remote directory
 Add Explorer virtual-file drag support
-Improve transfer progress throttling
 ```
 
-## <img src="docs/assets/brand/icons/link.svg" width="28" height="28" alt=""> Pull request
+## Pull request
 
-В описании pull request должны быть:
-
-- какую проблему он решает;
-- как устроено решение;
-- как это проверено;
-- скриншоты для видимых изменений интерфейса;
-- обновлённая документация на обоих языках, если нужно.
+Расскажите в описании: что за проблема, как вы её решили и как проверили. Если
+менялся вид приложения, приложите скриншоты.
 
 > [!NOTE]
-> Отправляя вклад, вы соглашаетесь, что он распространяется по лицензии
+> Отправляя код, вы соглашаетесь, что он распространяется по лицензии
 > GPL-3.0-or-later.

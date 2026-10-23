@@ -28,7 +28,7 @@ if (Test-Path $stage) {
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 Copy-Item -Path (Join-Path $distDir "*") -Destination $stage -Recurse
 Copy-Item -LiteralPath (Join-Path $projectRoot "LICENSE") -Destination (Join-Path $stage "LICENSE.txt")
-foreach ($notice in "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.ru.md") {
+foreach ($notice in "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.ru.md", "THIRD_PARTY_NOTICES.de.md") {
     Copy-Item -LiteralPath (Join-Path $projectRoot $notice) -Destination $stage
 }
 

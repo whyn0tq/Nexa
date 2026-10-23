@@ -169,16 +169,16 @@ void Breadcrumb::paintEvent(QPaintEvent *event)
                 painter.drawText(QRectF(x - 22 - 14 + 14, 0, 22, height()), Qt::AlignCenter,
                                  QStringLiteral("…"));
                 Icons::paint(painter, Icon::ChevronRight, QRectF(x - 22 - 13, 10, 12, 12),
-                             Theme::TextFaint, 2);
+                             Theme::TextFaint);
             }
             Icons::paint(painter, Icon::ChevronRight, QRectF(x + 1, 10, 12, 12),
-                         Theme::TextFaint, 2);
+                         Theme::TextFaint);
         }
         if (segment.root) {
             Icons::paint(painter, m_remote ? Icon::Server : Icon::Computer,
                          QRectF(segment.rect.center().x() - 8, segment.rect.center().y() - 8,
                                 16, 16),
-                         last ? Theme::Text : Theme::TextSecondary, 1.8);
+                         last ? Theme::Text : Theme::TextSecondary);
             continue;
         }
         painter.setPen(last ? Theme::Text : Theme::TextSecondary);
@@ -222,10 +222,10 @@ void Breadcrumb::leaveEvent(QEvent *event)
 }
 
 FilePane::FilePane(bool remote, QWidget *parent)
-    : GlassPanel(Glass::Tone::Panel, Theme::RadiusLarge, parent), m_remote(remote)
+    : GlassPanel(Glass::Tone::Flat, 0, parent), m_remote(remote)
 {
     auto *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(10, 10, 10, 8);
+    layout->setContentsMargins(12, 10, 12, 8);
     layout->setSpacing(6);
 
     auto *top = new QHBoxLayout;
@@ -315,9 +315,15 @@ FilePane::FilePane(bool remote, QWidget *parent)
     connect(m_upButton, &IconButton::clicked, this, &FilePane::goUp);
     connect(m_refreshButton, &IconButton::clicked, this, &FilePane::refreshRequested);
     connect(m_crumbs, &Breadcrumb::pathActivated, this, &FilePane::navigateRequested);
-    connect(m_messageAction, &QPushButton::clicked, this, &FilePane::messageActionTriggered);
+    connect(m_messageAction, &QPushButton::clicked, this, [this] {
+        if (m_message == Message::NoMatches)
+            m_filter->clear();
+        else
+            emit messageActionTriggered();
+    });
     connect(m_filter, &QLineEdit::textChanged, this, [this](const QString &text) {
         m_proxy->setNameFilter(text);
+        showFilterResult();
         updateFooter();
     });
     connect(m_view, &FileView::openRequested, this, [this](const QModelIndex &index) {
@@ -344,7 +350,36 @@ FilePane::FilePane(bool remote, QWidget *parent)
 void FilePane::setCaption(const QString &caption, Icon icon)
 {
     m_caption->setText(caption.toUpper());
-    m_captionIcon->setPixmap(Icons::pixmap(icon, Theme::TextMuted, 16));
+    m_icon = icon;
+    updateCaption();
+}
+
+void FilePane::setActive(bool active)
+{
+    if (m_active == active)
+        return;
+    m_active = active;
+    updateCaption();
+    update();
+}
+
+void FilePane::updateCaption()
+{
+    const QColor tone = m_active ? Theme::Text : Theme::TextMuted;
+    m_caption->setStyleSheet(QStringLiteral("color:%1;").arg(tone.name()));
+    m_captionIcon->setPixmap(Icons::pixmap(m_icon, m_active ? Theme::AccentText : tone, 16));
+}
+
+void FilePane::paintEvent(QPaintEvent *event)
+{
+    GlassPanel::paintEvent(event);
+    if (!m_active)
+        return;
+    QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(Theme::Accent);
+    painter.drawRoundedRect(QRectF(12, 0, width() - 24, 2), 1, 1);
 }
 
 QString FilePane::parentOf(const QString &path, bool remote)
@@ -433,13 +468,35 @@ void FilePane::setEntries(const RemoteEntries &entries)
                     index, QItemSelectionModel::Select | QItemSelectionModel::Rows);
         }
     }
-    if (entries.isEmpty())
-        showMessage(Icon::Folder, tr("Папка пуста"),
-                    m_remote ? tr("Перетащите сюда файлы или папки — загрузка начнётся сразу.")
-                             : tr("Здесь пока ничего нет."));
-    else
-        showList();
+    if (entries.isEmpty()) {
+        if (m_remote)
+            showMessage(Icon::Folder, tr("Папка пуста"),
+                        tr("Перетащите сюда файлы или папки — загрузка начнётся сразу."),
+                        tr("Загрузить файлы"));
+        else
+            showMessage(Icon::Folder, tr("Папка пуста"),
+                        tr("Перетащите сюда файлы с сервера, чтобы скачать их в эту папку."),
+                        tr("Показать в Проводнике"));
+        m_message = Message::EmptyFolder;
+    } else {
+        m_message = Message::None;
+        showFilterResult();
+    }
     updateFooter();
+}
+
+void FilePane::showFilterResult()
+{
+    if (m_message == Message::Other || m_message == Message::EmptyFolder)
+        return;
+    if (m_model->rowCount() > 0 && m_proxy->rowCount() == 0) {
+        showMessage(Icon::Search, tr("Ничего не найдено"),
+                    tr("В этой папке нет имён с «%1».").arg(m_filter->text()),
+                    tr("Сбросить фильтр"));
+        m_message = Message::NoMatches;
+        return;
+    }
+    showList();
 }
 
 void FilePane::removeEntries(const QStringList &paths)
@@ -479,7 +536,7 @@ void FilePane::showMessage(Icon icon, const QString &title, const QString &text,
         if (icon == Icon::Folder)
             Icons::paintFolder(p, QRectF(14, 14, 28, 28));
         else
-            Icons::paint(p, icon, QRectF(15, 15, 26, 26), Theme::TextSecondary, 1.6);
+            Icons::paint(p, icon, QRectF(15, 15, 26, 26), Theme::TextSecondary);
     }
     m_messageIcon->setPixmap(pixmap);
     m_messageTitle->setText(title);
@@ -488,11 +545,13 @@ void FilePane::showMessage(Icon icon, const QString &title, const QString &text,
     m_messageAction->setText(action);
     m_messageAction->setVisible(!action.isEmpty());
     m_stack->setCurrentWidget(m_messagePage);
+    m_message = Message::Other;
 }
 
 void FilePane::showList()
 {
     m_stack->setCurrentWidget(m_view);
+    m_message = Message::None;
 }
 
 void FilePane::updateFooter()

@@ -1,7 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="24" viewBox="0 0 1280 24" aria-hidden="true">
-<defs><linearGradient id="dv" x1="0" x2="1280" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity="0"/><stop offset=".5" stop-color="#ff4256" stop-opacity=".85"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></linearGradient>
-<radialGradient id="dg" cx="640" cy="12" r="60" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff4256" stop-opacity=".45"/><stop offset="1" stop-color="#ff4256" stop-opacity="0"/></radialGradient></defs>
-<rect x="580" y="0" width="120" height="24" fill="url(#dg)"/>
-<rect x="0" y="11.5" width="1280" height="1" fill="url(#dv)"/>
-<rect x="636" y="8" width="8" height="8" rx="2" transform="rotate(45 640 12)" fill="#ff4256"/>
+<rect x="0" y="11.5" width="1280" height="1" fill="#8b949e" fill-opacity=".3"/>
+<rect x="616" y="11" width="48" height="2" rx="1" fill="#5865f2"/>
 </svg>

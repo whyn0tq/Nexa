@@ -1,5 +1,6 @@
 #include "icons.h"
 
+#include "hoststore.h"
 #include "theme.h"
 
 #include <QApplication>
@@ -7,6 +8,10 @@
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
+#include <QtMath>
+
+#include <algorithm>
+#include <cmath>
 
 namespace Icons {
 
@@ -57,6 +62,118 @@ QPainterPath circle(qreal cx, qreal cy, qreal r)
     return path;
 }
 
+QPainterPath roundedPolygon(std::initializer_list<QPointF> list, qreal radius)
+{
+    const QVector<QPointF> points(list);
+    const qsizetype n = points.size();
+    QPainterPath path;
+    for (qsizetype i = 0; i < n; ++i) {
+        const QPointF prev = points.at((i + n - 1) % n);
+        const QPointF at = points.at(i);
+        const QPointF next = points.at((i + 1) % n);
+        const QLineF in(at, prev);
+        const QLineF out(at, next);
+        const QPointF a = in.pointAt(std::min(0.5, radius / in.length()));
+        const QPointF b = out.pointAt(std::min(0.5, radius / out.length()));
+        i == 0 ? path.moveTo(a) : path.lineTo(a);
+        path.quadTo(at, b);
+    }
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath strokeOf(const QPainterPath &path, qreal width)
+{
+    QPainterPathStroker stroker;
+    stroker.setWidth(width);
+    stroker.setCapStyle(Qt::RoundCap);
+    stroker.setJoinStyle(Qt::RoundJoin);
+    return stroker.createStroke(path);
+}
+
+QPainterPath alertTriangle()
+{
+    return roundedPolygon({{12, 3.6}, {21.2, 19.6}, {2.8, 19.6}}, 2.2);
+}
+
+QPainterPath trashCan()
+{
+    return roundedPolygon({{6.3, 7}, {17.7, 7}, {16.8, 19.8}, {7.2, 19.8}}, 1.8);
+}
+
+QPainterPath databaseBody()
+{
+    QPainterPath path;
+    path.moveTo(4.5, 6);
+    path.arcTo(QRectF(4.5, 3.5, 15, 5), 180, -180);
+    path.lineTo(19.5, 18);
+    path.arcTo(QRectF(4.5, 15.5, 15, 5), 0, -180);
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath filePage()
+{
+    QPainterPath path;
+    path.moveTo(14, 3);
+    path.lineTo(7.5, 3);
+    path.quadTo(5, 3, 5, 5.5);
+    path.lineTo(5, 18.5);
+    path.quadTo(5, 21, 7.5, 21);
+    path.lineTo(16.5, 21);
+    path.quadTo(19, 21, 19, 18.5);
+    path.lineTo(19, 8);
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath gamepadBody()
+{
+    QPainterPath path;
+    path.moveTo(7, 5.5);
+    path.lineTo(17, 5.5);
+    path.quadTo(20.6, 5.5, 21, 9);
+    path.lineTo(21.6, 15.2);
+    path.quadTo(21.9, 18.5, 19, 18.5);
+    path.quadTo(17.6, 18.5, 16.6, 17.4);
+    path.lineTo(15.6, 16.3);
+    path.quadTo(15, 15.6, 14, 15.6);
+    path.lineTo(10, 15.6);
+    path.quadTo(9, 15.6, 8.4, 16.3);
+    path.lineTo(7.4, 17.4);
+    path.quadTo(6.4, 18.5, 5, 18.5);
+    path.quadTo(2.1, 18.5, 2.4, 15.2);
+    path.lineTo(3, 9);
+    path.quadTo(3.4, 5.5, 7, 5.5);
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath gearTeeth()
+{
+    const auto at = [](qreal degrees, qreal radius) {
+        const qreal r = qDegreesToRadians(degrees);
+        return QPointF(12 + radius * std::cos(r), 12 + radius * std::sin(r));
+    };
+    QPainterPath path;
+    for (int tooth = 0; tooth < 8; ++tooth) {
+        const qreal a = tooth * 45.0;
+        const QPointF start = at(a - 22.5, 6.6);
+        tooth == 0 ? path.moveTo(start) : path.lineTo(start);
+        path.lineTo(at(a - 13, 6.6));
+        path.lineTo(at(a - 8.5, 9));
+        path.lineTo(at(a + 8.5, 9));
+        path.lineTo(at(a + 13, 6.6));
+    }
+    path.closeSubpath();
+    return path;
+}
+
+QPainterPath houseBody()
+{
+    return roundedPolygon({{12, 4.2}, {18.5, 9.6}, {18.5, 19.5}, {5.5, 19.5}, {5.5, 9.6}}, 1.6);
+}
+
 QPainterPath folderOutline()
 {
     QPainterPath path;
@@ -76,16 +193,7 @@ QPainterPath folderOutline()
 
 QPainterPath fileOutline()
 {
-    QPainterPath path;
-    path.moveTo(14, 3);
-    path.lineTo(7.5, 3);
-    path.quadTo(5, 3, 5, 5.5);
-    path.lineTo(5, 18.5);
-    path.quadTo(5, 21, 7.5, 21);
-    path.lineTo(16.5, 21);
-    path.quadTo(19, 21, 19, 18.5);
-    path.lineTo(19, 8);
-    path.closeSubpath();
+    QPainterPath path = filePage();
     path.moveTo(14, 3);
     path.lineTo(14, 8);
     path.lineTo(19, 8);
@@ -140,9 +248,8 @@ QPainterPath shape(Icon icon, bool &filled)
         return p;
     }
     case Icon::Home:
-        p = polyline({{4, 11}, {12, 4.5}, {20, 11}});
-        p.addPath(polyline({{6, 9.5}, {6, 18}, {7.5, 19.5}, {16.5, 19.5}, {18, 18}, {18, 9.5}}));
-        p.addPath(polyline({{10, 19.5}, {10, 14.5}, {14, 14.5}, {14, 19.5}}));
+        p = houseBody();
+        p.addPath(polyline({{10.2, 19.5}, {10.2, 15}, {13.8, 15}, {13.8, 19.5}}));
         return p;
     case Icon::Plus:
         p.moveTo(12, 5);
@@ -205,13 +312,14 @@ QPainterPath shape(Icon icon, bool &filled)
     case Icon::Trash:
         p.moveTo(4.5, 7);
         p.lineTo(19.5, 7);
-        p.addPath(polyline({{9.5, 7}, {9.5, 4.5}, {14.5, 4.5}, {14.5, 7}}));
-        p.addPath(polyline({{6.5, 7}, {7.3, 18.2}, {8.8, 19.5}, {15.2, 19.5}, {16.7, 18.2},
-                            {17.5, 7}}));
-        p.moveTo(10.3, 10.5);
-        p.lineTo(10.3, 16);
-        p.moveTo(13.7, 10.5);
-        p.lineTo(13.7, 16);
+        p.addPath(polyline({{9.3, 7}, {9.3, 5.6}, {10.4, 4.5}, {13.6, 4.5}, {14.7, 5.6}, {14.7, 7}}));
+        p.addPath(trashCan());
+        p.moveTo(9.6, 10.5);
+        p.lineTo(9.9, 16.5);
+        p.moveTo(12, 10.5);
+        p.lineTo(12, 16.5);
+        p.moveTo(14.4, 10.5);
+        p.lineTo(14.1, 16.5);
         return p;
     case Icon::Rename:
         p = roundedRect(3, 7.5, 18, 9, 3);
@@ -236,10 +344,10 @@ QPainterPath shape(Icon icon, bool &filled)
     case Icon::Check:
         return polyline({{5, 12.5}, {10, 17.5}, {19, 7}});
     case Icon::Alert:
-        p = polyline({{12, 4}, {21, 19.5}, {3, 19.5}, {12, 4}});
-        p.moveTo(12, 10);
-        p.lineTo(12, 14);
-        p.addPath(circle(12, 16.8, 0.35));
+        p = alertTriangle();
+        p.moveTo(12, 9.8);
+        p.lineTo(12, 13.8);
+        p.addPath(circle(12, 16.6, 0.35));
         return p;
     case Icon::Info:
         p = circle(12, 12, 8.5);
@@ -330,6 +438,47 @@ QPainterPath shape(Icon icon, bool &filled)
         p.lineTo(20, 17);
         p.addPath(circle(12.5, 17, 2.3));
         return p;
+    case Icon::Gear:
+        p = gearTeeth();
+        p.addPath(circle(12, 12, 2.8));
+        return p;
+    case Icon::Globe:
+        p = circle(12, 12, 8.5);
+        p.addEllipse(QRectF(8.2, 3.5, 7.6, 17));
+        p.moveTo(3.5, 12);
+        p.lineTo(20.5, 12);
+        p.moveTo(5.2, 7.6);
+        p.quadTo(12, 9.4, 18.8, 7.6);
+        p.moveTo(5.2, 16.4);
+        p.quadTo(12, 14.6, 18.8, 16.4);
+        return p;
+    case Icon::Gamepad:
+        p = gamepadBody();
+        p.moveTo(6, 10.5);
+        p.lineTo(10, 10.5);
+        p.moveTo(8, 8.5);
+        p.lineTo(8, 12.5);
+        p.addPath(circle(15, 11.5, 0.45));
+        p.addPath(circle(18, 9.5, 0.45));
+        return p;
+    case Icon::Database: {
+        const QRectF top(4.5, 3.5, 15, 5);
+        const QRectF middle(4.5, 9.5, 15, 5);
+        const QRectF bottom(4.5, 15.5, 15, 5);
+        Q_UNUSED(bottom);
+        p = databaseBody();
+        p.arcMoveTo(top, 180);
+        p.arcTo(top, 180, 180);
+        p.arcMoveTo(middle, 180);
+        p.arcTo(middle, 180, 180);
+        return p;
+    }
+    case Icon::HardDrive:
+        p = roundedRect(3, 6.5, 18, 11, 3);
+        p.moveTo(6.5, 13.5);
+        p.lineTo(10.5, 13.5);
+        p.addPath(circle(17, 13.5, 0.45));
+        return p;
     case Icon::ExternalLink:
         p = polyline({{13, 4.5}, {19.5, 4.5}, {19.5, 11}});
         p.moveTo(19.5, 4.5);
@@ -339,6 +488,131 @@ QPainterPath shape(Icon icon, bool &filled)
         return p;
     }
     return p;
+}
+
+bool fillShape(Icon icon, qreal stroke, QPainterPath &result)
+{
+    QPainterPath body;
+    QPainterPath cut;
+    QPainterPath hole;
+    const auto solid = [&body, stroke](const QPainterPath &closed) {
+        body.addPath(closed);
+        body.addPath(strokeOf(closed, stroke));
+    };
+    switch (icon) {
+    case Icon::Server:
+        solid(roundedRect(4, 4.5, 16, 6.5, 2.5));
+        solid(roundedRect(4, 13, 16, 6.5, 2.5));
+        cut.moveTo(2, 12);
+        cut.lineTo(22, 12);
+        cut.addPath(circle(7.8, 7.75, 0.4));
+        cut.addPath(circle(7.8, 16.25, 0.4));
+        break;
+    case Icon::Computer:
+        solid(roundedRect(3.5, 4.5, 17, 11.5, 2.5));
+        body.addPath(strokeOf(polyline({{9, 20}, {15, 20}}), stroke));
+        body.addPath(strokeOf(polyline({{12, 16}, {12, 20}}), stroke));
+        break;
+    case Icon::Globe:
+        solid(circle(12, 12, 8.5));
+        cut.addEllipse(QRectF(8.2, 3.5, 7.6, 17));
+        cut.moveTo(3.5, 12);
+        cut.lineTo(20.5, 12);
+        break;
+    case Icon::Gamepad:
+        solid(gamepadBody());
+        cut.moveTo(6, 10.5);
+        cut.lineTo(10, 10.5);
+        cut.moveTo(8, 8.5);
+        cut.lineTo(8, 12.5);
+        cut.addPath(circle(15, 11.5, 0.45));
+        cut.addPath(circle(18, 9.5, 0.45));
+        break;
+    case Icon::Database:
+        solid(databaseBody());
+        cut.arcMoveTo(QRectF(4.5, 3.5, 15, 5), 180);
+        cut.arcTo(QRectF(4.5, 3.5, 15, 5), 180, 180);
+        cut.arcMoveTo(QRectF(4.5, 9.5, 15, 5), 180);
+        cut.arcTo(QRectF(4.5, 9.5, 15, 5), 180, 180);
+        break;
+    case Icon::HardDrive:
+        solid(roundedRect(3, 6.5, 18, 11, 3));
+        cut.moveTo(6.5, 13.5);
+        cut.lineTo(10.5, 13.5);
+        cut.addPath(circle(17, 13.5, 0.45));
+        break;
+    case Icon::Folder:
+        solid(folderOutline());
+        break;
+    case Icon::File:
+        solid(filePage());
+        cut.addPath(polyline({{14, 3}, {14, 8}, {19, 8}}));
+        break;
+    case Icon::Gear:
+        solid(gearTeeth());
+        hole = circle(12, 12, 3.2);
+        break;
+    case Icon::Check:
+        solid(circle(12, 12, 9));
+        cut.addPath(polyline({{8, 12.4}, {10.8, 15.2}, {16.2, 9.2}}));
+        break;
+    case Icon::Alert:
+        solid(alertTriangle());
+        cut.moveTo(12, 9.8);
+        cut.lineTo(12, 13.8);
+        cut.addPath(circle(12, 16.6, 0.35));
+        break;
+    case Icon::Info:
+        solid(circle(12, 12, 8.5));
+        cut.moveTo(12, 11);
+        cut.lineTo(12, 16);
+        cut.addPath(circle(12, 8, 0.35));
+        break;
+    case Icon::Shield: {
+        QPainterPath outline;
+        outline.moveTo(12, 3.5);
+        outline.lineTo(19, 6.5);
+        outline.lineTo(19, 11.5);
+        outline.cubicTo(19, 16, 15.8, 19, 12, 20.5);
+        outline.cubicTo(8.2, 19, 5, 16, 5, 11.5);
+        outline.lineTo(5, 6.5);
+        outline.closeSubpath();
+        solid(outline);
+        cut.addPath(polyline({{9, 12}, {11.2, 14.2}, {15.2, 10}}));
+        break;
+    }
+    case Icon::Trash:
+        solid(trashCan());
+        body.addPath(strokeOf(polyline({{4.5, 7}, {19.5, 7}}), stroke));
+        body.addPath(strokeOf(polyline({{9.3, 7}, {9.3, 5.6}, {10.4, 4.5}, {13.6, 4.5},
+                                        {14.7, 5.6}, {14.7, 7}}),
+                              stroke));
+        cut.moveTo(9.6, 10.5);
+        cut.lineTo(9.9, 16.5);
+        cut.moveTo(12, 10.5);
+        cut.lineTo(12, 16.5);
+        cut.moveTo(14.4, 10.5);
+        cut.lineTo(14.1, 16.5);
+        break;
+    case Icon::Home:
+        solid(houseBody());
+        hole = roundedRect(10.2, 15, 3.6, 6, 0.8);
+        break;
+    default:
+        return false;
+    }
+    body.setFillRule(Qt::WindingFill);
+    result = body.simplified();
+    if (!cut.isEmpty())
+        result = result.subtracted(strokeOf(cut, stroke));
+    if (!hole.isEmpty())
+        result = result.subtracted(hole);
+    return true;
+}
+
+qreal strokeFor(qreal size)
+{
+    return std::clamp(size * 0.085, 1.2, 2.2) / (size / 24.0);
 }
 }
 
@@ -350,8 +624,11 @@ void paint(QPainter &painter, Icon icon, const QRectF &rect, const QColor &color
     painter.save();
     painter.setRenderHint(QPainter::Antialiasing);
     painter.translate(rect.topLeft());
-    const qreal scale = std::min(rect.width(), rect.height()) / 24.0;
+    const qreal size = std::min(rect.width(), rect.height());
+    const qreal scale = size / 24.0;
     painter.scale(scale, scale);
+    if (strokeWidth <= 0)
+        strokeWidth = strokeFor(size);
     if (filled) {
         painter.setPen(Qt::NoPen);
         painter.setBrush(color);
@@ -364,15 +641,72 @@ void paint(QPainter &painter, Icon icon, const QRectF &rect, const QColor &color
     painter.restore();
 }
 
-QPixmap pixmap(Icon icon, const QColor &color, int size, qreal devicePixelRatio)
+void paintFilled(QPainter &painter, Icon icon, const QRectF &rect, const QColor &color)
+{
+    const qreal size = std::min(rect.width(), rect.height());
+    QPainterPath path;
+    if (!fillShape(icon, strokeFor(size), path)) {
+        paint(painter, icon, rect, color);
+        return;
+    }
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(rect.topLeft());
+    painter.scale(size / 24.0, size / 24.0);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(color);
+    painter.drawPath(path);
+    painter.restore();
+}
+
+QPixmap pixmap(Icon icon, const QColor &color, int size, qreal devicePixelRatio, bool filled)
 {
     const qreal ratio = devicePixelRatio > 0 ? devicePixelRatio : qApp->devicePixelRatio();
     QPixmap result(qCeil(size * ratio), qCeil(size * ratio));
     result.setDevicePixelRatio(ratio);
     result.fill(Qt::transparent);
     QPainter painter(&result);
-    paint(painter, icon, QRectF(0, 0, size, size), color, size <= 16 ? 1.8 : 1.7);
+    const QRectF rect(0, 0, size, size);
+    filled ? paintFilled(painter, icon, rect, color) : paint(painter, icon, rect, color);
     return result;
+}
+
+Icon hostIcon(HostKind kind)
+{
+    switch (kind) {
+    case HostKind::Server:
+        return Icon::Server;
+    case HostKind::Web:
+        return Icon::Globe;
+    case HostKind::Game:
+        return Icon::Gamepad;
+    case HostKind::Database:
+        return Icon::Database;
+    case HostKind::Storage:
+        return Icon::HardDrive;
+    case HostKind::Desktop:
+        return Icon::Computer;
+    }
+    return Icon::Server;
+}
+
+QString hostKindName(HostKind kind)
+{
+    switch (kind) {
+    case HostKind::Server:
+        break;
+    case HostKind::Web:
+        return QCoreApplication::translate("HostKind", "Веб-сервер");
+    case HostKind::Game:
+        return QCoreApplication::translate("HostKind", "Игровой сервер");
+    case HostKind::Database:
+        return QCoreApplication::translate("HostKind", "База данных");
+    case HostKind::Storage:
+        return QCoreApplication::translate("HostKind", "Хранилище, NAS");
+    case HostKind::Desktop:
+        return QCoreApplication::translate("HostKind", "Компьютер");
+    }
+    return QCoreApplication::translate("HostKind", "Сервер");
 }
 
 QIcon icon(Icon value, const QColor &color, int size)
@@ -404,22 +738,14 @@ void paintFolder(QPainter &painter, const QRectF &rect, bool open)
     back.lineTo(5, 19.5);
     back.quadTo(2.5, 19.5, 2.5, 17);
     back.closeSubpath();
-    QLinearGradient backFill(0, 4, 0, 20);
-    backFill.setColorAt(0, QColor(200, 38, 64));
-    backFill.setColorAt(1, QColor(130, 18, 38));
     painter.setPen(Qt::NoPen);
-    painter.setBrush(backFill);
+    painter.setBrush(QColor(48, 118, 190));
     painter.drawPath(back);
 
     QPainterPath front;
     front.addRoundedRect(QRectF(2.5, 8.5, 19, 11), 2.5, 2.5);
-    QLinearGradient frontFill(0, 8.5, 0, 19.5);
-    frontFill.setColorAt(0, QColor(255, 104, 120));
-    frontFill.setColorAt(1, QColor(232, 46, 72));
-    painter.setBrush(frontFill);
+    painter.setBrush(QColor(92, 162, 230));
     painter.drawPath(front);
-    painter.setPen(QPen(QColor(255, 255, 255, 70), 0.6));
-    painter.drawLine(QPointF(4.2, 9.3), QPointF(19.8, 9.3));
     painter.restore();
 }
 
@@ -469,52 +795,47 @@ void paintLogo(QPainter &painter, const QRectF &rect)
     const qreal s = std::min(rect.width(), rect.height()) / 100.0;
     painter.scale(s, s);
 
-    const QRectF tile(3, 3, 94, 94);
     QPainterPath tilePath;
-    tilePath.addRoundedRect(tile, 26, 26);
-    QLinearGradient body(0, 3, 0, 97);
-    body.setColorAt(0, QColor(34, 34, 40));
-    body.setColorAt(1, QColor(10, 10, 12));
+    constexpr int steps = 360;
+    constexpr qreal exponent = 5.0;
+    for (int i = 0; i <= steps; ++i) {
+        const qreal t = 2 * M_PI * i / steps;
+        const qreal c = std::cos(t);
+        const qreal sn = std::sin(t);
+        const QPointF p(50 + 47 * (c < 0 ? -1 : 1) * std::pow(std::abs(c), 2 / exponent),
+                        50 + 47 * (sn < 0 ? -1 : 1) * std::pow(std::abs(sn), 2 / exponent));
+        i == 0 ? tilePath.moveTo(p) : tilePath.lineTo(p);
+    }
+    tilePath.closeSubpath();
+
+    const QColor tile(24, 24, 27);
     painter.setPen(Qt::NoPen);
-    painter.setBrush(body);
+    painter.setBrush(tile);
     painter.drawPath(tilePath);
-
-    QRadialGradient glow(QPointF(24, 92), 70);
-    glow.setColorAt(0, QColor(255, 66, 86, 120));
-    glow.setColorAt(1, QColor(255, 66, 86, 0));
-    painter.setBrush(glow);
-    painter.drawPath(tilePath);
-
-    QLinearGradient rim(0, 3, 0, 97);
-    rim.setColorAt(0, QColor(255, 255, 255, 70));
-    rim.setColorAt(0.5, QColor(255, 255, 255, 14));
-    rim.setColorAt(1, QColor(255, 255, 255, 26));
+    painter.setPen(QPen(QColor(255, 255, 255, 40), std::max(1.0, 1.0 / s)));
     painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(QBrush(rim), 1.6));
-    painter.drawRoundedRect(tile.adjusted(0.8, 0.8, -0.8, -0.8), 25.2, 25.2);
+    painter.drawPath(tilePath);
 
-    const auto drawArrow = [&painter](qreal x, qreal top, qreal bottom, bool up,
-                                      const QBrush &brush) {
-        QPainterPath path;
-        const qreal tip = up ? top : bottom;
-        const qreal tail = up ? bottom : top;
-        const qreal head = 13;
-        path.moveTo(x, tail);
-        path.lineTo(x, tip);
-        path.moveTo(x - head, tip + (up ? head : -head));
-        path.lineTo(x, tip);
-        path.lineTo(x + head, tip + (up ? head : -head));
-        painter.setPen(QPen(brush, 9.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-        painter.drawPath(path);
-    };
-    QLinearGradient red(0, 24, 0, 72);
-    red.setColorAt(0, QColor(255, 112, 126));
-    red.setColorAt(1, QColor(228, 34, 62));
-    QLinearGradient silver(0, 28, 0, 76);
-    silver.setColorAt(0, QColor(255, 255, 255));
-    silver.setColorAt(1, QColor(170, 170, 180));
-    drawArrow(38, 25, 70, true, red);
-    drawArrow(62, 30, 75, false, silver);
+    const QPointF a(31, 72.3);
+    const QPointF b(31, 27.7);
+    const QPointF c(68.9, 72.3);
+    const QPointF d(68.9, 27.7);
+    QPainterPath mark;
+    mark.moveTo(a);
+    mark.lineTo(b);
+    mark.lineTo(c);
+    mark.lineTo(d);
+    const bool small = rect.width() < 28;
+    painter.setPen(QPen(Theme::Text, small ? 9.5 : 8, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.drawPath(mark);
+
+    painter.setPen(Qt::NoPen);
+    for (const QPointF &node : {a, d}) {
+        painter.setBrush(tile);
+        painter.drawEllipse(node, 10, 10);
+        painter.setBrush(Theme::Accent);
+        painter.drawEllipse(node, 6.6, 6.6);
+    }
     painter.restore();
 }
 

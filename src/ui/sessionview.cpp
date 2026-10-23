@@ -137,25 +137,25 @@ void DropOverlay::paintEvent(QPaintEvent *event)
     QPainterPath outside;
     outside.addRect(rect());
     QPainterPath inside;
-    inside.addRoundedRect(area, 16, 16);
-    painter.fillPath(outside.subtracted(inside), QColor(4, 4, 6, 120));
-    painter.fillPath(inside, QColor(255, 66, 86, 22));
+    inside.addRoundedRect(area, 8, 8);
+    painter.fillPath(outside.subtracted(inside), QColor(0, 0, 0, 150));
+    painter.fillPath(inside, Theme::withAlpha(Theme::Accent, 22));
     QPen dash(Theme::Accent, 1.6, Qt::DashLine, Qt::RoundCap);
     dash.setDashPattern({5, 4});
     painter.setPen(dash);
     painter.setBrush(Qt::NoBrush);
-    painter.drawRoundedRect(area, 16, 16);
+    painter.drawRoundedRect(area, 8, 8);
 
     painter.setFont(Theme::font(14, QFont::DemiBold));
     const qreal textWidth = painter.fontMetrics().horizontalAdvance(m_text);
     const qreal width = std::min<qreal>(textWidth + 64, area.width() - 32);
     const QRectF pill(area.center().x() - width / 2, area.bottom() - 70, width, 46);
-    Glass::paintPanel(painter, pill, 14, Glass::Tone::Sheet);
+    Glass::paintPanel(painter, pill, 8, Glass::Tone::Sheet);
     const QRectF badge(pill.left() + 8, pill.top() + 8, 30, 30);
     painter.setPen(Qt::NoPen);
     painter.setBrush(Theme::Accent);
-    painter.drawRoundedRect(badge, 9, 9);
-    Icons::paint(painter, m_icon, badge.adjusted(7, 7, -7, -7), Qt::white, 2);
+    painter.drawRoundedRect(badge, 15, 15);
+    Icons::paint(painter, m_icon, badge.adjusted(7, 7, -7, -7), Qt::white);
     painter.setPen(Theme::Text);
     painter.drawText(QRectF(badge.right() + 10, pill.top(), pill.right() - badge.right() - 22,
                             pill.height()),
@@ -171,12 +171,18 @@ SessionView::SessionView(Session *session, ToastHost *toasts, QWidget *parent)
     setAcceptDrops(true);
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(10);
+    layout->setSpacing(0);
     layout->addWidget(buildHeader());
+    auto *rule = new QFrame;
+    rule->setFixedHeight(1);
+    rule->setStyleSheet(QStringLiteral("background:%1;").arg(Theme::Divider.name()));
+    layout->addWidget(rule);
 
     m_splitter = new QSplitter(Qt::Horizontal);
     m_splitter->setChildrenCollapsible(false);
-    m_splitter->setHandleWidth(10);
+    m_splitter->setHandleWidth(1);
+    m_splitter->setStyleSheet(
+        QStringLiteral("QSplitter::handle{background:%1;}").arg(Theme::Divider.name()));
     m_local = new FilePane(false);
     m_local->setCaption(tr("Этот компьютер"), Icon::Computer);
     m_remote = new FilePane(true);
@@ -196,6 +202,17 @@ SessionView::SessionView(Session *session, ToastHost *toasts, QWidget *parent)
                 child->setAcceptDrops(false);
         }
     }
+    m_remote->setActive(true);
+    connect(qApp, &QApplication::focusChanged, this, [this](QWidget *, QWidget *now) {
+        if (!now)
+            return;
+        const bool inLocal = now == m_local || m_local->isAncestorOf(now);
+        const bool inRemote = now == m_remote || m_remote->isAncestorOf(now);
+        if (inLocal || inRemote) {
+            m_local->setActive(inLocal);
+            m_remote->setActive(inRemote);
+        }
+    });
 
     m_watcher = new QFileSystemWatcher(this);
     m_editWatcher = new QFileSystemWatcher(this);
@@ -225,8 +242,12 @@ SessionView::SessionView(Session *session, ToastHost *toasts, QWidget *parent)
     connect(m_remote, &FilePane::refreshRequested, this, &SessionView::refreshRemote);
     connect(m_remote, &FilePane::entryOpened, this, &SessionView::openRemoteEntry);
     connect(m_remote, &FilePane::contextMenuRequested, this, &SessionView::remoteMenu);
+    connect(m_local, &FilePane::messageActionTriggered, this,
+            [this] { QDesktopServices::openUrl(QUrl::fromLocalFile(m_localPath)); });
     connect(m_remote, &FilePane::messageActionTriggered, this, [this] {
-        if (m_session->online())
+        if (m_remote->showsEmptyFolder())
+            uploadDialog(false);
+        else if (m_session->online())
             refreshRemote();
         else
             m_session->retry();
@@ -320,30 +341,31 @@ SessionView::SessionView(Session *session, ToastHost *toasts, QWidget *parent)
 
 QWidget *SessionView::buildHeader()
 {
-    m_header = new GlassPanel(Glass::Tone::Panel, Theme::RadiusLarge);
-    m_header->setFixedHeight(56);
+    m_header = new GlassPanel(Glass::Tone::Flat, 0);
+    m_header->setFixedHeight(48);
     auto *layout = new QHBoxLayout(m_header);
     layout->setContentsMargins(16, 0, 10, 0);
     layout->setSpacing(10);
     m_dot = new StatusDot;
     layout->addWidget(m_dot);
-    m_title = makeLabel(QString(), 15, Theme::Text, QFont::DemiBold);
+    m_title = makeLabel(QString(), 16, Theme::Text, QFont::Bold);
     layout->addWidget(m_title);
-    m_endpoint = makeLabel(QString(), 13, Theme::TextMuted);
+    m_endpoint = makeLabel(QString(), 14, Theme::TextMuted);
     layout->addWidget(m_endpoint);
     layout->addSpacing(6);
     m_status = makeLabel(QString(), 12.5, Theme::TextSecondary);
     layout->addWidget(m_status, 1);
 
     m_reconnect = makeButton(tr("Переподключить"), QStringLiteral("primary"), Icon::Retry, true);
-    m_reconnect->setStyleSheet(QStringLiteral("min-height:32px;border-radius:9px;"));
+    m_reconnect->setStyleSheet(QStringLiteral("min-height:30px;border-radius:8px;"));
     m_reconnect->hide();
     connect(m_reconnect, &QPushButton::clicked, this, [this] { m_session->retry(); });
     layout->addWidget(m_reconnect);
 
     const auto tool = [this, layout](Icon icon, const QString &tip, auto slot) {
         auto *button = new IconButton(icon, tip);
-        button->setFixedSize(36, 36);
+        button->setFixedSize(34, 34);
+        button->setIconSize(20);
         connect(button, &IconButton::clicked, this, slot);
         layout->addWidget(button);
         return button;
@@ -549,7 +571,7 @@ void SessionView::refreshLocal()
 
 void SessionView::navigateBack()
 {
-    if (m_remote->view()->hasFocus() || !m_local->view()->hasFocus())
+    if (!localFocused())
         m_remote->goBack();
     else
         m_local->goBack();
@@ -557,7 +579,7 @@ void SessionView::navigateBack()
 
 void SessionView::navigateForward()
 {
-    if (m_remote->view()->hasFocus() || !m_local->view()->hasFocus())
+    if (!localFocused())
         m_remote->goForward();
     else
         m_local->goForward();
@@ -713,7 +735,7 @@ void SessionView::renameRemote()
         return;
     const RemoteEntry entry = entries.first();
     Sheets::prompt(window(), tr("Переименовать"), tr("Новое имя"), entry.name,
-                   tr("Переименовать"), Icon::Edit, [this, entry](const QString &name) {
+                   tr("Переименовать"), Icon::Rename, [this, entry](const QString &name) {
                        if (name != entry.name)
                            m_session->rename(entry.path,
                                              remoteJoin(remoteParent(entry.path), name));
@@ -741,8 +763,7 @@ void SessionView::deleteRemote()
 
 bool SessionView::localFocused() const
 {
-    const QWidget *focus = QApplication::focusWidget();
-    return focus && (focus == m_local || m_local->isAncestorOf(focus));
+    return m_local->isActive();
 }
 
 void SessionView::deleteFocused()

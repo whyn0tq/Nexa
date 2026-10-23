@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Nexa — ein schneller SFTP-, FTP- und FTPS-Client für Windows">
+<title>Nexa — ein schneller SFTP-, FTP- und FTPS-Client für Windows</title>
+<rect width="1280" height="640" rx="12" fill="#111113"/>
+<rect x=".5" y=".5" width="1279" height="639" rx="11.5" fill="none" stroke="#fff" stroke-opacity=".08"/>
+<g transform="translate(64 200) scale(0.6)">
+  <path d="M97 50L96.97 64.44L96.9 69.05L96.77 72.38L96.59 75.08L96.35 77.37L96.07 79.38L95.73 81.18L95.33 82.8L94.88 84.27L94.37 85.62L93.81 86.86L93.18 88L92.49 89.05L91.74 90.02L90.92 90.92L90.02 91.74L89.05 92.49L88 93.18L86.86 93.81L85.62 94.37L84.27 94.88L82.8 95.33L81.18 95.73L79.38 96.07L77.37 96.35L75.08 96.59L72.38 96.77L69.05 96.9L64.44 96.97L50 97L35.56 96.97L30.95 96.9L27.62 96.77L24.92 96.59L22.63 96.35L20.62 96.07L18.82 95.73L17.2 95.33L15.73 94.88L14.38 94.37L13.14 93.81L12 93.18L10.95 92.49L9.98 91.74L9.08 90.92L8.26 90.02L7.51 89.05L6.82 88L6.19 86.86L5.63 85.62L5.12 84.27L4.67 82.8L4.27 81.18L3.93 79.38L3.65 77.37L3.41 75.08L3.23 72.38L3.1 69.05L3.03 64.44L3 50L3.03 35.56L3.1 30.95L3.23 27.62L3.41 24.92L3.65 22.63L3.93 20.62L4.27 18.82L4.67 17.2L5.12 15.73L5.63 14.38L6.19 13.14L6.82 12L7.51 10.95L8.26 9.98L9.08 9.08L9.98 8.26L10.95 7.51L12 6.82L13.14 6.19L14.38 5.63L15.73 5.12L17.2 4.67L18.82 4.27L20.62 3.93L22.63 3.65L24.92 3.41L27.62 3.23L30.95 3.1L35.56 3.03L50 3L64.44 3.03L69.05 3.1L72.38 3.23L75.08 3.41L77.37 3.65L79.38 3.93L81.18 4.27L82.8 4.67L84.27 5.12L85.62 5.63L86.86 6.19L88 6.82L89.05 7.51L90.02 8.26L90.92 9.08L91.74 9.98L92.49 10.95L93.18 12L93.81 13.14L94.37 14.38L94.88 15.73L95.33 17.2L95.73 18.82L96.07 20.62L96.35 22.63L96.59 24.92L96.77 27.62L96.9 30.95L96.97 35.56Z" fill="#18181b" stroke="#fff" stroke-opacity=".14" stroke-width="1.67"/>
+  <path d="M31 72.3V27.7L68.9 72.3V27.7" fill="none" stroke="#f2f3f5" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="72.3" r="10" fill="#18181b"/><circle cx="31" cy="72.3" r="6.6" fill="#5865f2"/>
+  <circle cx="68.9" cy="27.7" r="10" fill="#18181b"/><circle cx="68.9" cy="27.7" r="6.6" fill="#5865f2"/>
+</g>
+<text x="144" y="250" font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="60" font-weight="700" letter-spacing="-1.2" fill="#f2f3f5">Nexa</text>
+<text font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="27" font-weight="500" fill="#f2f3f5"><tspan x="64" y="334">Schneller SFTP-, FTP- und</tspan><tspan x="64" y="372">FTPS-Client für Windows.</tspan></text>
+<text font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="20" fill="#949ba4"><tspan x="64" y="418">Ein Tab pro Server.</tspan><tspan x="64" y="448">Übertragungen ohne Abbrüche.</tspan></text>
+<g transform="translate(518 38) scale(1.1)">
+<rect x="0" y="0" width="656" height="512" rx="8" fill="#000000"/>
+<rect x="0" y="40" width="656" height="1" fill="#1e1e20"/>
+<rect x="0" y="84" width="656" height="1" fill="#1e1e20"/>
+<rect x="328" y="85" width="1" height="331" fill="#1e1e20"/>
+<rect x="0" y="416" width="656" height="1" fill="#1e1e20"/>
+<g transform="translate(12 10) scale(0.2)">
+  <path d="M97 50L96.97 64.44L96.9 69.05L96.77 72.38L96.59 75.08L96.35 77.37L96.07 79.38L95.73 81.18L95.33 82.8L94.88 84.27L94.37 85.62L93.81 86.86L93.18 88L92.49 89.05L91.74 90.02L90.92 90.92L90.02 91.74L89.05 92.49L88 93.18L86.86 93.81L85.62 94.37L84.27 94.88L82.8 95.33L81.18 95.73L79.38 96.07L77.37 96.35L75.08 96.59L72.38 96.77L69.05 96.9L64.44 96.97L50 97L35.56 96.97L30.95 96.9L27.62 96.77L24.92 96.59L22.63 96.35L20.62 96.07L18.82 95.73L17.2 95.33L15.73 94.88L14.38 94.37L13.14 93.81L12 93.18L10.95 92.49L9.98 91.74L9.08 90.92L8.26 90.02L7.51 89.05L6.82 88L6.19 86.86L5.63 85.62L5.12 84.27L4.67 82.8L4.27 81.18L3.93 79.38L3.65 77.37L3.41 75.08L3.23 72.38L3.1 69.05L3.03 64.44L3 50L3.03 35.56L3.1 30.95L3.23 27.62L3.41 24.92L3.65 22.63L3.93 20.62L4.27 18.82L4.67 17.2L5.12 15.73L5.63 14.38L6.19 13.14L6.82 12L7.51 10.95L8.26 9.98L9.08 9.08L9.98 8.26L10.95 7.51L12 6.82L13.14 6.19L14.38 5.63L15.73 5.12L17.2 4.67L18.82 4.27L20.62 3.93L22.63 3.65L24.92 3.41L27.62 3.23L30.95 3.1L35.56 3.03L50 3L64.44 3.03L69.05 3.1L72.38 3.23L75.08 3.41L77.37 3.65L79.38 3.93L81.18 4.27L82.8 4.67L84.27 5.12L85.62 5.63L86.86 6.19L88 6.82L89.05 7.51L90.02 8.26L90.92 9.08L91.74 9.98L92.49 10.95L93.18 12L93.81 13.14L94.37 14.38L94.88 15.73L95.33 17.2L95.73 18.82L96.07 20.62L96.35 22.63L96.59 24.92L96.77 27.62L96.9 30.95L96.97 35.56Z" fill="#18181b" stroke="#fff" stroke-opacity=".14" stroke-width="5"/>
+  <path d="M31 72.3V27.7L68.9 72.3V27.7" fill="none" stroke="#f2f3f5" stroke-width="9.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="31" cy="72.3" r="10" fill="#18181b"/><circle cx="31" cy="72.3" r="6.6" fill="#5865f2"/>
+  <circle cx="68.9" cy="27.7" r="10" fill="#18181b"/><circle cx="68.9" cy="27.7" r="6.6" fill="#5865f2"/>
+</g>
+  <rect x="40" y="6" width="119" height="28" rx="6" fill="#fff" fill-opacity=".08"/>
+  <rect x="50" y="14" width="2" height="12" rx="1" fill="#ff8a3d"/>
+  <circle cx="60" cy="20" r="3" fill="#23a55a"/>
+  <text x="69" y="24.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12.5" font-weight="600" fill="#f2f3f5">web-prod</text>
+  <g transform="translate(137 14) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7L7 17"/></g>
+  
+  <rect x="173" y="14" width="2" height="12" rx="1" fill="#3ddc97"/>
+  <circle cx="183" cy="20" r="3" fill="#23a55a"/>
+  <text x="192" y="24.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12.5" fill="#b5bac1">Storage</text>
+  
+  <g transform="translate(261 13) scale(0.58)" fill="none" stroke="#949ba4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></g>
+  <rect x="324.5" y="7.5" width="199" height="25" rx="6" fill="none" stroke="#fff" stroke-opacity=".12"/>
+  <text x="335" y="24" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12" fill="#949ba4">Suche und Befehle</text>
+  <rect x="478" y="12" width="38" height="16" rx="4" fill="#fff" fill-opacity=".09"/>
+  <text x="497" y="23.8" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10" font-weight="600" fill="#b5bac1">Ctrl K</text>
+  <g transform="translate(550 14) scale(0.5)" fill="none" stroke="#b5bac1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12h12"/></g><g transform="translate(590 14) scale(0.5)" fill="none" stroke="#b5bac1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="11" height="11" rx="1"/></g><g transform="translate(630 14) scale(0.5)" fill="none" stroke="#b5bac1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7L7 17"/></g>
+<circle cx="19" cy="62" r="4" fill="#23a55a"/>
+  <text x="32" y="67" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="15" font-weight="600" fill="#f2f3f5">web-prod</text>
+  <text x="109.88" y="66.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#b5bac1">deploy@web-01.example.com:22 · SFTP</text>
+  <text x="365.24" y="66" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12" fill="#949ba4">Verbunden · Ping 24 ms</text>
+  <g transform="translate(544 54) scale(0.67)" fill="none" stroke="#b5bac1" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4.5M7.5 9L12 4.5 16.5 9M5 15v3.5h14V15"/></g><g transform="translate(570 54) scale(0.67)" fill="none" stroke="#b5bac1" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 7.5q0-2 2-2h3.7l2 2h7.3q2 0 2 2v7q0 2-2 2h-13q-2 0-2-2zM12 10.5v5M9.5 13h5"/></g><g transform="translate(596 54) scale(0.67)" fill="none" stroke="#b5bac1" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5V15M7.5 10.5L12 15l4.5-4.5M5 15v3.5h14V15"/></g><g transform="translate(622 54) scale(0.67)" fill="none" stroke="#b5bac1" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M9.5 7V5h5v2M7 7l.8 12h8.4L17 7"/></g>
+<rect x="8" y="85" width="312" height="2" rx="1" fill="#5865f2"/>
+  <g transform="translate(16 95) scale(0.58)" fill="none" stroke="#b5bac1" stroke-width="2.57" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="11.5" rx="2"/><path d="M9 20h6M12 16v4"/></g>
+  <text x="37" y="106.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" letter-spacing=".6" fill="#f2f3f5">DIESER PC</text>
+  <rect x="220.5" y="91.5" width="95" height="23" rx="6" fill="none" stroke="#fff" stroke-opacity=".2"/>
+  <g transform="translate(228 97) scale(0.5)" fill="none" stroke="#80838c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></g>
+  <text x="246" y="107" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#80838c">Filter</text>
+  <g transform="translate(12 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></g><g transform="translate(32 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></g><g transform="translate(52 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/></g>
+  <g transform="translate(72 129) scale(0.58)" fill="none" stroke="#949ba4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="11.5" rx="2"/><path d="M9 20h6M12 16v4"/></g>
+  <text x="92" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#b5bac1">D:</text><g transform="translate(106.96 130) scale(0.5)" fill="none" stroke="#80838c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 7.5l4.5 4.5-4.5 4.5"/></g><text x="123.96" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#b5bac1">Projects</text><g transform="translate(170.9 130) scale(0.5)" fill="none" stroke="#80838c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 7.5l4.5 4.5-4.5 4.5"/></g><text x="187.9" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">website</text>
+  <g transform="translate(302 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 12a6.5 6.5 0 1 1-1.9-4.6M18.5 5v4h-4"/></g>
+  <text x="16" y="170" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#949ba4">NAME</text>
+  <text x="216" y="170" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#949ba4">GRÖSSE</text>
+  <text x="228" y="170" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#949ba4">GEÄNDERT</text>
+  
+  <path d="M16 190q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M16 193.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="42" y="199.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">app</text>
+  
+  <text x="228" y="199.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">heute 00:11</text>
+  <rect x="6" y="211" width="316" height="28" rx="6" fill="#5865f2" fill-opacity=".2"/>
+  <path d="M16 220q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M16 223.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="42" y="229.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">public</text>
+  
+  <text x="228" y="229.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">heute 00:09</text>
+  
+  <path d="M16 250q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M16 253.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="42" y="259.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">resources</text>
+  
+  <text x="228" y="259.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">22.10. 21:14</text>
+  
+  <path d="M25 277.5h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="#80838c" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="42" y="289.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">composer.json</text>
+  <text x="216" y="289.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">2,4 KB</text>
+  <text x="228" y="289.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">22.10. 00:02</text>
+  
+  <path d="M25 307.5h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="#80838c" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="42" y="319.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">deploy.sh</text>
+  <text x="216" y="319.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">3,1 KB</text>
+  <text x="228" y="319.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">heute 00:42</text>
+  
+  <path d="M25 337.5h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="#80838c" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="42" y="349.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">package.json</text>
+  <text x="216" y="349.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">1,8 KB</text>
+  <text x="228" y="349.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">22.10. 22:11</text>
+  
+  <path d="M25 367.5h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="#80838c" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="42" y="379.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">vite.config.js</text>
+  <text x="216" y="379.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">1,1 KB</text>
+  <text x="228" y="379.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">21.10. 23:15</text>
+  <text x="16" y="407" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#80838c">Ordner: 3 · Dateien: 4 · 8,4 KB</text>
+
+  <g transform="translate(345 95) scale(0.58)" fill="none" stroke="#b5bac1" stroke-width="2.57" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.5" width="16" height="6.5" rx="2"/><rect x="4" y="13" width="16" height="6.5" rx="2"/></g>
+  <text x="366" y="106.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" letter-spacing=".6" fill="#b5bac1">SERVER</text>
+  <rect x="548.5" y="91.5" width="95" height="23" rx="6" fill="none" stroke="#fff" stroke-opacity=".2"/>
+  <g transform="translate(556 97) scale(0.5)" fill="none" stroke="#80838c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></g>
+  <text x="574" y="107" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#80838c">Filter</text>
+  <g transform="translate(341 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6l-6 6 6 6"/></g><g transform="translate(361 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6l6 6-6 6"/></g><g transform="translate(381 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6.5 10.5L12 5l5.5 5.5"/></g>
+  <g transform="translate(401 129) scale(0.58)" fill="none" stroke="#949ba4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.5" width="16" height="6.5" rx="2"/><rect x="4" y="13" width="16" height="6.5" rx="2"/></g>
+  <text x="421" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#b5bac1">var</text><g transform="translate(441.68 130) scale(0.5)" fill="none" stroke="#80838c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 7.5l4.5 4.5-4.5 4.5"/></g><text x="458.68" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#b5bac1">www</text><g transform="translate(492.88 130) scale(0.5)" fill="none" stroke="#80838c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 7.5l4.5 4.5-4.5 4.5"/></g><text x="509.88" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">shop</text>
+  <g transform="translate(630 130) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 12a6.5 6.5 0 1 1-1.9-4.6M18.5 5v4h-4"/></g>
+  <text x="345" y="170" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#949ba4">NAME</text>
+  <text x="544" y="170" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#949ba4">GRÖSSE</text>
+  <text x="556" y="170" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="10.5" font-weight="600" letter-spacing=".5" fill="#949ba4">GEÄNDERT</text>
+  
+  <path d="M345 190q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M345 193.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="371" y="199.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">app</text>
+  
+  <text x="556" y="199.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">heute 00:09</text>
+  
+  <path d="M345 220q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M345 223.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="371" y="229.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">bootstrap</text>
+  
+  <text x="556" y="229.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">21.10. 00:45</text>
+  
+  <path d="M345 250q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M345 253.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="371" y="259.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">config</text>
+  
+  <text x="556" y="259.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">22.10. 00:43</text>
+  
+  <path d="M345 280q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M345 283.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="371" y="289.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">public</text>
+  
+  <text x="556" y="289.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">heute 00:09</text>
+  
+  <path d="M345 310q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="#5865f2" fill-opacity=".9"/><path d="M345 313.5h16" stroke="#000" stroke-opacity=".25"/>
+  <text x="371" y="319.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">resources</text>
+  
+  <text x="556" y="319.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">22.10. 21:14</text>
+  
+  <path d="M354 337.5h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="#80838c" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="371" y="349.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">composer.json</text>
+  <text x="544" y="349.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">2,4 KB</text>
+  <text x="556" y="349.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">22.10. 00:02</text>
+  
+  <path d="M354 367.5h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="#80838c" stroke-width="1.2" stroke-linejoin="round"/>
+  <text x="371" y="379.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" fill="#f2f3f5">deploy.sh</text>
+  <text x="544" y="379.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">3,1 KB</text>
+  <text x="556" y="379.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">heute 00:42</text>
+  <text x="345" y="407" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11" fill="#80838c">Ordner: 5 · Dateien: 2 · 5,5 KB</text>
+<rect x="16" y="429" width="28" height="28" rx="6" fill="#5865f2" fill-opacity=".16"/>
+  <g transform="translate(22 435) scale(0.67)" fill="none" stroke="#8b95f7" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4.5M7.5 9L12 4.5 16.5 9M5 15v3.5h14V15"/></g>
+  <text x="56" y="440" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13.5" font-weight="600" fill="#f2f3f5">public</text>
+  <rect x="103.06" y="427.5" width="63.78" height="17" rx="4" fill="none" stroke="#fff" stroke-opacity=".16"/>
+  <text x="134.45" y="439.5" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="600" fill="#b5bac1">web-prod</text>
+  <text x="56" y="458" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">/var/www/shop/public</text>
+  <rect x="372" y="432" width="232" height="4" rx="2" fill="#fff" fill-opacity=".1"/>
+  <rect x="372" y="432" width="78.88" height="4" rx="2" fill="#5865f2"/>
+  <text x="372" y="455" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" fill="#949ba4">412 MB / 1,2 GB · 1186/3240</text>
+  <text x="604" y="455" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="11.5" font-weight="600" fill="#f2f3f5">38 MB/s · 22 s</text>
+  <g transform="translate(622 437) scale(0.5)" fill="none" stroke="#949ba4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10M17 7L7 17"/></g>
+  <rect x="0" y="470" width="656" height="1" fill="#1e1e20"/>
+  <rect x="0" y="470" width="223.04" height="2" fill="#5865f2"/>
+  <g transform="translate(15 484) scale(0.63)" fill="none" stroke="#8b95f7" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19V5M5 8l3-3 3 3M16 5v14M13 16l3 3 3-3"/></g>
+  <text x="38" y="495.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="13" font-weight="600" fill="#f2f3f5">Übertragungen</text>
+  <text x="135.86" y="495.5" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12" fill="#949ba4">aktiv: 1 · 38 MB/s · noch 22 s</text>
+  <text x="640" y="495.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12" font-weight="600" fill="#f2f3f5">Fortsetzen</text>
+  <text x="578.06" y="495.5" text-anchor="end" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-size="12" fill="#949ba4">Wenn die Datei existiert:</text>
+<rect x="0.5" y="0.5" width="655" height="511" rx="7.5" fill="none" stroke="#fff" stroke-opacity=".14"/>
+</g>
+</svg>

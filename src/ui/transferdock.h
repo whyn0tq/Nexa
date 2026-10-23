@@ -34,11 +34,13 @@ public:
     const TransferStatus *at(int row) const;
     int activeCount() const;
     int failedCount() const;
+    int countFor(Filter filter) const;
     qint64 speed() const;
     qint64 remainingBytes() const;
     double progress() const;
 
     static bool finished(TransferState state);
+    static bool matches(Filter filter, const TransferStatus &status);
 
 signals:
     void summaryChanged();
@@ -111,8 +113,6 @@ private:
     QLabel *m_summary = nullptr;
     IconButton *m_toggle = nullptr;
     Segmented *m_filter = nullptr;
-    Segmented *m_policy = nullptr;
-    QLabel *m_policyHint = nullptr;
     Dropdown *m_policyChip = nullptr;
     Dropdown *m_connections = nullptr;
     FrameAnimation *m_animation = nullptr;

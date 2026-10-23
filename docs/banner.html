@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru" class="bg-[#050506]">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nexa — баннер</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
+          mono: ['"Cascadia Mono"', 'Consolas', 'ui-monospace', 'monospace'],
+        },
+        colors: { base: '#0d0e11', sheet: '#121318', accent: '#5865f2', ok: '#23a55a' },
+      } },
+    };
+  </script>
+</head>
+<body class="min-h-screen font-sans antialiased text-[#f2f3f5] flex items-center justify-center p-4 sm:p-8">
+
+<!-- Banner: 8px grid, 2 columns from lg, stacked below -->
+<section class="w-full max-w-6xl rounded-3xl border border-white/10 bg-base p-6 sm:p-10 lg:p-14
+                grid items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14">
+
+  <!-- Left: identity -->
+  <div>
+    <div class="flex items-center gap-4">
+      <!-- Logo: dark tile, 1px border, flat "N" with two nodes -->
+      <div class="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-white/10 bg-[#16171b]">
+        <svg viewBox="0 0 32 32" class="h-8 w-8" fill="none" aria-hidden="true">
+          <path d="M9 23V9l14 14V9" stroke="#f2f3f5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="23" r="2" fill="#5865f2"/>
+          <circle cx="23" cy="9" r="2" fill="#5865f2"/>
+        </svg>
+      </div>
+      <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">Nexa</h1>
+    </div>
+
+    <p class="mt-8 max-w-md text-xl leading-8 text-[#b5bac1] sm:text-2xl sm:leading-9">
+      Быстрый SFTP-, FTP- и FTPS-клиент для Windows.
+      Вкладка на каждый сервер. Передачи без обрывов.
+    </p>
+  </div>
+
+  <!-- Right: app window -->
+  <div class="overflow-hidden rounded-2xl border border-white/10 bg-sheet shadow-[0_16px_48px_rgba(0,0,0,.5)]">
+
+    <!-- Tabs -->
+    <div class="flex items-center gap-1 p-2">
+      <div class="grid h-6 w-6 place-items-center rounded-md">
+        <svg viewBox="0 0 32 32" class="h-4 w-4" fill="none"><path d="M9 23V9l14 14V9" stroke="#f2f3f5" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="flex items-center gap-2 rounded-lg bg-white/[.08] px-3 py-1.5 text-xs font-semibold">
+        <span class="h-1.5 w-1.5 rounded-full bg-ok"></span>web-prod
+      </div>
+      <div class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-[#b5bac1]">
+        <span class="h-1.5 w-1.5 rounded-full bg-ok"></span>Storage
+      </div>
+    </div>
+
+    <div class="space-y-2 p-2 pt-0">
+
+      <!-- Connection -->
+      <div class="flex items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.03] px-3 py-2 text-xs">
+        <span class="h-2 w-2 rounded-full bg-ok"></span>
+        <span class="font-semibold">web-prod</span>
+        <span class="text-[#949ba4]">SFTP · пинг 24 мс</span>
+        <span class="ml-auto hidden font-mono text-[11px] text-[#949ba4] sm:inline">deploy@203.0.113.7</span>
+      </div>
+
+      <!-- Panes -->
+      <div class="grid gap-2 sm:grid-cols-2">
+
+        <!-- Local -->
+        <div class="rounded-xl border border-white/[.07] bg-white/[.025]">
+          <div class="flex items-center gap-2 border-b border-white/[.06] px-3 py-2.5 font-mono text-[11px] text-[#b5bac1]">
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-[#949ba4]" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="11.5" rx="2.5"/><path d="M9 20h6M12 16v4"/></svg>
+            C:\site\dist
+          </div>
+          <ul class="space-y-0.5 p-1.5 text-xs">
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fo"></i>assets<span class="sz"></span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fo"></i>img<span class="sz"></span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fi"></i>index.html<span class="sz">4.2 KB</span></li>
+            <li class="flex items-center gap-2.5 rounded-md bg-accent/[.16] px-2 py-1.5"><i class="fi"></i>app.js<span class="sz">118 KB</span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fi"></i>style.css<span class="sz">22 KB</span></li>
+          </ul>
+        </div>
+
+        <!-- Server -->
+        <div class="rounded-xl border border-white/[.07] bg-white/[.025]">
+          <div class="flex items-center gap-2 border-b border-white/[.06] px-3 py-2.5 font-mono text-[11px] text-[#b5bac1]">
+            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-[#949ba4]" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.5" width="16" height="6.5" rx="2.5"/><rect x="4" y="13" width="16" height="6.5" rx="2.5"/></svg>
+            /var/www/site
+          </div>
+          <ul class="space-y-0.5 p-1.5 text-xs">
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fo"></i>assets<span class="sz"></span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fo"></i>img<span class="sz"></span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fo"></i>uploads<span class="sz"></span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fi"></i>index.html<span class="sz">4.1 KB</span></li>
+            <li class="flex items-center gap-2.5 rounded-md px-2 py-1.5"><i class="fi"></i>app.js<span class="sz">112 KB</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Transfer -->
+      <div class="flex items-center gap-3 rounded-xl border border-white/[.07] bg-white/[.03] px-3 py-2.5 text-xs">
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0 text-accent" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 19V5M5.3 7.7L8 5l2.7 2.7M16 5v14M13.3 16.3L16 19l2.7-2.7"/></svg>
+        <span>app.js</span>
+        <div class="h-1 flex-1 overflow-hidden rounded-full bg-white/[.09]" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100">
+          <div class="h-full w-[62%] rounded-full bg-accent"></div>
+        </div>
+        <span class="whitespace-nowrap text-[#b5bac1]">62% · 38 МБ/с</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style type="text/tailwindcss">
+  @layer components {
+    /* folder / file glyphs and right-aligned size column */
+    .fo { @apply block h-3.5 w-4 shrink-0 rounded-[3px] bg-accent/90; }
+    .fi { @apply block h-3.5 w-3 shrink-0 rounded-[3px] border border-white/35 ml-0.5 mr-0.5; }
+    .sz { @apply ml-auto text-[11px] text-[#949ba4]; }
+  }
+</style>
+</body>
+</html>

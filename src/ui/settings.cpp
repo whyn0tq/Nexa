@@ -56,8 +56,8 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
         if (m_selected) {
-            painter.setPen(QPen(QColor(255, 90, 108, 150), 1));
-            painter.setBrush(QColor(255, 66, 86, 30));
+            painter.setPen(QPen(Theme::withAlpha(Theme::Accent, 150), 1));
+            painter.setBrush(Theme::withAlpha(Theme::Accent, 30));
         } else {
             painter.setPen(QPen(QColor(255, 255, 255, underMouse() ? 40 : 22), 1));
             painter.setBrush(QColor(255, 255, 255, underMouse() ? 16 : 9));
@@ -97,7 +97,7 @@ protected:
 
         const QColor tone = m_editor.available ? Theme::Success : Theme::TextFaint;
         const QString chip = m_editor.available ? QObject::tr("найден") : QObject::tr("нет");
-        painter.setFont(Theme::font(11, QFont::DemiBold));
+        painter.setFont(Theme::font(12, QFont::DemiBold));
         const qreal w = painter.fontMetrics().horizontalAdvance(chip) + 18;
         const QRectF chipRect(r.right() - w - 14, r.center().y() - 10, w, 20);
         QColor fill = tone;
@@ -181,8 +181,8 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
         if (m_selected) {
-            painter.setPen(QPen(QColor(255, 90, 108, 150), 1));
-            painter.setBrush(QColor(255, 66, 86, 30));
+            painter.setPen(QPen(Theme::withAlpha(Theme::Accent, 150), 1));
+            painter.setBrush(Theme::withAlpha(Theme::Accent, 30));
         } else {
             painter.setPen(QPen(QColor(255, 255, 255, underMouse() ? 40 : 22), 1));
             painter.setBrush(QColor(255, 255, 255, underMouse() ? 16 : 9));
@@ -204,7 +204,7 @@ protected:
         painter.setPen(Theme::Text);
         painter.drawText(QRectF(left, r.top() + 11, r.right() - left - 10, 20),
                          Qt::AlignLeft | Qt::AlignVCenter, TransferPrefs::policyTitle(m_policy));
-        painter.setFont(Theme::font(11.5));
+        painter.setFont(Theme::font(12));
         painter.setPen(Theme::TextMuted);
         const int hintWidth = static_cast<int>(r.right() - left - 10);
         painter.drawText(QRectF(left, r.top() + 30, hintWidth, 18), Qt::AlignLeft | Qt::AlignVCenter,
@@ -292,8 +292,8 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
         if (m_selected) {
-            painter.setPen(QPen(QColor(255, 90, 108, 150), 1));
-            painter.setBrush(QColor(255, 66, 86, 30));
+            painter.setPen(QPen(Theme::withAlpha(Theme::Accent, 150), 1));
+            painter.setBrush(Theme::withAlpha(Theme::Accent, 30));
         } else {
             painter.setPen(QPen(QColor(255, 255, 255, underMouse() ? 40 : 22), 1));
             painter.setBrush(QColor(255, 255, 255, underMouse() ? 16 : 9));
@@ -308,13 +308,13 @@ protected:
         painter.setPen(Theme::Text);
         painter.drawText(QRectF(left, r.top() + 10, r.right() - left - checkSpace, 20),
                          Qt::AlignLeft | Qt::AlignVCenter, m_title);
-        painter.setFont(Theme::font(11.5));
+        painter.setFont(Theme::font(12));
         painter.setPen(Theme::TextMuted);
         painter.drawText(QRectF(left, r.top() + 29, r.right() - left - checkSpace, 18),
                          Qt::AlignLeft | Qt::AlignVCenter, m_native);
         if (m_selected)
             Icons::paint(painter, Icon::Check,
-                         QRectF(r.right() - 30, r.center().y() - 8, 16, 16), Theme::Accent, 2.0);
+                         QRectF(r.right() - 30, r.center().y() - 8, 16, 16), Theme::Accent);
     }
 
 private:
@@ -327,7 +327,7 @@ private:
 
 SettingsSheet::SettingsSheet(QWidget *host) : Sheet(host, 560)
 {
-    setTitle(tr("Настройки"), tr("Изменения применяются сразу."), Icon::Sliders, Theme::Accent);
+    setTitle(tr("Настройки"), tr("Изменения применяются сразу."), Icon::Gear, Theme::Accent);
 
     auto *page = new QWidget;
     auto *form = new QVBoxLayout(page);

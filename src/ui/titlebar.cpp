@@ -16,7 +16,7 @@
 #include <cmath>
 
 namespace {
-constexpr qreal TabHeight = 32;
+constexpr qreal TabHeight = 30;
 constexpr qreal HomeWidth = 40;
 constexpr qreal MaxTabWidth = 220;
 constexpr qreal MinTabWidth = 96;
@@ -54,7 +54,7 @@ public:
     explicit SearchPill(QWidget *parent = nullptr) : QWidget(parent)
     {
         setCursor(Qt::PointingHandCursor);
-        setFixedSize(250, 32);
+        setFixedSize(240, 28);
         setAttribute(Qt::WA_Hover);
         setToolTip(tr("Сервера, сессии и команды"));
     }
@@ -67,20 +67,20 @@ protected:
         painter.setRenderHint(QPainter::Antialiasing);
         const bool hovered = underMouse();
         const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
-        painter.setPen(QPen(QColor(255, 255, 255, hovered ? 40 : 24), 1));
-        painter.setBrush(QColor(255, 255, 255, hovered ? 20 : 11));
-        painter.drawRoundedRect(r, 10, 10);
-        Icons::paint(painter, Icon::Search, QRectF(11, 8, 16, 16), Theme::TextMuted, 1.8);
-        painter.setFont(Theme::font(12.5));
+        painter.setPen(QPen(hovered ? QColor(52, 52, 56) : QColor(36, 36, 38), 1));
+        painter.setBrush(Theme::Base);
+        painter.drawRoundedRect(r, 8, 8);
+        painter.setFont(Theme::font(13));
         painter.setPen(Theme::TextMuted);
-        painter.drawText(QRectF(34, 0, width() - 90, height()), Qt::AlignVCenter,
+        painter.drawText(QRectF(10, 0, width() - 90, height()), Qt::AlignVCenter,
                          tr("Поиск и команды"));
-        const QRectF key(width() - 56, 7, 46, 18);
-        painter.setPen(QPen(QColor(255, 255, 255, 26), 1));
-        painter.setBrush(QColor(255, 255, 255, 10));
-        painter.drawRoundedRect(key, 6, 6);
-        painter.setFont(Theme::font(11, QFont::DemiBold));
-        painter.setPen(Theme::TextSecondary);
+        const QRectF key(width() - 82, 5, 48, 18);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(Theme::SurfaceHover);
+        painter.drawRoundedRect(key, 4, 4);
+        Icons::paint(painter, Icon::Search, QRectF(width() - 25, 6, 16, 16), Theme::TextSecondary);
+        painter.setFont(Theme::font(12, QFont::DemiBold));
+        painter.setPen(Theme::TextMuted);
         painter.drawText(key, Qt::AlignCenter, QStringLiteral("Ctrl K"));
     }
     void mouseReleaseEvent(QMouseEvent *event) override
@@ -240,45 +240,53 @@ void TabStrip::paintEvent(QPaintEvent *event)
         const QRectF r = m_rects.at(i);
         const bool active = tab.id == m_current;
         const bool hovered = i == m_hovered || i == m_dragHover;
-        if (active) {
-            Glass::paintPanel(painter, r, 10, Glass::Tone::Raised);
-            QLinearGradient line(r.center().x() - 14, 0, r.center().x() + 14, 0);
-            line.setColorAt(0, QColor(255, 66, 86, 0));
-            line.setColorAt(0.5, Theme::Accent);
-            line.setColorAt(1, QColor(255, 66, 86, 0));
-            painter.setPen(QPen(QBrush(line), 2, Qt::SolidLine, Qt::RoundCap));
-            painter.drawLine(QPointF(r.center().x() - 14, r.bottom() - 1),
-                             QPointF(r.center().x() + 14, r.bottom() - 1));
-        } else if (hovered) {
+        if (active || hovered) {
             painter.setPen(Qt::NoPen);
-            painter.setBrush(QColor(255, 255, 255, 14));
-            painter.drawRoundedRect(r, 10, 10);
+            painter.setBrush(QColor(255, 255, 255, active ? 24 : 12));
+            painter.drawRoundedRect(r, 8, 8);
         }
 
         if (tab.id == 0) {
-            Icons::paint(painter, Icon::Server,
-                         QRectF(r.center().x() - 9, r.center().y() - 9, 18, 18),
-                         active ? Theme::Text : Theme::TextSecondary, 1.7);
+            const QRectF glyph(r.center().x() - 9, r.center().y() - 9, 18, 18);
+            if (active)
+                Icons::paintFilled(painter, Icon::Server, glyph, Theme::Text);
+            else
+                Icons::paint(painter, Icon::Server, glyph, Theme::TextMuted);
             continue;
         }
 
         const QPointF dot(r.left() + 16, r.center().y());
-        QColor color = statusColor(tab.status);
-        if (tab.status == Status::Busy) {
-            QColor halo = color;
-            halo.setAlphaF(0.15 + 0.25 * (std::sin(m_phase) + 1) / 2);
+        const QColor color = statusColor(tab.status);
+        switch (tab.status) {
+        case Status::Online:
             painter.setPen(Qt::NoPen);
-            painter.setBrush(halo);
-            painter.drawEllipse(dot, 6.0, 6.0);
+            painter.setBrush(color);
+            painter.drawEllipse(dot, 4.0, 4.0);
+            break;
+        case Status::Busy: {
+            painter.setPen(QPen(color, 1.8, Qt::SolidLine, Qt::RoundCap));
+            painter.setBrush(Qt::NoBrush);
+            const QRectF ring(dot.x() - 4.5, dot.y() - 4.5, 9, 9);
+            const qreal start = -std::fmod(m_phase * 86.0, 360.0);
+            painter.drawArc(ring, qRound(start * 16), 270 * 16);
+            break;
         }
-        painter.setPen(Qt::NoPen);
-        painter.setBrush(color);
-        painter.drawEllipse(dot, 3.5, 3.5);
+        case Status::Offline:
+            painter.setPen(QPen(color, 2, Qt::SolidLine, Qt::RoundCap));
+            painter.drawLine(dot + QPointF(-3.5, -3.5), dot + QPointF(3.5, 3.5));
+            painter.drawLine(dot + QPointF(-3.5, 3.5), dot + QPointF(3.5, -3.5));
+            break;
+        case Status::None:
+            painter.setPen(QPen(color, 1.5));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawEllipse(dot, 3.5, 3.5);
+            break;
+        }
 
         const bool showClose = active || hovered;
         const qreal textRight = showClose ? r.right() - 30 : r.right() - 12;
         painter.setFont(Theme::font(13, active ? QFont::DemiBold : QFont::Medium));
-        painter.setPen(active ? Theme::Text : Theme::TextSecondary);
+        painter.setPen(active ? Theme::Text : hovered ? Theme::TextSecondary : Theme::TextMuted);
         const QRectF textRect(r.left() + 28, r.top(), textRight - r.left() - 28, r.height());
         painter.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft,
                          painter.fontMetrics().elidedText(tab.title, Qt::ElideRight,
@@ -299,18 +307,18 @@ void TabStrip::paintEvent(QPaintEvent *event)
                 painter.drawRoundedRect(close, 6, 6);
             }
             Icons::paint(painter, Icon::Close, close.adjusted(4, 4, -4, -4),
-                         i == m_hovered && m_hoverClose ? Theme::Text : Theme::TextMuted, 2);
+                         i == m_hovered && m_hoverClose ? Theme::Text : Theme::TextMuted);
         }
     }
 
     if (m_hoverPlus) {
         painter.setPen(Qt::NoPen);
-        painter.setBrush(QColor(255, 255, 255, 18));
-        painter.drawRoundedRect(m_plusRect, 10, 10);
+        painter.setBrush(QColor(255, 255, 255, 12));
+        painter.drawRoundedRect(m_plusRect, 8, 8);
     }
     Icons::paint(painter, Icon::Plus,
                  QRectF(m_plusRect.center().x() - 8, m_plusRect.center().y() - 8, 16, 16),
-                 m_hoverPlus ? Theme::Text : Theme::TextSecondary, 1.9);
+                 m_hoverPlus ? Theme::Text : Theme::TextSecondary);
 }
 
 void TabStrip::mouseMoveEvent(QMouseEvent *event)
@@ -429,7 +437,7 @@ TitleBar::TitleBar(QWidget *parent) : QWidget(parent)
     m_transfers->setFixedSize(34, 32);
     connect(m_transfers, &IconButton::clicked, this, &TitleBar::transfersRequested);
     layout->addWidget(m_transfers);
-    m_settings = new IconButton(Icon::Sliders, tr("Настройки (Ctrl+,)"), this);
+    m_settings = new IconButton(Icon::Gear, tr("Настройки (Ctrl+,)"), this);
     m_settings->setFixedSize(34, 32);
     connect(m_settings, &IconButton::clicked, this, &TitleBar::settingsRequested);
     layout->addWidget(m_settings);
@@ -474,4 +482,6 @@ bool TitleBar::isCaption(const QPoint &point) const
 void TitleBar::paintEvent(QPaintEvent *event)
 {
     Q_UNUSED(event);
+    QPainter painter(this);
+    painter.fillRect(QRect(0, height() - 1, width(), 1), Theme::Divider);
 }

@@ -28,15 +28,19 @@ public:
     QSize sizeHint() const override;
 
 protected:
+    bool event(QEvent *event) override;
     void paintEvent(QPaintEvent *event) override;
     void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 
 private:
     Icon m_icon;
     Style m_style = Style::Ghost;
     int m_iconSize = 18;
     bool m_hovered = false;
+    bool m_keyboardFocus = false;
     bool m_forcedHover = false;
     bool m_forcedPressed = false;
     int m_badge = 0;
@@ -50,6 +54,7 @@ public:
     int current() const { return m_current; }
     void setCurrent(int index);
     void setOptionEnabled(int index, bool enabled);
+    void setCounts(const QVector<int> &counts, int alertIndex = -1);
     QSize sizeHint() const override;
 
 signals:
@@ -66,6 +71,8 @@ private:
 
     QStringList m_options;
     QVector<bool> m_enabled;
+    QVector<int> m_counts;
+    int m_alert = -1;
     int m_current = 0;
     int m_hovered = -1;
 };

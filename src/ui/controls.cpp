@@ -4,6 +4,7 @@
 #include "theme.h"
 
 #include <QEnterEvent>
+#include <QFocusEvent>
 #include <QMouseEvent>
 #include <QElapsedTimer>
 #include <QGuiApplication>
@@ -15,13 +16,46 @@
 
 #include <cmath>
 
+namespace {
+QString withoutShortcut(const QString &tooltip)
+{
+    const qsizetype open = tooltip.lastIndexOf(QStringLiteral(" ("));
+    if (open > 0 && tooltip.endsWith(QLatin1Char(')')))
+        return tooltip.left(open);
+    return tooltip;
+}
+}
+
 IconButton::IconButton(Icon icon, const QString &tooltip, QWidget *parent)
     : QAbstractButton(parent), m_icon(icon)
 {
     setToolTip(tooltip);
     setCursor(Qt::PointingHandCursor);
-    setFocusPolicy(Qt::NoFocus);
+    setFocusPolicy(Qt::TabFocus);
     setAttribute(Qt::WA_Hover);
+}
+
+bool IconButton::event(QEvent *event)
+{
+    if (event->type() == QEvent::ToolTipChange)
+        setAccessibleName(withoutShortcut(toolTip()));
+    return QAbstractButton::event(event);
+}
+
+void IconButton::focusInEvent(QFocusEvent *event)
+{
+    const Qt::FocusReason reason = event->reason();
+    m_keyboardFocus = reason == Qt::TabFocusReason || reason == Qt::BacktabFocusReason ||
+                      reason == Qt::ShortcutFocusReason;
+    update();
+    QAbstractButton::focusInEvent(event);
+}
+
+void IconButton::focusOutEvent(QFocusEvent *event)
+{
+    m_keyboardFocus = false;
+    update();
+    QAbstractButton::focusOutEvent(event);
 }
 
 void IconButton::setIcon(Icon icon)
@@ -92,7 +126,7 @@ void IconButton::paintEvent(QPaintEvent *event)
     const bool hovered = (m_hovered || m_forcedHover) && isEnabled();
     const bool pressed = (isDown() || m_forcedPressed) && isEnabled();
     const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
-    const qreal radius = std::min<qreal>(10, r.height() / 2.6);
+    const qreal radius = std::min<qreal>(8, r.height() / 2.6);
 
     QColor fill = Qt::transparent;
     QColor stroke = Qt::transparent;
@@ -100,13 +134,13 @@ void IconButton::paintEvent(QPaintEvent *event)
     switch (m_style) {
     case Style::Ghost:
         if (hovered || isChecked()) {
-            fill = pressed ? QColor(255, 255, 255, 12) : QColor(255, 255, 255, 20);
+            fill = pressed ? QColor(255, 255, 255, 8) : QColor(255, 255, 255, 14);
             glyph = Theme::Text;
         }
         break;
     case Style::Glass:
-        fill = hovered ? QColor(255, 255, 255, 24) : QColor(255, 255, 255, 12);
-        stroke = QColor(255, 255, 255, hovered ? 40 : 22);
+        fill = hovered ? Theme::SurfaceHover : Theme::Surface;
+        stroke = hovered ? QColor(46, 46, 50) : QColor(39, 39, 41);
         if (hovered)
             glyph = Theme::Text;
         break;
@@ -118,14 +152,14 @@ void IconButton::paintEvent(QPaintEvent *event)
         break;
     case Style::Danger:
         if (hovered) {
-            fill = pressed ? Theme::AccentDeep : QColor(232, 36, 60);
+            fill = pressed ? QColor(161, 40, 41) : QColor(218, 55, 60);
             glyph = Qt::white;
         }
         break;
     }
     if (isChecked() && m_style == Style::Ghost) {
         fill = Theme::AccentSoft;
-        glyph = Theme::AccentHover;
+        glyph = Theme::AccentText;
     }
     painter.setPen(stroke.alpha() ? QPen(stroke, 1) : Qt::NoPen);
     painter.setBrush(fill);
@@ -133,15 +167,20 @@ void IconButton::paintEvent(QPaintEvent *event)
         painter.drawRoundedRect(r, radius, radius);
     const qreal size = m_iconSize;
     const QRectF iconRect((width() - size) / 2.0, (height() - size) / 2.0, size, size);
-    Icons::paint(painter, m_icon, iconRect, glyph, size <= 16 ? 1.8 : 1.7);
+    Icons::paint(painter, m_icon, iconRect, glyph);
+    if (m_keyboardFocus && hasFocus()) {
+        painter.setPen(QPen(Theme::Accent, 2));
+        painter.setBrush(Qt::NoBrush);
+        painter.drawRoundedRect(QRectF(rect()).adjusted(1, 1, -1, -1), radius, radius);
+    }
     if (m_badge > 0) {
         const QString text = m_badge > 99 ? QStringLiteral("99+") : QString::number(m_badge);
-        painter.setFont(Theme::font(10, QFont::Bold));
-        const qreal w = std::max<qreal>(15, painter.fontMetrics().horizontalAdvance(text) + 7);
-        const QRectF badge(width() - w - 1, 1, w, 15);
+        painter.setFont(Theme::font(12, QFont::Bold));
+        const qreal w = std::max<qreal>(17, painter.fontMetrics().horizontalAdvance(text) + 8);
+        const QRectF badge(width() - w, 0, w, 17);
         painter.setPen(QPen(Theme::Base, 1.5));
         painter.setBrush(Theme::Accent);
-        painter.drawRoundedRect(badge, 7.5, 7.5);
+        painter.drawRoundedRect(badge, 8.5, 8.5);
         painter.setPen(Qt::white);
         painter.drawText(badge, Qt::AlignCenter, text);
     }
@@ -173,11 +212,25 @@ void Segmented::setOptionEnabled(int index, bool enabled)
     }
 }
 
+void Segmented::setCounts(const QVector<int> &counts, int alertIndex)
+{
+    if (counts == m_counts && alertIndex == m_alert)
+        return;
+    m_counts = counts;
+    m_alert = alertIndex;
+    updateGeometry();
+    update();
+}
+
 QSize Segmented::sizeHint() const
 {
+    const QFontMetrics countMetrics(Theme::font(12, QFont::Bold));
     int width = 8;
-    for (const QString &option : m_options)
-        width += fontMetrics().horizontalAdvance(option) + 32;
+    for (int i = 0; i < m_options.size(); ++i) {
+        width += fontMetrics().horizontalAdvance(m_options.at(i)) + 32;
+        if (m_counts.value(i) > 0)
+            width += countMetrics.horizontalAdvance(QString::number(m_counts.value(i))) + 6;
+    }
     return {width, 38};
 }
 
@@ -203,21 +256,39 @@ void Segmented::paintEvent(QPaintEvent *event)
     for (int i = 0; i < m_options.size(); ++i) {
         const QRectF cell(4 + i * segment, 4, segment, height() - 8);
         if (i == m_current) {
-            QLinearGradient fill(cell.topLeft(), cell.bottomLeft());
-            fill.setColorAt(0, QColor(255, 84, 104));
-            fill.setColorAt(1, QColor(229, 42, 69));
             painter.setPen(Qt::NoPen);
-            painter.setBrush(fill);
+            painter.setBrush(Theme::Accent);
             painter.drawRoundedRect(cell, 8, 8);
         } else if (i == m_hovered && m_enabled.at(i)) {
             painter.setPen(Qt::NoPen);
             painter.setBrush(QColor(255, 255, 255, 14));
             painter.drawRoundedRect(cell, 8, 8);
         }
-        painter.setPen(i == m_current ? QColor(Qt::white)
-                       : m_enabled.at(i) ? Theme::TextSecondary
-                                         : Theme::TextFaint);
-        painter.drawText(cell, Qt::AlignCenter, m_options.at(i));
+        const QColor tone = i == m_current ? QColor(Qt::white)
+                            : m_enabled.at(i) ? Theme::TextSecondary
+                                              : Theme::TextFaint;
+        const int count = m_counts.value(i);
+        if (count <= 0) {
+            painter.setPen(tone);
+            painter.drawText(cell, Qt::AlignCenter, m_options.at(i));
+            continue;
+        }
+        const QFont countFont = Theme::font(12, QFont::Bold);
+        const QString number = QString::number(count);
+        const qreal labelWidth = fontMetrics().horizontalAdvance(m_options.at(i));
+        const qreal numberWidth = QFontMetricsF(countFont).horizontalAdvance(number);
+        const qreal gap = 6;
+        const qreal x = cell.center().x() - (labelWidth + gap + numberWidth) / 2;
+        painter.setPen(tone);
+        painter.drawText(QRectF(x, cell.top(), labelWidth + 1, cell.height()),
+                         Qt::AlignLeft | Qt::AlignVCenter, m_options.at(i));
+        painter.setFont(countFont);
+        painter.setPen(i == m_current ? Theme::withAlpha(Qt::white, 200)
+                       : i == m_alert ? Theme::Danger
+                                      : Theme::TextMuted);
+        painter.drawText(QRectF(x + labelWidth + gap, cell.top(), numberWidth + 1, cell.height()),
+                         Qt::AlignLeft | Qt::AlignVCenter, number);
+        painter.setFont(font());
     }
 }
 
@@ -300,11 +371,11 @@ void Dropdown::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing);
     const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
     const qreal radius = m_compact ? 9 : 10;
-    QColor line = m_open ? QColor(255, 90, 108, 170)
-                 : (m_hovered || hasFocus()) ? Theme::StrokeStrong
-                                             : Theme::Stroke;
+    QColor line = m_open ? Theme::withAlpha(Theme::Accent, 170)
+                 : (m_hovered || hasFocus()) ? Theme::FieldStrokeHover
+                                             : Theme::FieldStroke;
     painter.setPen(QPen(line, 1));
-    painter.setBrush(m_open ? QColor(255, 66, 86, 22)
+    painter.setBrush(m_open ? Theme::withAlpha(Theme::Accent, 22)
                             : QColor(255, 255, 255, m_hovered ? 18 : 11));
     painter.drawRoundedRect(r, radius, radius);
 
@@ -328,7 +399,7 @@ void Dropdown::paintEvent(QPaintEvent *event)
                                                       static_cast<int>(valueRect.width())));
     Icons::paint(painter, m_open ? Icon::ChevronUp : Icon::ChevronDown,
                  QRectF(r.right() - chevron - 10, r.center().y() - chevron / 2, chevron, chevron),
-                 m_open ? Theme::Accent : Theme::TextMuted, 1.8);
+                 m_open ? Theme::Accent : Theme::TextMuted);
 }
 
 void Dropdown::mousePressEvent(QMouseEvent *event)
@@ -461,51 +532,18 @@ public:
     using QMenu::QMenu;
 
 protected:
-    void showEvent(QShowEvent *event) override
-    {
-        m_backdrop = QPixmap();
-        QWidget *host = parentWidget() ? parentWidget()->window() : nullptr;
-        if (host) {
-            const QRect area(host->mapFromGlobal(geometry().topLeft()), size());
-            const QRect visible = area.intersected(host->rect());
-            if (!visible.isEmpty()) {
-                const QImage shot = host->grab(visible).toImage();
-                m_backdrop = QPixmap::fromImage(Glass::blurred(shot, 30));
-                m_offset = visible.topLeft() - area.topLeft();
-            }
-        }
-        QMenu::showEvent(event);
-    }
-
     void paintEvent(QPaintEvent *event) override
     {
         {
             QPainter painter(this);
             painter.setRenderHint(QPainter::Antialiasing);
             const QRectF r = QRectF(rect()).adjusted(0.5, 0.5, -0.5, -0.5);
-            QPainterPath path;
-            path.addRoundedRect(r, 12, 12);
-            painter.setClipPath(path);
-            if (!m_backdrop.isNull())
-                painter.drawPixmap(m_offset, m_backdrop);
-            QLinearGradient tint(r.topLeft(), r.bottomLeft());
-            tint.setColorAt(0, QColor(30, 30, 36, 150));
-            tint.setColorAt(1, QColor(14, 14, 18, 175));
-            painter.fillPath(path, tint);
-            painter.setClipping(false);
-            QLinearGradient rim(r.topLeft(), r.bottomLeft());
-            rim.setColorAt(0, QColor(255, 255, 255, 60));
-            rim.setColorAt(1, QColor(255, 255, 255, 18));
-            painter.setPen(QPen(QBrush(rim), 1));
-            painter.setBrush(Qt::NoBrush);
-            painter.drawPath(path);
+            painter.setPen(QPen(QColor(44, 44, 48), 1));
+            painter.setBrush(Theme::Surface);
+            painter.drawRoundedRect(r, 8, 8);
         }
         QMenu::paintEvent(event);
     }
-
-private:
-    QPixmap m_backdrop;
-    QPoint m_offset;
 };
 }
 

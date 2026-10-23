@@ -18,20 +18,47 @@
 
 #include <QApplication>
 #include <QCloseEvent>
+#include <QCursor>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QMenu>
+#include <QScreen>
 #include <QSettings>
+#include <QSet>
 #include <QShortcut>
 #include <QStackedWidget>
 #include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
 
+#include <algorithm>
+#include <utility>
+
 quint64 nextTransferId();
 
 namespace {
+const QSize CompactSize(980, 620);
+const QSize WideSize(1440, 900);
+
+QRect placed(const QPoint &center, QSize size, const QRect &area)
+{
+    size = size.boundedTo(area.size());
+    QRect rect(QPoint(0, 0), size);
+    rect.moveCenter(center);
+    rect.moveLeft(std::clamp(rect.left(), area.left(), area.right() - size.width() + 1));
+    rect.moveTop(std::clamp(rect.top(), area.top(), area.bottom() - size.height() + 1));
+    return rect;
+}
+
+QRect lerp(const QRect &from, const QRect &to, qreal t)
+{
+    const auto mix = [t](int a, int b) { return a + qRound((b - a) * t); };
+    return QRect(QPoint(mix(from.left(), to.left()), mix(from.top(), to.top())),
+                 QSize(mix(from.width(), to.width()), mix(from.height(), to.height())));
+}
+
 TabStrip::Status statusFor(Session::State state)
 {
     switch (state) {
@@ -53,8 +80,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
 {
     setWindowFlags(Qt::Window | Qt::FramelessWindowHint | Qt::WindowMinMaxButtonsHint);
     setWindowTitle(QStringLiteral("Nexa"));
-    setMinimumSize(980, 620);
-    resize(1440, 900);
+    setMinimumSize(CompactSize);
     setAcceptDrops(true);
 
     auto *outer = new QVBoxLayout(this);
@@ -69,14 +95,17 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
     layout->addWidget(m_titleBar);
 
     auto *content = new QVBoxLayout;
-    content->setContentsMargins(12, 4, 12, 12);
-    content->setSpacing(10);
+    content->setContentsMargins(0, 0, 0, 0);
+    content->setSpacing(0);
     m_pages = new QStackedWidget;
     m_launcher = new LauncherPage;
     m_pages->addWidget(m_launcher);
     content->addWidget(m_pages, 1);
+    auto *dockRow = new QVBoxLayout;
+    dockRow->setContentsMargins(12, 0, 12, 12);
     m_dock = new TransferDock;
-    content->addWidget(m_dock);
+    dockRow->addWidget(m_dock);
+    content->addLayout(dockRow);
     m_dock->setOverlayHost(m_root);
     layout->addLayout(content, 1);
 
@@ -99,15 +128,14 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
             [this](quint64 id) { closeSession(id); });
     connect(tabs, &TabStrip::newRequested, this, [this] {
         activate(0);
-        m_launcher->focusQuickConnect();
+        addHost();
     });
     connect(tabs, &TabStrip::contextMenuRequested, this, &MainWindow::tabMenu);
 
+    connect(m_launcher, &LauncherPage::quickConnect, this, &MainWindow::quickConnect);
     connect(m_launcher, &LauncherPage::connectHost, this, [this](const QString &id) { openHost(id); });
-    connect(m_launcher, &LauncherPage::editHost, this, &MainWindow::editHost);
     connect(m_launcher, &LauncherPage::hostMenu, this, &MainWindow::hostMenu);
     connect(m_launcher, &LauncherPage::addHost, this, [this] { addHost(); });
-    connect(m_launcher, &LauncherPage::quickConnect, this, &MainWindow::quickConnect);
 
     TransferModel *model = m_dock->model();
     connect(model, &TransferModel::summaryChanged, this, &MainWindow::updateDock);
@@ -116,8 +144,18 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
             t->session->transfers()->cancel(id);
     });
     connect(m_dock, &TransferDock::cancelAllRequested, this, [this] {
-        for (const Tab &t : std::as_const(m_tabs))
-            t.session->transfers()->cancelAll();
+        const auto cancelAll = [this] {
+            for (const Tab &t : std::as_const(m_tabs))
+                t.session->transfers()->cancelAll();
+        };
+        const int active = activeTransfers();
+        if (active == 0) {
+            cancelAll();
+            return;
+        }
+        Sheets::confirm(this, tr("Остановить все передачи?"),
+                        tr("Остановятся передачи в работе и в очереди: %1.").arg(active),
+                        tr("Остановить всё"), true, cancelAll);
     });
     connect(m_dock, &TransferDock::retryRequested, this, [this](const TransferStatus &status) {
         Tab *t = tab(status.sessionId);
@@ -157,9 +195,85 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent)
     refreshTabs();
     updateDock();
 
-    const QByteArray geometry = QSettings().value(QStringLiteral("window/geometry")).toByteArray();
-    if (!geometry.isEmpty())
-        restoreGeometry(geometry);
+    m_resize = new FrameAnimation(this);
+    connect(m_resize, &FrameAnimation::valueChanged, this,
+            [this](qreal t) {
+                setGeometry(lerp(m_resizeFrom, m_resizeTo, t));
+                repaint();
+                Win::waitForFrame();
+            });
+    connect(m_resize, &FrameAnimation::finished, this, [this] {
+        if (const auto done = std::exchange(m_resizeDone, {}))
+            done();
+    });
+
+    QSettings settings;
+    m_wideSize = settings.value(QStringLiteral("window/size"), WideSize).toSize()
+                     .expandedTo(CompactSize);
+    m_wideMaximized = settings.value(QStringLiteral("window/maximized")).toBool();
+    bool restoring = false;
+    for (const QString &id : HostStore::instance().openSessions())
+        restoring = restoring || HostStore::instance().contains(id);
+    const QScreen *display = QGuiApplication::screenAt(QCursor::pos());
+    const QRect area = (display ? display : QGuiApplication::primaryScreen())->availableGeometry();
+    m_compact = !restoring;
+    setGeometry(placed(area.center(), m_compact ? CompactSize : m_wideSize, area));
+    if (!m_compact && m_wideMaximized)
+        setWindowState(Qt::WindowMaximized);
+}
+
+void MainWindow::expandWindow(bool animated)
+{
+    if (!m_compact)
+        return;
+    m_compact = false;
+    if (isMaximized() || isFullScreen() || isMinimized())
+        return;
+    const QRect area = screen()->availableGeometry();
+    const QRect from = geometry();
+    const QRect wide = placed(from.center(), m_wideSize.expandedTo(from.size()), area);
+    if (!animated) {
+        setGeometry(wide);
+        if (m_wideMaximized)
+            showMaximized();
+        return;
+    }
+    if (!m_wideMaximized) {
+        animateTo(wide);
+        return;
+    }
+    animateTo(area, [this, wide] {
+        setGeometry(wide);
+        showMaximized();
+    });
+}
+
+void MainWindow::collapseWindow()
+{
+    if (m_compact)
+        return;
+    m_compact = true;
+    if (isMinimized() || isFullScreen())
+        return;
+    if (!m_resize->isRunning()) {
+        m_wideMaximized = isMaximized();
+        m_wideSize = (m_wideMaximized ? normalGeometry().size() : size()).expandedTo(CompactSize);
+    }
+    const QRect from = geometry();
+    if (isMaximized()) {
+        showNormal();
+        setGeometry(from);
+    }
+    animateTo(placed(from.center(), CompactSize, screen()->availableGeometry()));
+}
+
+void MainWindow::animateTo(const QRect &target, std::function<void()> done)
+{
+    m_resize->stop();
+    m_resizeFrom = geometry();
+    m_resizeTo = target;
+    m_resizeDone = std::move(done);
+    m_resize->start(0.0, 1.0, 650, QEasingCurve::OutCubic);
 }
 
 MainWindow::~MainWindow()
@@ -378,6 +492,8 @@ void MainWindow::closeSession(quint64 id, bool confirmTransfers)
                                                     .session->id();
         activate(next);
     }
+    if (m_tabs.isEmpty())
+        collapseWindow();
     refreshTabs();
     saveOpenSessions();
 }
@@ -390,6 +506,7 @@ void MainWindow::activate(quint64 id)
     } else if (Tab *t = tab(id)) {
         m_current = id;
         m_pages->setCurrentWidget(t->view);
+        expandWindow(isVisible());
     }
     m_titleBar->tabs()->setCurrent(m_current);
     if (!m_closing)
@@ -406,6 +523,8 @@ void MainWindow::refreshTabs()
     tabs.append(home);
     QStringList open;
     for (const Tab &t : std::as_const(m_tabs)) {
+        if (!t.session->hostId().isEmpty())
+            open.append(t.session->hostId());
         TabStrip::Tab item;
         item.id = t.session->id();
         item.title = t.session->title();
@@ -417,8 +536,6 @@ void MainWindow::refreshTabs()
                                                                                : QString())
                                                         : t.session->stateMessage());
         tabs.append(item);
-        if (!t.session->hostId().isEmpty())
-            open.append(t.session->hostId());
     }
     m_titleBar->tabs()->setTabs(tabs);
     m_titleBar->tabs()->setCurrent(m_current);
@@ -576,15 +693,23 @@ void MainWindow::tabMenu(quint64 id, const QPoint &position)
 void MainWindow::showPalette()
 {
     QVector<CommandPalette::Command> commands;
+    QSet<QString> openHosts;
+    const HostStore &store = HostStore::instance();
     for (const Tab &t : std::as_const(m_tabs)) {
         const quint64 id = t.session->id();
-        commands.append({Icon::ChevronRight, tr("Перейти: %1").arg(t.session->title()),
+        const QString hostId = t.session->hostId();
+        openHosts.insert(hostId);
+        const Icon icon = Icons::hostIcon(store.contains(hostId) ? store.host(hostId).kind
+                                                                 : HostKind::Server);
+        commands.append({icon, tr("Перейти: %1").arg(t.session->title()),
                          t.session->profile().endpoint(), tr("ВКЛАДКА"),
                          [this, id] { activate(id); }});
     }
-    for (const SavedHost &host : HostStore::instance().hosts()) {
+    for (const SavedHost &host : store.hosts()) {
+        if (openHosts.contains(host.id))
+            continue;
         const QString id = host.id;
-        commands.append({Icon::Server, host.title(), host.profile.endpoint(), tr("СЕРВЕР"),
+        commands.append({Icons::hostIcon(host.kind), host.title(), host.profile.endpoint(), tr("СЕРВЕР"),
                          [this, id] { openHost(id); }});
     }
     commands.append({Icon::Plus, tr("Новый сервер"), QStringLiteral("Ctrl+N"), tr("ДЕЙСТВИЕ"),
@@ -594,7 +719,7 @@ void MainWindow::showPalette()
                          activate(0);
                          m_launcher->focusQuickConnect();
                      }});
-    commands.append({Icon::Sliders, tr("Настройки"), QStringLiteral("Ctrl+,"), tr("ДЕЙСТВИЕ"),
+    commands.append({Icon::Gear, tr("Настройки"), QStringLiteral("Ctrl+,"), tr("ДЕЙСТВИЕ"),
                      [this] { (new SettingsSheet(this))->open(); }});
     commands.append({Icon::Transfers, tr("Передачи"), QStringLiteral("Ctrl+J"), tr("ДЕЙСТВИЕ"),
                      [this] {
@@ -659,7 +784,14 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
     m_closing = true;
-    QSettings().setValue(QStringLiteral("window/geometry"), saveGeometry());
+    if (!m_compact && !m_resize->isRunning() && !isMinimized()) {
+        m_wideMaximized = isMaximized();
+        m_wideSize = m_wideMaximized ? normalGeometry().size() : size();
+    }
+    QSettings settings;
+    settings.remove(QStringLiteral("window/geometry"));
+    settings.setValue(QStringLiteral("window/size"), m_wideSize);
+    settings.setValue(QStringLiteral("window/maximized"), m_wideMaximized);
     hide();
     for (const Tab &t : std::as_const(m_tabs))
         t.session->shutdown();

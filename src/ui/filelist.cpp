@@ -319,19 +319,16 @@ void FileView::drawRow(QPainter *painter, const QStyleOptionViewItem &option,
     painter->setRenderHint(QPainter::Antialiasing);
     if (dropTarget) {
         painter->setPen(QPen(Theme::Accent, 1.4));
-        painter->setBrush(QColor(255, 66, 86, 46));
-        painter->drawRoundedRect(r, 9, 9);
+        painter->setBrush(Theme::withAlpha(Theme::Accent, 46));
+        painter->drawRoundedRect(r, 6, 6);
     } else if (selected) {
-        QLinearGradient fill(r.topLeft(), r.topRight());
-        fill.setColorAt(0, QColor(255, 66, 86, 70));
-        fill.setColorAt(1, QColor(255, 66, 86, 30));
-        painter->setPen(QPen(QColor(255, 90, 108, 90), 1));
-        painter->setBrush(fill);
-        painter->drawRoundedRect(r, 9, 9);
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(QColor(255, 255, 255, hovered ? 32 : 26));
+        painter->drawRoundedRect(r, 6, 6);
     } else if (hovered) {
         painter->setPen(Qt::NoPen);
-        painter->setBrush(QColor(255, 255, 255, 13));
-        painter->drawRoundedRect(r, 9, 9);
+        painter->setBrush(QColor(255, 255, 255, 12));
+        painter->drawRoundedRect(r, 6, 6);
     }
     painter->restore();
     QStyleOptionViewItem plain = option;

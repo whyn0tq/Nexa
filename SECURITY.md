@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="SECURITY.ru.md">Русский</a>
+  <strong>English</strong> · <a href="SECURITY.ru.md">Русский</a> · <a href="SECURITY.de.md">Deutsch</a>
 </p>
 
 <p align="center"><sub>
@@ -16,47 +16,38 @@
   <a href="THIRD_PARTY_NOTICES.md">Third-party notices</a>
 </sub></p>
 
-# <img src="docs/assets/brand/icons/shield.svg" width="32" height="32" alt=""> Security policy
+# <img src="docs/assets/brand/icons/shield.svg" width="32" height="32" alt=""> Security
 
-## <img src="docs/assets/brand/icons/info.svg" width="28" height="28" alt=""> Supported versions
+## Supported versions
 
-Nexa is currently a preview project. Security fixes are applied to the latest
-development version only.
+Security fixes are released only for the latest version.
 
-| Version | Supported |
-|---|---|
-| Latest development version | Yes |
-| Older releases | No |
-
-## <img src="docs/assets/brand/icons/alert.svg" width="28" height="28" alt=""> Reporting a vulnerability
+## How to report a vulnerability
 
 > [!CAUTION]
-> Please do not open a public issue for vulnerabilities involving:
+> Do not open a public issue if the problem involves:
 >
-> - credential disclosure;
-> - private-key handling;
-> - host-key verification bypass;
-> - arbitrary file overwrite or path traversal;
-> - unsafe ZIP or virtual-file extraction;
-> - remote code execution;
-> - authentication or encryption weaknesses.
+> - leaked passwords or credentials;
+> - private keys;
+> - bypassing the server key check;
+> - writing files outside the intended folder (path traversal);
+> - unsafe unpacking of ZIP files or virtual files;
+> - running someone else's code;
+> - weak sign-in or encryption.
 
-Use GitHub's **Private vulnerability reporting** feature on the repository
-Security page. Include:
+Open the **Security** tab of the repository and choose **Report a vulnerability**.
+Include:
 
-- affected version or commit;
-- operating system;
-- reproduction steps;
-- expected and actual behavior;
-- impact assessment;
-- a minimal proof of concept, if safe.
+- your Nexa version and Windows version;
+- how to reproduce the problem;
+- what should have happened and what happened;
+- why it is dangerous;
+- an example, if it is safe to show one.
 
-Do not include real production credentials or private keys. You should receive
-an initial acknowledgement within seven days after the repository enables
-private security reporting.
+Do not attach working passwords or private keys. We will answer within seven
+days after private reporting is turned on in the repository.
 
-## <img src="docs/assets/brand/icons/eye.svg" width="28" height="28" alt=""> Scope
+## What counts as a Nexa vulnerability
 
-Security reports should concern Nexa's own source code. Vulnerabilities in Qt,
-libssh or other dependencies should also be reported to the corresponding
-upstream project.
+We accept reports about Nexa's own code. If the problem is in Qt, libssh or
+another library, please tell its authors too.

@@ -61,6 +61,8 @@ public:
 
     bool isRemote() const { return m_remote; }
     void setCaption(const QString &caption, Icon icon);
+    void setActive(bool active);
+    bool isActive() const { return m_active; }
     void setPath(const QString &path, bool record = true);
     QString path() const { return m_path; }
     void setEntries(const RemoteEntries &entries);
@@ -70,6 +72,7 @@ public:
                      const QString &action = QString());
     void showList();
     void setInteractive(bool interactive);
+    bool showsEmptyFolder() const { return m_message == Message::EmptyFolder; }
 
     FileView *view() const { return m_view; }
     FileListModel *model() const { return m_model; }
@@ -90,14 +93,22 @@ signals:
     void messageActionTriggered();
 
 protected:
+    void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
 
 private:
     void updateFooter();
     void updateButtons();
+    void updateCaption();
+    void showFilterResult();
     static QString parentOf(const QString &path, bool remote);
 
+    enum class Message { None, Other, EmptyFolder, NoMatches };
+    Message m_message = Message::None;
+
     bool m_remote;
+    bool m_active = false;
+    Icon m_icon = Icon::Computer;
     QString m_path;
     QStringList m_back;
     QStringList m_forward;

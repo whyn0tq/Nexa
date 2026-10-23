@@ -222,7 +222,6 @@ public:
         if (data->QueryGetData(&format) != S_OK)
             return false;
         FORMATETC drop{CF_HDROP, nullptr, DVASPECT_CONTENT, -1, TYMED_HGLOBAL};
-        // Explorer's zip folder answers S_FALSE here, which FAILED() counts as success.
         return data->QueryGetData(&drop) != S_OK;
     }
 
@@ -333,6 +332,13 @@ private:
 };
 }
 #endif
+
+void waitForFrame()
+{
+#ifdef Q_OS_WIN
+    DwmFlush();
+#endif
+}
 
 void installVirtualFileSupport()
 {

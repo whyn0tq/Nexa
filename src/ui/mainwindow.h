@@ -3,10 +3,14 @@
 #include "hoststore.h"
 #include "types.h"
 
+#include <QRect>
 #include <QVector>
 #include <QWidget>
 
+#include <functional>
+
 class Backdrop;
+class FrameAnimation;
 class LauncherPage;
 class QStackedWidget;
 class Session;
@@ -52,6 +56,9 @@ private:
     void showPalette();
     void saveOpenSessions();
     void updateDock();
+    void expandWindow(bool animated);
+    void collapseWindow();
+    void animateTo(const QRect &target, std::function<void()> done = {});
     Tab *tab(quint64 id);
     SessionView *currentView() const;
     int activeTransfers() const;
@@ -65,6 +72,13 @@ private:
     QVector<Tab> m_tabs;
     quint64 m_current = 0;
     quint64 m_nextSessionId = 1;
+    FrameAnimation *m_resize = nullptr;
+    QRect m_resizeFrom;
+    QRect m_resizeTo;
+    std::function<void()> m_resizeDone;
+    QSize m_wideSize;
+    bool m_wideMaximized = false;
+    bool m_compact = true;
     bool m_framePrepared = false;
     bool m_closing = false;
 };

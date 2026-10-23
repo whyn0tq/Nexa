@@ -22,6 +22,8 @@
 namespace {
 bool exportIcon(const QString &path)
 {
+    if (path.endsWith(QLatin1String(".png"), Qt::CaseInsensitive))
+        return Icons::logoImage(1024).save(path, "PNG");
     const QList<int> sizes{16, 20, 24, 32, 40, 48, 64, 128, 256};
     QList<QByteArray> images;
     for (const int size : sizes) {

@@ -53,20 +53,7 @@ protected:
     {
         const auto *model = static_cast<TransferModel *>(sourceModel());
         const TransferStatus *status = model->at(row);
-        if (!status)
-            return false;
-        switch (filter) {
-        case TransferModel::Active:
-            return !TransferModel::finished(status->state);
-        case TransferModel::Done:
-            return status->state == TransferState::Completed ||
-                   status->state == TransferState::Skipped;
-        case TransferModel::Failed:
-            return status->state == TransferState::Failed ||
-                   status->state == TransferState::Canceled;
-        default:
-            return true;
-        }
+        return status && TransferModel::matches(static_cast<TransferModel::Filter>(filter), *status);
     }
 };
 
@@ -183,6 +170,27 @@ int TransferModel::activeCount() const
                                           [](const TransferStatus &s) { return !finished(s.state); }));
 }
 
+bool TransferModel::matches(Filter filter, const TransferStatus &status)
+{
+    switch (filter) {
+    case Active:
+        return !finished(status.state);
+    case Done:
+        return status.state == TransferState::Completed || status.state == TransferState::Skipped;
+    case Failed:
+        return status.state == TransferState::Failed || status.state == TransferState::Canceled;
+    case All:
+        break;
+    }
+    return true;
+}
+
+int TransferModel::countFor(Filter filter) const
+{
+    return static_cast<int>(std::count_if(m_rows.cbegin(), m_rows.cend(),
+                                          [filter](const TransferStatus &s) { return matches(filter, s); }));
+}
+
 int TransferModel::failedCount() const
 {
     return static_cast<int>(std::count_if(m_rows.cbegin(), m_rows.cend(), [](const TransferStatus &s) {
@@ -266,7 +274,7 @@ void TransferDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
     const Icon icon = failed ? Icon::Alert
                       : done ? Icon::Check
                       : status.upload ? Icon::Upload : Icon::Download;
-    Icons::paint(*painter, icon, bubble.adjusted(8, 8, -8, -8), tint, 2);
+    Icons::paint(*painter, icon, bubble.adjusted(8, 8, -8, -8), tint);
 
     const qreal right = r.right() - 92;
     const qreal left = bubble.right() + 12;
@@ -281,11 +289,11 @@ void TransferDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
                       name);
     const qreal nameEnd = left + painter->fontMetrics().horizontalAdvance(name);
     if (!status.sessionName.isEmpty()) {
-        painter->setFont(Theme::font(11, QFont::DemiBold));
+        painter->setFont(Theme::font(12, QFont::DemiBold));
         const QString session = painter->fontMetrics().elidedText(status.sessionName,
                                                                   Qt::ElideRight, 120);
         const qreal w = painter->fontMetrics().horizontalAdvance(session) + 14;
-        const QRectF chip(nameEnd + 10, r.top() + 10, w, 18);
+        const QRectF chip(nameEnd + 10, r.top() + 9, w, 20);
         painter->setPen(QPen(QColor(255, 255, 255, 28), 1));
         painter->setBrush(QColor(255, 255, 255, 12));
         painter->drawRoundedRect(chip, 6, 6);
@@ -322,8 +330,8 @@ void TransferDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
             gradient.setColorAt(0, QColor(61, 220, 151, 150));
             gradient.setColorAt(1, QColor(61, 220, 151, 220));
         } else {
-            gradient.setColorAt(0, QColor(200, 30, 58));
-            gradient.setColorAt(1, Theme::AccentHover);
+            gradient.setColorAt(0, Theme::AccentDeep);
+            gradient.setColorAt(1, Theme::Accent);
         }
         painter->setBrush(gradient);
         painter->drawRoundedRect(filled, 3, 3);
@@ -367,7 +375,7 @@ void TransferDelegate::paint(QPainter *painter, const QStyleOptionViewItem &opti
         painter->setBrush(QColor(255, 255, 255, hovered ? 18 : 8));
         painter->drawRoundedRect(action, 9, 9);
         Icons::paint(*painter, actionIcon, QRectF(action).adjusted(8, 8, -8, -8),
-                     hovered ? Theme::Text : Theme::TextMuted, 2);
+                     hovered ? Theme::Text : Theme::TextMuted);
     }
     painter->restore();
 }
@@ -421,7 +429,7 @@ TransferDock::TransferDock(QWidget *parent) : QWidget(parent)
     auto *tools = new QHBoxLayout;
     tools->setSpacing(8);
     m_filter = new Segmented({tr("Все"), tr("Активные"), tr("Готово"), tr("Ошибки")});
-    m_filter->setFixedWidth(360);
+    m_filter->setFixedWidth(440);
     m_filter->setFixedHeight(34);
     tools->addWidget(m_filter);
     tools->addStretch();
@@ -441,27 +449,6 @@ TransferDock::TransferDock(QWidget *parent) : QWidget(parent)
     tools->addWidget(clear);
     tools->addWidget(cancelAll);
     panel->addLayout(tools);
-
-    auto *strip = new QFrame;
-    strip->setObjectName(QStringLiteral("policyStrip"));
-    strip->setStyleSheet(QStringLiteral(
-        "#policyStrip { background: rgba(255,255,255,0.03);"
-        " border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; }"));
-    auto *stripLayout = new QHBoxLayout(strip);
-    stripLayout->setContentsMargins(12, 5, 12, 5);
-    stripLayout->setSpacing(10);
-    auto *stripIcon = new QLabel;
-    stripIcon->setPixmap(Icons::pixmap(Icon::File, Theme::Accent, 16));
-    stripLayout->addWidget(stripIcon);
-    stripLayout->addWidget(makeLabel(tr("Если файл уже есть"), 12.5, Theme::Text, QFont::DemiBold));
-    m_policy = new Segmented(policyNames);
-    m_policy->setFixedSize(470, 32);
-    stripLayout->addWidget(m_policy);
-    m_policyHint = makeLabel(QString(), 12, Theme::TextSecondary);
-    m_policyHint->setMinimumWidth(0);
-    m_policyHint->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-    stripLayout->addWidget(m_policyHint, 1);
-    panel->addWidget(strip);
 
     m_proxy = new FilterProxy(this);
     m_proxy->setSourceModel(m_model);
@@ -486,7 +473,6 @@ TransferDock::TransferDock(QWidget *parent) : QWidget(parent)
     const auto pickPolicy = [](int index) {
         TransferPrefs::instance().setPolicy(static_cast<OverwritePolicy>(index));
     };
-    connect(m_policy, &Segmented::changed, this, pickPolicy);
     connect(m_policyChip, &Dropdown::changed, this, pickPolicy);
     connect(m_connections, &Dropdown::changed, this, [](int index) {
         TransferPrefs::instance().setConnections(
@@ -544,11 +530,7 @@ void TransferDock::applyFilter()
 
 void TransferDock::showPolicy(OverwritePolicy policy)
 {
-    const int index = static_cast<int>(policy);
-    m_policy->setCurrent(index);
-    m_policyChip->setCurrent(index);
-    m_policyHint->setText(TransferPrefs::policyHint(policy));
-    m_policyHint->setToolTip(m_policyHint->text());
+    m_policyChip->setCurrent(static_cast<int>(policy));
 }
 
 void TransferDock::showConnections(int connections)
@@ -578,6 +560,11 @@ void TransferDock::refreshSummary()
     if (failed > 0)
         parts.append(tr("ошибок: %1").arg(failed));
     m_summary->setText(parts.join(QStringLiteral("  ·  ")));
+    m_filter->setCounts({m_model->countFor(TransferModel::All),
+                         m_model->countFor(TransferModel::Active),
+                         m_model->countFor(TransferModel::Done),
+                         m_model->countFor(TransferModel::Failed)},
+                        TransferModel::Failed);
     m_progress = m_model->progress();
     if (m_progress < 0) {
         m_progressAnimation->stop();
@@ -596,7 +583,7 @@ void TransferDock::paintEvent(QPaintEvent *event)
     Q_UNUSED(event);
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    Glass::paintPanel(painter, rect(), Theme::RadiusLarge, Glass::Tone::Bar);
+    Glass::paintPanel(painter, rect(), Theme::Radius, Glass::Tone::Bar);
     if (m_shownProgress >= 0) {
         const QRectF track(18, 2, width() - 36, 2.5);
         painter.setPen(Qt::NoPen);
@@ -605,8 +592,8 @@ void TransferDock::paintEvent(QPaintEvent *event)
         QRectF filled = track;
         filled.setWidth(track.width() * std::clamp(m_shownProgress, 0.0, 1.0));
         QLinearGradient gradient(filled.topLeft(), filled.topRight());
-        gradient.setColorAt(0, QColor(200, 30, 58));
-        gradient.setColorAt(1, Theme::AccentHover);
+        gradient.setColorAt(0, Theme::AccentDeep);
+        gradient.setColorAt(1, Theme::Accent);
         painter.setBrush(gradient);
         painter.drawRoundedRect(filled, 1.25, 1.25);
     }

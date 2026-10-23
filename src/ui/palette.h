@@ -4,8 +4,10 @@
 
 #include <functional>
 
+class QLabel;
 class QLineEdit;
 class QListWidget;
+class QStackedLayout;
 
 class CommandPalette final : public Sheet {
     Q_OBJECT
@@ -32,4 +34,6 @@ private:
     QVector<int> m_visible;
     QLineEdit *m_search = nullptr;
     QListWidget *m_list = nullptr;
+    QStackedLayout *m_results = nullptr;
+    QLabel *m_nothing = nullptr;
 };

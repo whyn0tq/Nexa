@@ -6,11 +6,21 @@
 #include <QObject>
 #include <QVector>
 
+enum class HostKind {
+    Server,
+    Web,
+    Game,
+    Database,
+    Storage,
+    Desktop,
+};
+
 struct SavedHost {
     QString id;
     QString name;
     ConnectionProfile profile;
     int color = 0;
+    HostKind kind = HostKind::Server;
     QDateTime lastUsed;
     QString lastPath;
 

@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="CODE_OF_CONDUCT.ru.md">Русский</a>
+  <strong>English</strong> · <a href="CODE_OF_CONDUCT.ru.md">Русский</a> · <a href="CODE_OF_CONDUCT.de.md">Deutsch</a>
 </p>
 
 <p align="center"><sub>
@@ -18,27 +18,26 @@
 
 # <img src="docs/assets/brand/icons/link.svg" width="32" height="32" alt=""> Code of Conduct
 
-## <img src="docs/assets/brand/icons/check.svg" width="28" height="28" alt=""> Our standards
+## How we talk to each other
 
-Nexa is committed to a welcoming, professional and harassment-free community.
-Examples of positive behavior include:
+We want the project to be calm and respectful. So:
 
-- being respectful and constructive;
-- accepting technical feedback;
-- focusing criticism on code and ideas, not people;
-- helping newcomers participate;
-- protecting other users' private information.
+- be polite and stick to the point;
+- take feedback calmly;
+- criticize code and ideas, not people;
+- help newcomers;
+- do not post other people's personal data.
 
 > [!WARNING]
-> Unacceptable behavior includes harassment, threats, discriminatory language,
-> personal attacks, deliberate disruption, publishing private information, or
-> sharing credentials and sensitive infrastructure data.
+> Harassment, threats, insults, discrimination, deliberately derailing
+> discussions, and posting other people's personal data, passwords or details of
+> their servers are not allowed.
 
-## <img src="docs/assets/brand/icons/shield.svg" width="28" height="28" alt=""> Enforcement
+## What happens if the rules are broken
 
-Project maintainers may edit, remove or reject comments, commits, issues and
-pull requests that violate these standards. Repeated or severe violations may
-result in a temporary or permanent ban from project spaces.
+Maintainers may edit or remove comments, commits, issues and pull requests that
+break these rules. Repeated or serious violations can lead to a temporary or
+permanent ban from the project.
 
-Report conduct concerns privately to the repository maintainers. Reports will be
-reviewed confidentially and handled proportionally.
+To report a violation, write to the maintainers privately. We will look into it
+quietly and choose a response that fits the situation.

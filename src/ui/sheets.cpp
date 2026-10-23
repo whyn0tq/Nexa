@@ -84,6 +84,51 @@ protected:
 private:
     QColor m_color;
 };
+
+class KindButton final : public QAbstractButton {
+public:
+    KindButton(HostKind kind, QWidget *parent = nullptr) : QAbstractButton(parent), m_kind(kind)
+    {
+        setCheckable(true);
+        setFixedSize(30, 30);
+        setCursor(Qt::PointingHandCursor);
+        setAttribute(Qt::WA_Hover);
+        setToolTip(Icons::hostKindName(kind));
+        setAccessibleName(Icons::hostKindName(kind));
+    }
+
+protected:
+    void paintEvent(QPaintEvent *) override
+    {
+        QPainter painter(this);
+        painter.setRenderHint(QPainter::Antialiasing);
+        const QRectF r = QRectF(rect()).adjusted(1, 1, -1, -1);
+        const bool hovered = underMouse();
+        if (isChecked()) {
+            painter.setPen(QPen(Theme::withAlpha(Theme::Accent, 150), 1));
+            painter.setBrush(Theme::AccentSoft);
+            painter.drawRoundedRect(r.adjusted(0.5, 0.5, -0.5, -0.5), 8, 8);
+        } else if (hovered) {
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(Theme::GlassHover);
+            painter.drawRoundedRect(r, 8, 8);
+        }
+        if (hasFocus()) {
+            painter.setPen(QPen(Theme::Accent, 2));
+            painter.setBrush(Qt::NoBrush);
+            painter.drawRoundedRect(r, 8, 8);
+        }
+        const QRectF glyph(6, 6, 18, 18);
+        if (isChecked())
+            Icons::paintFilled(painter, Icons::hostIcon(m_kind), glyph, Theme::AccentText);
+        else
+            Icons::paint(painter, Icons::hostIcon(m_kind), glyph,
+                         hovered ? Theme::Text : Theme::TextMuted);
+    }
+
+private:
+    HostKind m_kind;
+};
 }
 
 namespace Sheets {
@@ -213,10 +258,11 @@ void trust(QWidget *host, const QString &server, const QString &fingerprint,
 }
 
 HostEditor::HostEditor(QWidget *host, const SavedHost &value, bool isNew)
-    : Sheet(host, 560), m_value(value), m_color(value.color)
+    : Sheet(host, 560), m_value(value), m_color(value.color), m_kind(value.kind)
 {
     setTitle(isNew ? tr("Новый сервер") : tr("Сервер «%1»").arg(value.title()),
-             tr("Пароли хранятся зашифрованными средствами Windows."), Icon::Server,
+             tr("Пароли хранятся зашифрованными средствами Windows."),
+             Icons::hostIcon(value.kind),
              Theme::Accent);
     const ConnectionProfile &profile = value.profile;
 
@@ -295,10 +341,29 @@ HostEditor::HostEditor(QWidget *host, const SavedHost &value, bool isNew)
     more->addWidget(field(tr("Начальная папка"), m_path), 0, 1);
     body()->addLayout(more);
 
+    auto *looks = new QGridLayout;
+    looks->setHorizontalSpacing(12);
+    looks->setVerticalSpacing(8);
+    auto *kinds = new QHBoxLayout;
+    kinds->setSpacing(4);
+    for (const HostKind kind : {HostKind::Server, HostKind::Web, HostKind::Game,
+                                HostKind::Database, HostKind::Storage, HostKind::Desktop}) {
+        auto *button = new KindButton(kind);
+        button->setChecked(kind == m_kind);
+        connect(button, &QAbstractButton::clicked, this, [this, kind, button] {
+            m_kind = kind;
+            for (QWidget *other : std::as_const(m_kinds))
+                static_cast<QAbstractButton *>(other)->setChecked(other == button);
+        });
+        m_kinds.append(button);
+        kinds->addWidget(button);
+    }
+    kinds->addStretch();
+    looks->addWidget(makeLabel(tr("Тип"), 12, Theme::TextSecondary, QFont::DemiBold), 0, 0);
+    looks->addLayout(kinds, 0, 1);
+
     auto *colors = new QHBoxLayout;
     colors->setSpacing(4);
-    colors->addWidget(makeLabel(tr("Метка"), 12, Theme::TextSecondary, QFont::DemiBold));
-    colors->addSpacing(8);
     for (int i = 0; i < Theme::labelColorCount(); ++i) {
         auto *swatch = new Swatch(Theme::labelColor(i));
         swatch->setChecked(i == m_color);
@@ -311,7 +376,10 @@ HostEditor::HostEditor(QWidget *host, const SavedHost &value, bool isNew)
         colors->addWidget(swatch);
     }
     colors->addStretch();
-    body()->addLayout(colors);
+    looks->addWidget(makeLabel(tr("Метка"), 12, Theme::TextSecondary, QFont::DemiBold), 1, 0);
+    looks->addLayout(colors, 1, 1);
+    looks->setColumnStretch(1, 1);
+    body()->addLayout(looks);
 
     m_error = makeLabel(QString(), 12, Theme::Danger);
     m_error->hide();
@@ -385,6 +453,7 @@ SavedHost HostEditor::collect() const
     SavedHost result = m_value;
     result.name = m_name->text().trimmed();
     result.color = m_color;
+    result.kind = m_kind;
     ConnectionProfile &p = result.profile;
     bool parsed = false;
     const ConnectionProfile address = HostStore::parseAddress(m_host->text(), &parsed);
