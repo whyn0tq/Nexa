@@ -60,7 +60,7 @@ class TransferHost {
 public:
     virtual ~TransferHost() = default;
 
-    virtual bool take(WorkItem &item, bool allowExpand) = 0;
+    virtual bool take(WorkItem &item, bool allowExpand, bool allowSegments) = 0;
     virtual void pushFront(const QVector<FileTask> &tasks) = 0;
     virtual void addTasks(quint64 jobId, const QVector<FileTask> &tasks) = 0;
     virtual void expansionFinished(quint64 jobId) = 0;

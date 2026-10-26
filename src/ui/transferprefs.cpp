@@ -16,7 +16,7 @@ TransferPrefs::TransferPrefs()
     const int policy = settings.value(QStringLiteral("transfers/policy"), 0).toInt();
     m_policy = static_cast<OverwritePolicy>(std::clamp(policy, 0, 3));
     m_connections =
-        std::clamp(settings.value(QStringLiteral("transfers/connections"), 4).toInt(), 1, 16);
+        std::clamp(settings.value(QStringLiteral("transfers/connections"), 2).toInt(), 1, 16);
 }
 
 void TransferPrefs::setPolicy(OverwritePolicy policy)

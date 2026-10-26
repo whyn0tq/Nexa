@@ -23,12 +23,26 @@ Notable changes to Nexa are collected here. Versions follow
 
 | Version | Date | In short |
 |---|---|---|
-| [**1.2.0**](#120---2026-10-24) | 2026-10-24 | New look and icon, documentation in German |
+| [**1.2.1**](#121---2026-10-27) | 2026-10-27 | Faster transfers of large files |
+| [1.2.0](#120---2026-10-24) | 2026-10-24 | New look and icon, documentation in German |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | German, files from a ZIP |
 | [1.0.0](#100---2026-10-15) | 2026-10-15 | Tabs and the new transfer engine |
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP and FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Transfer queue and resume |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | First two-pane SFTP client |
+
+## [1.2.1] - 2026-10-27
+
+### Changed
+
+- Large files move faster over SFTP: a file from 2 MB is split across all
+  transfer connections at once.
+- Transfers use 2 connections by default.
+
+### Fixed
+
+- Uploading a large file over SFTP no longer sits still at the start and then
+  jumps to done. Progress moves steadily, and Cancel works right away.
 
 ## [1.2.0] - 2026-10-24
 

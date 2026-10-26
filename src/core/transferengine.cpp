@@ -117,11 +117,13 @@ void TransferQueue::setStopping(bool value)
     wakeAll();
 }
 
-bool TransferQueue::take(WorkItem &item, bool allowExpand)
+bool TransferQueue::take(WorkItem &item, bool allowExpand, bool allowSegments)
 {
     QMutexLocker locker(&m_mutex);
     for (auto it = m_items.begin(); it != m_items.end(); ++it) {
         if (it->kind == WorkItem::Kind::Expand && !allowExpand)
+            continue;
+        if (it->kind == WorkItem::Kind::File && it->file.isSegment() && !allowSegments)
             continue;
         item = *it;
         m_items.erase(it);
@@ -485,7 +487,7 @@ void TransferEngine::spawnWorkers()
     if (queued == 0)
         return;
     const int limit = std::min(m_parallel, m_queue->capacity());
-    const int wanted = std::min(limit, std::max<int>(1, queued));
+    const int wanted = std::min(limit, static_cast<int>(m_workers.size()) + queued);
     while (m_workers.size() < wanted) {
         auto *worker = new TransferWorker(m_queue, m_profile);
         connect(worker, &TransferWorker::connectionFailed, this,

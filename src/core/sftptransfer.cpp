@@ -19,13 +19,18 @@ constexpr int MaxActiveFiles = 64;
 constexpr int MaxRequests = 384;
 constexpr qint64 ReadBudget = 24LL * 1024 * 1024;
 constexpr qint64 WriteBudget = 12LL * 1024 * 1024;
-constexpr qint64 SegmentThreshold = 40LL * 1024 * 1024;
-constexpr qint64 SegmentTarget = 24LL * 1024 * 1024;
+constexpr qint64 SegmentTarget = 1LL * 1024 * 1024;
+constexpr qint64 SegmentThreshold = 2 * SegmentTarget;
 constexpr int SilenceLimitMs = 60000;
 
 QByteArray bytes(const QString &path)
 {
     return QDir::fromNativeSeparators(path).toUtf8();
+}
+
+int segmentCount(qint64 size, int parallel)
+{
+    return static_cast<int>(std::clamp<qint64>(size / SegmentTarget, 2, parallel));
 }
 
 void setLocalTime(QFile &file, qint64 modified)
@@ -79,6 +84,7 @@ private:
     using Phase = Active::Phase;
     using Kind = Request::Kind;
 
+    bool hasActiveSegment() const;
     void start(const FileTask &task);
     void startUpload(Active *a);
     void startDownload(Active *a);
@@ -149,7 +155,7 @@ bool SftpConnection::Pipeline::run()
         while (static_cast<int>(active.size()) < MaxActiveFiles &&
                inFlightBytes < budget && !ch.broken()) {
             const bool idle = active.empty() && pending.isEmpty();
-            if (!host.take(item, idle))
+            if (!host.take(item, idle, !hasActiveSegment()))
                 break;
             if (item.kind == WorkItem::Kind::Expand) {
                 if (!c.expand(item.job, host) && c.m_broken) {
@@ -185,7 +191,7 @@ bool SftpConnection::Pipeline::run()
                      active.end());
 
         if (active.empty() && pending.isEmpty()) {
-            if (!host.take(item, true))
+            if (!host.take(item, true, true))
                 return true;
             if (item.kind == WorkItem::Kind::Expand) {
                 if (!c.expand(item.job, host) && c.m_broken) {
@@ -219,6 +225,13 @@ bool SftpConnection::Pipeline::run()
             break;
         }
     }
+}
+
+bool SftpConnection::Pipeline::hasActiveSegment() const
+{
+    return std::any_of(active.begin(), active.end(), [](const std::unique_ptr<Active> &a) {
+        return a->phase != Phase::Done && a->task.isSegment();
+    });
 }
 
 void SftpConnection::Pipeline::abortAll()
@@ -277,7 +290,7 @@ void SftpConnection::Pipeline::start(const FileTask &task)
 void SftpConnection::Pipeline::startUpload(Active *a)
 {
     a->local = std::make_unique<QFile>(a->task.localPath);
-    if (!a->local->open(QIODevice::ReadOnly)) {
+    if (!a->local->open(QIODevice::ReadOnly | QIODevice::Unbuffered)) {
         conclude(a, FileOutcome::Failed,
                  tr("Не удалось открыть «%1»: %2")
                      .arg(a->task.localPath, a->local->errorString()));
@@ -352,7 +365,7 @@ void SftpConnection::Pipeline::startDownload(Active *a)
         a->next = task.segmentStart;
         a->rangeEnd = task.segmentEnd;
         a->local = std::make_unique<QFile>(a->partial);
-        if (!a->local->open(QIODevice::ReadWrite)) {
+        if (!a->local->open(QIODevice::ReadWrite | QIODevice::Unbuffered)) {
             conclude(a, FileOutcome::Failed,
                      tr("Не удалось открыть «%1»: %2")
                          .arg(a->partial, a->local->errorString()));
@@ -408,8 +421,7 @@ void SftpConnection::Pipeline::startDownload(Active *a)
     const int parallel = host.parallelism();
     if (startOffset == 0 && task.size >= SegmentThreshold && parallel > 1) {
         QFile::remove(destination + c.partialSuffix());
-        const int count = static_cast<int>(std::clamp<qint64>(
-            task.size / SegmentTarget, 2, std::min(parallel, 8)));
+        const int count = segmentCount(task.size, parallel);
         auto group = std::make_shared<SegmentGroup>();
         group->partialLocal = destination + c.segmentSuffix();
         group->finalLocal = destination;
@@ -449,9 +461,9 @@ void SftpConnection::Pipeline::startDownload(Active *a)
     if (discardPartial || startOffset == 0)
         QFile::remove(a->partial);
     a->local = std::make_unique<QFile>(a->partial);
-    const QIODevice::OpenMode mode =
-        startOffset > 0 ? QIODevice::ReadWrite
-                        : (QIODevice::ReadWrite | QIODevice::Truncate);
+    QIODevice::OpenMode mode = QIODevice::ReadWrite | QIODevice::Unbuffered;
+    if (startOffset == 0)
+        mode |= QIODevice::Truncate;
     if (!a->local->open(mode)) {
         conclude(a, FileOutcome::Failed,
                  tr("Не удалось создать «%1»: %2")
@@ -487,8 +499,7 @@ void SftpConnection::Pipeline::segmentAfterOpen(Active *a)
     if (task.isSegment() || a->next != 0 || task.size < SegmentThreshold ||
         parallel < 2)
         return;
-    const int count = static_cast<int>(
-        std::clamp<qint64>(task.size / SegmentTarget, 2, std::min(parallel, 8)));
+    const int count = segmentCount(task.size, parallel);
     auto group = std::make_shared<SegmentGroup>();
     group->remoteDestination = a->destination;
     group->size = task.size;
@@ -523,13 +534,16 @@ void SftpConnection::Pipeline::pump(Active *a)
             if (inFlightBytes >= WriteBudget || a->next >= a->rangeEnd)
                 break;
             const qint64 length = std::min<qint64>(chunk, a->rangeEnd - a->next);
+            const qint64 packetSize = length + a->handle.size() + 32;
+            if (inFlightBytes > 0 && ch.writeWindow() < packetSize)
+                break;
             if (a->local->pos() != a->next && !a->local->seek(a->next)) {
                 a->failed = true;
                 a->error = tr("Не удалось прочитать «%1».").arg(a->task.localPath);
                 return;
             }
             const quint32 id = ch.nextId();
-            Builder builder(Write, id, length + a->handle.size() + 32);
+            Builder builder(Write, id, packetSize);
             builder.string(a->handle).u64(static_cast<quint64>(a->next));
             char *target = builder.stringSpace(length);
             const qint64 got = a->local->read(target, length);

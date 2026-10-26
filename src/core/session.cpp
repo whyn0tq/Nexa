@@ -57,9 +57,8 @@ Session::Session(quint64 id, const QString &hostId, const QString &title,
 
     m_transfers = new TransferEngine(id, this);
     QSettings settings;
-    m_transfers->setParallelism(settings.value(QStringLiteral("transfers/connections"),
-                                               m_profile.protocol == Protocol::Ftp ? 3 : 4)
-                                    .toInt());
+    m_transfers->setParallelism(
+        settings.value(QStringLiteral("transfers/connections"), 2).toInt());
     m_transfers->setPolicy(static_cast<OverwritePolicy>(
         settings.value(QStringLiteral("transfers/policy"), 0).toInt()));
     m_transfers->setProfile(m_profile, m_title);

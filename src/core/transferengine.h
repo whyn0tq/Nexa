@@ -58,7 +58,7 @@ public:
 
     QVector<TransferStatus> snapshot(qint64 elapsedMs, bool &anyActive);
 
-    bool take(WorkItem &item, bool allowExpand) override;
+    bool take(WorkItem &item, bool allowExpand, bool allowSegments) override;
     void pushFront(const QVector<FileTask> &tasks) override;
     void addTasks(quint64 jobId, const QVector<FileTask> &tasks) override;
     void expansionFinished(quint64 jobId) override;
@@ -90,7 +90,7 @@ private:
     QHash<quint64, std::shared_ptr<Job>> m_jobs;
     std::atomic_bool m_stopping{false};
     std::atomic_int m_policy{static_cast<int>(OverwritePolicy::Resume)};
-    std::atomic_int m_parallel{4};
+    std::atomic_int m_parallel{2};
     std::atomic_int m_capacity{64};
 };
 
@@ -156,6 +156,6 @@ private:
     QElapsedTimer m_clock;
     qint64 m_lastTick = 0;
     QElapsedTimer m_failingSince;
-    int m_parallel = 4;
+    int m_parallel = 2;
     bool m_shutdown = false;
 };

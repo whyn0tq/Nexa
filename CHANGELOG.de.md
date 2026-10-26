@@ -23,12 +23,27 @@ Hier sind die wichtigen Änderungen an Nexa gesammelt. Die Versionen folgen der
 
 | Version | Datum | Kurz gesagt |
 |---|---|---|
-| [**1.2.0**](#120---2026-10-24) | 2026-10-24 | Neues Aussehen und Symbol, Dokumentation auf Deutsch |
+| [**1.2.1**](#121---2026-10-27) | 2026-10-27 | Schnellere Übertragung großer Dateien |
+| [1.2.0](#120---2026-10-24) | 2026-10-24 | Neues Aussehen und Symbol, Dokumentation auf Deutsch |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | Deutsch, Dateien aus einem ZIP |
 | [1.0.0](#100---2026-10-15) | 2026-10-15 | Tabs und die neue Übertragungs-Engine |
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP und FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Übertragungswarteschlange und Fortsetzen |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | Erster zweispaltiger SFTP-Client |
+
+## [1.2.1] - 2026-10-27
+
+### Geändert
+
+- Große Dateien werden per SFTP schneller übertragen: Eine Datei ab 2 MB wird
+  gleichzeitig auf alle Übertragungsverbindungen aufgeteilt.
+- Übertragungen nutzen standardmäßig 2 Verbindungen.
+
+### Behoben
+
+- Das Hochladen einer großen Datei per SFTP bleibt am Anfang nicht mehr stehen,
+  um dann sofort fertig zu sein. Der Fortschritt läuft gleichmäßig, und
+  Abbrechen wirkt sofort.
 
 ## [1.2.0] - 2026-10-24
 

@@ -1089,7 +1089,7 @@ bool FtpConnection::runTransfers(TransferHost &host)
 {
     m_error.clear();
     WorkItem item;
-    while (!host.stopping() && host.take(item, true)) {
+    while (!host.stopping() && host.take(item, true, true)) {
         if (item.kind == WorkItem::Kind::Expand) {
             if (!expand(item.job, host) && m_broken)
                 return false;

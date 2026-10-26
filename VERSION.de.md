@@ -20,8 +20,8 @@
 
 | Angabe | Wert |
 |---|---|
-| **Version** | **1.2.0** |
-| Datum | 24. Oktober 2026 |
+| **Version** | **1.2.1** |
+| Datum | 27. Oktober 2026 |
 | System | Windows 10 und 11, x64 |
 | Sprache | C++20, Oberfläche mit Qt 6 |
 | SFTP | eigener Client auf Basis von libssh 0.12 |
@@ -34,7 +34,7 @@
 > Die Nummer steht an zwei Stellen und wird von Hand eingetragen. Ändern Sie
 > beide zusammen:
 >
-> - `project(Nexa VERSION 1.2.0 ...)` in `CMakeLists.txt`;
+> - `project(Nexa VERSION 1.2.1 ...)` in `CMakeLists.txt`;
 > - die Tabelle oben, in `VERSION.md`, `VERSION.ru.md` und `VERSION.de.md`.
 >
 > Die App und `Nexa.exe` übernehmen die Nummer aus `CMakeLists.txt`. Das
@@ -42,7 +42,7 @@
 
 Die Nummern folgen der [semantischen Versionierung](https://semver.org/lang/de/):
 `MAJOR.MINOR.PATCH`. Eine neue Funktion ist ein MINOR-Schritt (1.3.0), eine
-Fehlerbehebung ein PATCH (1.2.1). Für Testbuilds hängen Sie `-beta.1` oder
+Fehlerbehebung ein PATCH (1.2.2). Für Testbuilds hängen Sie `-beta.1` oder
 `-rc.1` an.
 
 ## So erstellen Sie ein Release
@@ -59,8 +59,8 @@ Fehlerbehebung ein PATCH (1.2.1). Für Testbuilds hängen Sie `-beta.1` oder
 6. Setzen Sie einen Tag und pushen Sie ihn:
 
    ```powershell
-   git tag -a v1.2.0 -m "Nexa 1.2.0"
-   git push origin v1.2.0
+   git tag -a v1.2.1 -m "Nexa 1.2.1"
+   git push origin v1.2.1
    ```
 
 7. GitHub Actions baut das Archiv und legt einen Release-Entwurf an. Prüfen Sie

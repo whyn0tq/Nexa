@@ -163,6 +163,7 @@ public:
 
     quint32 maxRead() const { return m_maxRead; }
     quint32 maxWrite() const { return m_maxWrite; }
+    qint64 writeWindow() const;
     QString lastError() const { return m_error; }
 
 private:
@@ -173,7 +174,6 @@ private:
     ssh_channel m_channel = nullptr;
     QByteArray m_buffer;
     qsizetype m_offset = 0;
-    QByteArray m_scratch;
     quint32 m_nextId = 1;
     quint32 m_maxRead = 64 * 1024;
     quint32 m_maxWrite = 32 * 1024;

@@ -29,7 +29,7 @@ quint32 getU32(const char *source)
 }
 
 constexpr qsizetype MaxPacket = 4 * 1024 * 1024;
-constexpr qsizetype ReadChunk = 512 * 1024;
+constexpr qsizetype ReadChunk = 2 * 1024 * 1024;
 }
 
 Builder::Builder(Type type, quint32 id, qsizetype reserve)
@@ -212,7 +212,6 @@ bool Channel::open(ssh_session session, QString &error)
     m_offset = 0;
     m_nextId = 1;
     m_extensions.clear();
-    m_scratch.resize(ReadChunk);
 
     m_channel = ssh_channel_new(session);
     if (!m_channel || ssh_channel_open_session(m_channel) != SSH_OK ||
@@ -298,6 +297,11 @@ void Channel::close()
     m_channel = nullptr;
 }
 
+qint64 Channel::writeWindow() const
+{
+    return m_channel ? ssh_channel_window_size(m_channel) : 0;
+}
+
 bool Channel::send(const QByteArray &framed)
 {
     if (!m_channel || m_broken)
@@ -323,24 +327,22 @@ bool Channel::fillBuffer(int timeoutMs, bool &timedOut)
     timedOut = false;
     if (!m_channel || m_broken)
         return false;
+    if (m_offset > 0 && m_offset >= m_buffer.size() / 2) {
+        m_buffer.remove(0, m_offset);
+        m_offset = 0;
+    }
+    const qsizetype used = m_buffer.size();
+    m_buffer.resize(used + ReadChunk);
     const int count = ssh_channel_read_timeout(
-        m_channel, m_scratch.data(), static_cast<uint32_t>(m_scratch.size()), 0,
-        timeoutMs);
+        m_channel, m_buffer.data() + used, static_cast<uint32_t>(ReadChunk), 0, timeoutMs);
+    m_buffer.resize(used + std::max(count, 0));
     if (count == SSH_ERROR || (count == 0 && ssh_channel_is_eof(m_channel))) {
         m_broken = true;
         m_error = QCoreApplication::translate("sftp",
                                               "Соединение с сервером прервано.");
         return false;
     }
-    if (count == 0 || count == SSH_AGAIN) {
-        timedOut = true;
-        return true;
-    }
-    if (m_offset > 0 && m_offset >= m_buffer.size() / 2) {
-        m_buffer.remove(0, m_offset);
-        m_offset = 0;
-    }
-    m_buffer.append(m_scratch.constData(), count);
+    timedOut = count <= 0;
     return true;
 }
 
@@ -361,7 +363,7 @@ bool Channel::takePacket(Packet &packet)
     packet.data = m_buffer.mid(m_offset + 4, length);
     m_offset += static_cast<qsizetype>(length) + 4;
     if (m_offset == m_buffer.size()) {
-        m_buffer.clear();
+        m_buffer.resize(0);
         m_offset = 0;
     }
     packet.valid = true;
