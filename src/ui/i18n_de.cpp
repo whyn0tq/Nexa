@@ -428,6 +428,7 @@ const Pair German[] = {
     {"Русский", "Russisch"},
     {"Американский", "Amerikanisches Englisch"},
     {"Немецкий", "Deutsch"},
+    {"Французский", "Französisch"},
     {"Чтобы переключить язык на %1, Nexa перезапустится. Открытые вкладки вернутся сами.",
      "Nexa startet neu, um die Sprache auf %1 umzustellen. Geöffnete Tabs kommen von selbst "
      "zurück."},

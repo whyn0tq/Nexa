@@ -412,6 +412,7 @@ const Pair English[] = {
     {"Русский", "Russian"},
     {"Американский", "American English"},
     {"Немецкий", "German"},
+    {"Французский", "French"},
     {"Чтобы переключить язык на %1, Nexa перезапустится. Открытые вкладки вернутся сами.",
      "Nexa restarts to switch the language to %1. Open tabs come back by themselves."},
     {"Перезапустить", "Restart"},

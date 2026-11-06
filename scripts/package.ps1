@@ -1,7 +1,9 @@
 param(
     [string]$DistDirectory = "dist-release",
     [string]$OutputDirectory = "dist",
-    [switch]$Zip
+    [switch]$Zip,
+    [switch]$Installer,
+    [string]$Compiler = "ISCC.exe"
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,6 +15,13 @@ $resolve = {
 }
 $distDir = & $resolve $DistDirectory
 $outputDir = & $resolve $OutputDirectory
+$distDir = [System.IO.Path]::GetFullPath($distDir)
+$outputDir = [System.IO.Path]::GetFullPath($outputDir)
+
+if (-not (Test-Path -LiteralPath (Join-Path $distDir "Nexa.exe"))) {
+    throw "No Nexa.exe in $distDir. Run scripts/build.ps1 first."
+}
+$compilerPath = if ($Installer) { (Get-Command $Compiler -ErrorAction Stop).Source }
 
 $cmake = Get-Content (Join-Path $projectRoot "CMakeLists.txt") -Raw
 if ($cmake -notmatch "project\(Nexa VERSION (?<version>[0-9.]+)") {
@@ -22,13 +31,18 @@ $version = $Matches["version"]
 $name = "Nexa-$version-windows-x64"
 $stage = Join-Path $outputDir $name
 
+if ($distDir -eq $stage -or $distDir.StartsWith("$stage\", [StringComparison]::OrdinalIgnoreCase) -or
+    $stage.StartsWith("$distDir\", [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Package staging and deployment directories must not overlap"
+}
 if (Test-Path $stage) {
-    Remove-Item -Recurse -Force $stage
+    Remove-Item -LiteralPath $stage -Recurse -Force
 }
 New-Item -ItemType Directory -Force -Path $stage | Out-Null
 Copy-Item -Path (Join-Path $distDir "*") -Destination $stage -Recurse
 Copy-Item -LiteralPath (Join-Path $projectRoot "LICENSE") -Destination (Join-Path $stage "LICENSE.txt")
-foreach ($notice in "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.ru.md", "THIRD_PARTY_NOTICES.de.md") {
+foreach ($notice in "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.ru.md", "THIRD_PARTY_NOTICES.de.md",
+                  "THIRD_PARTY_NOTICES.fr.md") {
     Copy-Item -LiteralPath (Join-Path $projectRoot $notice) -Destination $stage
 }
 
@@ -101,4 +115,14 @@ if ($Zip) {
     Write-Host "Nexa package: $archive"
 } else {
     Write-Host "Nexa package: $stage"
+}
+
+if ($Installer) {
+    & (Join-Path $PSScriptRoot "installer-assets.ps1")
+    & $compilerPath "/DAppVersion=$version" "/DSourceDir=$stage" "/DOutputDir=$outputDir" `
+        (Join-Path $projectRoot "installer\setup.iss")
+    if ($LASTEXITCODE -ne 0) {
+        throw "Installer compilation failed"
+    }
+    Write-Host "Nexa installer: $(Join-Path $outputDir "$name-setup.exe")"
 }

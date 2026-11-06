@@ -20,7 +20,7 @@ QString Format::size(qint64 bytes)
         ++unit;
     }
     return QStringLiteral("%1 %2")
-        .arg(QString::number(value, 'f', value < 10.0 ? 1 : 0), units.at(unit));
+        .arg(QLocale().toString(value, 'f', value < 10.0 ? 1 : 0), units.at(unit));
 }
 
 QString Format::speed(qint64 bytesPerSecond)

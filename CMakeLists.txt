@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(Nexa VERSION 1.2.1 LANGUAGES CXX)
+project(Nexa VERSION 1.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -87,7 +87,8 @@ if(BUILD_TESTING)
     target_link_libraries(NexaSftpCodecTest PRIVATE nexa_core)
     add_test(NAME sftp_codec COMMAND NexaSftpCodecTest)
 
-    qt_add_executable(NexaI18nTest tests/i18n_test.cpp src/ui/i18n_en.cpp src/ui/i18n_de.cpp)
+    qt_add_executable(NexaI18nTest tests/i18n_test.cpp src/ui/i18n_en.cpp src/ui/i18n_de.cpp
+                      src/ui/i18n_fr.cpp)
     target_include_directories(NexaI18nTest PRIVATE src/ui)
     target_link_libraries(NexaI18nTest PRIVATE Qt6::Core)
     add_test(NAME i18n COMMAND NexaI18nTest)

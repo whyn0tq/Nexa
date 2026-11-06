@@ -44,6 +44,8 @@ QString codeOf(Language language)
         return QStringLiteral("ru");
     case Language::German:
         return QStringLiteral("de");
+    case Language::French:
+        return QStringLiteral("fr");
     case Language::English:
         break;
     }
@@ -58,6 +60,8 @@ Language fromCode(const QString &code)
         return Language::Russian;
     if (code == QLatin1String("de"))
         return Language::German;
+    if (code == QLatin1String("fr"))
+        return Language::French;
     return Language::English;
 }
 
@@ -89,6 +93,12 @@ void install()
         QLocale::setDefault(QLocale(QLocale::German, QLocale::Germany));
         static TableTranslator german(German, GermanCount);
         QCoreApplication::installTranslator(&german);
+        return;
+    }
+    if (g_active == Language::French) {
+        QLocale::setDefault(QLocale(QLocale::French, QLocale::France));
+        static TableTranslator french(French, FrenchCount);
+        QCoreApplication::installTranslator(&french);
         return;
     }
     QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedStates));

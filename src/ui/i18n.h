@@ -4,7 +4,7 @@
 
 namespace I18n {
 
-enum class Language { English = 0, Russian, German };
+enum class Language { English = 0, Russian, German, French };
 
 struct Pair {
     const char *ru;
@@ -14,6 +14,8 @@ extern const Pair English[];
 extern const int EnglishCount;
 extern const Pair German[];
 extern const int GermanCount;
+extern const Pair French[];
+extern const int FrenchCount;
 
 Language current();
 Language active();

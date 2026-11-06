@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="CONTRIBUTING.md">English</a> · <a href="CONTRIBUTING.ru.md">Русский</a> · <strong>Deutsch</strong>
+  <a href="CONTRIBUTING.md">English</a> · <a href="CONTRIBUTING.ru.md">Русский</a> · <strong>Deutsch</strong> · <a href="CONTRIBUTING.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>
@@ -54,21 +54,22 @@ ctest --test-dir build --output-on-failure
 
 ## Dokumentation
 
-Jedes Dokument hat drei Fassungen: `NAME.md` auf Englisch, `NAME.ru.md` auf
-Russisch und `NAME.de.md` auf Deutsch. Ändern Sie eine, ändern Sie die anderen
-im selben Pull Request. Sie haben denselben Aufbau und denselben Inhalt, nur die
-Sprache unterscheidet sich.
+Jedes Dokument hat vier Fassungen: `NAME.md` auf Englisch, `NAME.ru.md` auf
+Russisch, `NAME.de.md` auf Deutsch und `NAME.fr.md` auf Französisch. Ändern Sie
+eine, ändern Sie die anderen im selben Pull Request. Sie haben denselben Aufbau
+und denselben Inhalt, nur die Sprache unterscheidet sich.
 
 - Die Texte der Oberfläche stehen im Quellcode auf Russisch, die Übersetzungen
-  liegen in `src/ui/i18n_en.cpp` und `src/ui/i18n_de.cpp`. Die Namen der
-  Schaltflächen in der Dokumentation müssen dem entsprechen, was Sie in der App
-  sehen.
+  liegen in `src/ui/i18n_en.cpp`, `src/ui/i18n_de.cpp` und `src/ui/i18n_fr.cpp`.
+  Die Namen der Schaltflächen in der Dokumentation müssen dem entsprechen, was
+  Sie in der App sehen.
 - Die App nimmt ihre Screenshots selbst auf:
 
   ```powershell
   .\build\Nexa.exe --demo-shots docs\assets --language en
   .\build\Nexa.exe --demo-shots docs\assets\ru --language ru
   .\build\Nexa.exe --demo-shots docs\assets\de --language de
+  .\build\Nexa.exe --demo-shots docs\assets\fr --language fr
   ```
 
 - Das Banner, die Zahlen und die Symbole in `docs/assets/brand` erzeugt ein

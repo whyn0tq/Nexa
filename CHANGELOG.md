@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="CHANGELOG.ru.md">Русский</a> · <a href="CHANGELOG.de.md">Deutsch</a>
+  <strong>English</strong> · <a href="CHANGELOG.ru.md">Русский</a> · <a href="CHANGELOG.de.md">Deutsch</a> · <a href="CHANGELOG.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>
@@ -23,13 +23,33 @@ Notable changes to Nexa are collected here. Versions follow
 
 | Version | Date | In short |
 |---|---|---|
-| [**1.2.1**](#121---2026-10-27) | 2026-10-27 | Faster transfers of large files |
+| [**1.3.0**](#130---2026-11-06) | 2026-11-06 | French interface and documentation |
+| [1.2.1](#121---2026-10-27) | 2026-10-27 | Faster transfers of large files |
 | [1.2.0](#120---2026-10-24) | 2026-10-24 | New look and icon, documentation in German |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | German, files from a ZIP |
 | [1.0.0](#100---2026-10-15) | 2026-10-15 | Tabs and the new transfer engine |
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP and FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Transfer queue and resume |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | First two-pane SFTP client |
+
+## [1.3.0] - 2026-11-06
+
+> [!IMPORTANT]
+> French. The interface and the documentation now come in French too.
+
+### Added
+
+- French interface: pick it in Settings or run `Nexa.exe --language fr`.
+- Documentation in French.
+- Windows installer alongside the portable ZIP, with folder selection, Start menu
+  and optional desktop shortcuts, and uninstallation through Windows.
+- Uninstalling Nexa removes its installation folder, settings, saved servers,
+  cache and temporary application files.
+
+### Fixed
+
+- File sizes and speeds use the decimal separator of the interface language,
+  for example a comma in Russian, German and French.
 
 ## [1.2.1] - 2026-10-27
 

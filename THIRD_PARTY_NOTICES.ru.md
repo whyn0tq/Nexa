@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="THIRD_PARTY_NOTICES.md">English</a> · <strong>Русский</strong> · <a href="THIRD_PARTY_NOTICES.de.md">Deutsch</a>
+  <a href="THIRD_PARTY_NOTICES.md">English</a> · <strong>Русский</strong> · <a href="THIRD_PARTY_NOTICES.de.md">Deutsch</a> · <a href="THIRD_PARTY_NOTICES.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>

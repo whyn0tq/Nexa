@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> · <a href="README.ru.md">Русский</a> · <strong>Deutsch</strong>
+  <a href="README.md">English</a> · <a href="README.ru.md">Русский</a> · <strong>Deutsch</strong> · <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">
@@ -31,10 +31,16 @@ gleichzeitig, und bricht die Verbindung ab, verbindet sich Nexa neu und
 
 ## Installation
 
-1. Laden Sie `Nexa-<Version>-windows-x64.zip` von der
-   [Release-Seite](https://github.com/whyn0tq/Nexa/releases/latest) herunter.
-2. Entpacken Sie das Archiv und starten Sie `Nexa.exe`. Eine Installation ist
-   nicht nötig.
+Wählen Sie auf der [Release-Seite](https://github.com/whyn0tq/Nexa/releases/latest):
+
+- **Installer:** Starten Sie `Nexa-<Version>-windows-x64-setup.exe`. Wählen Sie
+  den Ordner und bei Bedarf eine Desktop-Verknüpfung. Standard: `C:\Program Files\Nexa`.
+  Die Installation für alle Benutzer benötigt Administratorrechte.
+- **Portabel:** Entpacken Sie `Nexa-<Version>-windows-x64.zip` und starten Sie `Nexa.exe`.
+
+Der Installer trägt Nexa ins Startmenü und in die Windows-App-Liste ein.
+Die Deinstallation entfernt den Installationsordner, Einstellungen, gespeicherte
+Server, Cache und temporäre Nexa-Dateien.
 
 ## So funktioniert es
 
@@ -70,8 +76,8 @@ Datei mit demselben Namen, folgt Nexa der gewählten Regel:
 | **Überspringen** | Vorhandene Dateien bleiben unberührt |
 | **Umbenennen** | Die neue Datei bekommt einen anderen Namen, die alte bleibt |
 
-Die Oberfläche gibt es auf Englisch, Russisch und Deutsch. Die Sprache wählen
-Sie in den Einstellungen (`Strg` + `,`) oder beim Start:
+Die Oberfläche gibt es auf Englisch, Russisch, Deutsch und Französisch. Die
+Sprache wählen Sie in den Einstellungen (`Strg` + `,`) oder beim Start:
 
 ```powershell
 Nexa.exe --language de
@@ -125,6 +131,18 @@ ctest --test-dir build --output-on-failure
 .\scripts\package.ps1 -Zip
 ```
 
+Für beide Pakete benötigen Sie Inno Setup 6.3 oder neuer und PowerShell 7:
+
+```powershell
+.\scripts\package.ps1 -Zip -Installer -Compiler "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+.\scripts\test-package.ps1 -Compiler "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+```
+
+Die Pakettests installieren, aktualisieren, starten und entfernen eine temporäre
+Kopie mit separater Registrierung, Verknüpfungen, Einstellungen und Datenordnern.
+Mit `-AllUsers` in einer PowerShell mit Administratorrechten wird die Installation
+für alle Benutzer getestet, sonst nur für den aktuellen Benutzer.
+
 Das Archiv landet in `dist\`. Es läuft auf jedem Rechner mit Windows 10 oder 11
 ohne MSYS2. Wer einen `v*`-Tag pusht, löst dasselbe in GitHub Actions aus und
 bekommt einen Release-Entwurf.
@@ -137,7 +155,8 @@ bekommt einen Release-Entwurf.
 - [ ] SSH-Terminal in einem Tab
 - [ ] Eine Übertragungswarteschlange, die einen Neustart übersteht
 - [ ] Portweiterleitung und Jump-Hosts
-- [ ] Installationsprogramm und automatische Updates
+- [x] Installationsprogramm für Windows
+- [ ] Automatische Updates
 
 ## Sicherheit und Lizenz
 

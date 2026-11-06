@@ -62,8 +62,10 @@ int main()
 {
     const auto english = table(I18n::English, I18n::EnglishCount, "en");
     const auto german = table(I18n::German, I18n::GermanCount, "de");
+    const auto french = table(I18n::French, I18n::FrenchCount, "fr");
     compare(english, english, "en");
     compare(english, german, "de");
+    compare(english, french, "fr");
     if (failures == 0)
         std::printf("i18n: %d strings in every language\n", I18n::EnglishCount);
     return failures == 0 ? 0 : 1;

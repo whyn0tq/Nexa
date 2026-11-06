@@ -57,10 +57,23 @@ jobs:
           $msys = '${{ steps.msys2.outputs.msys2-location }}'
           $env:PATH = "$msys\ucrt64\bin;$msys\usr\bin;$env:PATH"
           .\scripts\build.ps1 -OutputDirectory dist-release
-          .\scripts\package.ps1 -DistDirectory dist-release -OutputDirectory dist -Zip
+          $compilers = @(
+            "$env:ProgramFiles\Inno Setup 7\ISCC.exe"
+            "${env:ProgramFiles(x86)}\Inno Setup 7\ISCC.exe"
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          )
+          $compiler = $compilers | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          if (-not $compiler) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw "Inno Setup installation failed" }
+            $compiler = $compilers | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+          }
+          if (-not $compiler) { throw "Inno Setup compiler not found" }
+          .\scripts\package.ps1 -DistDirectory dist-release -OutputDirectory dist -Zip -Installer -Compiler $compiler
+          .\scripts\test-package.ps1 -Compiler $compiler -AllUsers
           New-Item -ItemType Directory -Force release | Out-Null
-          Move-Item dist\*.zip release
-          Get-ChildItem release\*.zip | ForEach-Object {
+          Move-Item dist\*.zip, dist\*-setup.exe release
+          Get-ChildItem release -File | ForEach-Object {
             "$((Get-FileHash $_.FullName -Algorithm SHA256).Hash)  $($_.Name)" | Out-File -Encoding ascii "$($_.FullName).sha256"
           }
 

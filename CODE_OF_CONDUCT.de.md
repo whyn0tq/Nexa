@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="CODE_OF_CONDUCT.md">English</a> · <a href="CODE_OF_CONDUCT.ru.md">Русский</a> · <strong>Deutsch</strong>
+  <a href="CODE_OF_CONDUCT.md">English</a> · <a href="CODE_OF_CONDUCT.ru.md">Русский</a> · <strong>Deutsch</strong> · <a href="CODE_OF_CONDUCT.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>

@@ -14,5 +14,5 @@
 ## Checklist · Чек-лист
 
 - [ ] No credentials, private keys or sensitive server data are included · Нет паролей, приватных ключей и чувствительных данных серверов
-- [ ] Documentation is updated in English, Russian and German (`NAME.md` + `NAME.ru.md` + `NAME.de.md`) · Документация обновлена на английском, русском и немецком
+- [ ] Documentation is updated in English, Russian, German and French (`NAME.md` + `NAME.ru.md` + `NAME.de.md` + `NAME.fr.md`) · Документация обновлена на английском, русском, немецком и французском
 - [ ] The change is focused and ready for review · Изменение сфокусировано и готово к ревью

@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="CONTRIBUTING.md">English</a> · <strong>Русский</strong> · <a href="CONTRIBUTING.de.md">Deutsch</a>
+  <a href="CONTRIBUTING.md">English</a> · <strong>Русский</strong> · <a href="CONTRIBUTING.de.md">Deutsch</a> · <a href="CONTRIBUTING.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>
@@ -51,19 +51,21 @@ ctest --test-dir build --output-on-failure
 
 ## Документация
 
-У каждого документа три версии: `NAME.md` на английском, `NAME.ru.md` на
-русском и `NAME.de.md` на немецком. Меняете одну — меняйте и остальные в том же
-pull request. Структура и содержание у них одинаковые, различается только язык.
+У каждого документа четыре версии: `NAME.md` на английском, `NAME.ru.md` на
+русском, `NAME.de.md` на немецком и `NAME.fr.md` на французском. Меняете одну —
+меняйте и остальные в том же pull request. Структура и содержание у них
+одинаковые, различается только язык.
 
 - Тексты интерфейса пишутся по-русски в исходниках, переводы лежат в
-  `src/ui/i18n_en.cpp` и `src/ui/i18n_de.cpp`. Названия кнопок в документации
-  должны совпадать с тем, что видно в приложении.
+  `src/ui/i18n_en.cpp`, `src/ui/i18n_de.cpp` и `src/ui/i18n_fr.cpp`. Названия
+  кнопок в документации должны совпадать с тем, что видно в приложении.
 - Скриншоты снимает само приложение:
 
   ```powershell
   .\build\Nexa.exe --demo-shots docs\assets --language en
   .\build\Nexa.exe --demo-shots docs\assets\ru --language ru
   .\build\Nexa.exe --demo-shots docs\assets\de --language de
+  .\build\Nexa.exe --demo-shots docs\assets\fr --language fr
   ```
 
 - Баннер, цифры и иконки в `docs/assets/brand` создаёт скрипт. Правьте его, а

@@ -13,12 +13,17 @@ $distDir = if ([System.IO.Path]::IsPathRooted($OutputDirectory)) {
 }
 
 cmake -S $projectRoot -B $buildDir -G Ninja -DCMAKE_BUILD_TYPE=Release
+if ($LASTEXITCODE -ne 0) { throw "CMake configuration failed" }
 cmake --build $buildDir --parallel
+if ($LASTEXITCODE -ne 0) { throw "Compilation failed" }
 cmake --install $buildDir --prefix $distDir
+if ($LASTEXITCODE -ne 0) { throw "Deployment failed" }
 $previousPreference = $ErrorActionPreference
 $ErrorActionPreference = "Continue"
 windeployqt --release --no-translations (Join-Path $distDir "Nexa.exe")
+$deployResult = $LASTEXITCODE
 $ErrorActionPreference = $previousPreference
+if ($deployResult -ne 0) { throw "Qt deployment failed" }
 
 $qtBin = Split-Path (Get-Command qmake).Source
 $ucrtRoot = Split-Path $qtBin

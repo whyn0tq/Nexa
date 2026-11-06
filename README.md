@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="README.ru.md">Русский</a> · <a href="README.de.md">Deutsch</a>
+  <strong>English</strong> · <a href="README.ru.md">Русский</a> · <a href="README.de.md">Deutsch</a> · <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">
@@ -30,9 +30,16 @@ Nexa reconnects and finishes the file on its own.
 
 ## Install
 
-1. Download `Nexa-<version>-windows-x64.zip` from the
-   [releases page](https://github.com/whyn0tq/Nexa/releases/latest).
-2. Unzip it and run `Nexa.exe`. Nothing to install.
+Download from the [releases page](https://github.com/whyn0tq/Nexa/releases/latest):
+
+- **Installer:** run `Nexa-<version>-windows-x64-setup.exe`. Choose a folder and,
+  optionally, a desktop shortcut. The default folder is `C:\Program Files\Nexa`;
+  installation for all users requires administrator rights.
+- **Portable:** unzip `Nexa-<version>-windows-x64.zip` and run `Nexa.exe`.
+
+The installer adds Nexa to the Start menu and Windows installed apps.
+Uninstalling removes the installation folder, settings, saved servers, cache and
+temporary Nexa files.
 
 ## How to use it
 
@@ -68,8 +75,8 @@ same name already exists, Nexa follows the rule you picked:
 | **Skip** | Existing files are left alone |
 | **Rename** | The new file gets another name, the old one stays |
 
-The interface is in English, Russian and German. Pick the language in Settings
-(`Ctrl` + `,`) or at launch:
+The interface is in English, Russian, German and French. Pick the language in
+Settings (`Ctrl` + `,`) or at launch:
 
 ```powershell
 Nexa.exe --language en
@@ -123,6 +130,18 @@ ctest --test-dir build --output-on-failure
 .\scripts\package.ps1 -Zip
 ```
 
+To build both packages, install Inno Setup 6.3 or later and run:
+
+```powershell
+.\scripts\package.ps1 -Zip -Installer -Compiler "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+.\scripts\test-package.ps1 -Compiler "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+```
+
+Use PowerShell 7. Package tests install, upgrade, launch and uninstall a temporary
+copy with isolated registration, shortcuts, settings and data folders.
+To test installation for all users, run the test from an administrator PowerShell
+with `-AllUsers`. Without this flag, it tests installation for the current user.
+
 The archive lands in `dist\`. It runs on any Windows 10 or 11 machine without
 MSYS2. Pushing a `v*` tag does the same in GitHub Actions and drafts a release.
 
@@ -134,7 +153,8 @@ MSYS2. Pushing a `v*` tag does the same in GitHub Actions and drafts a release.
 - [ ] SSH terminal in a tab
 - [ ] A transfer queue that survives a restart
 - [ ] Port forwarding and jump hosts
-- [ ] Installer and auto-update
+- [x] Windows installer
+- [ ] Auto-update
 
 ## Security and license
 

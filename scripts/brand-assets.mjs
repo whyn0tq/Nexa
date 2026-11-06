@@ -6,9 +6,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'docs', 'assets', 'brand');
 mkdirSync(join(out, 'ru'), { recursive: true });
 mkdirSync(join(out, 'de'), { recursive: true });
+mkdirSync(join(out, 'fr'), { recursive: true });
 mkdirSync(join(out, 'icons'), { recursive: true });
-
-// The app's own tokens (src/ui/theme.h), so the docs look like the window they describe.
 const T = {
   base: '#000000', card: '#111113', text: '#f2f3f5', text2: '#b5bac1', muted: '#949ba4', faint: '#80838c',
   accent: '#5865f2', accentText: '#8b95f7', success: '#23a55a', divider: '#1e1e20',
@@ -19,19 +18,15 @@ const DISPLAY = `'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,
 const MONO = `'Cascadia Mono',Consolas,'SFMono-Regular',Menlo,monospace`;
 const f = (n) => +n.toFixed(2);
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-
-// Rough Segoe UI advance widths; good enough to place text after text without measuring.
 const charWidth = (c) =>
-  /[mwMWжшщыюМШЩЖЮ]/.test(c) ? 0.8 : /[A-ZА-ЯЁÄÖÜ]/.test(c) ? 0.62 : /[0-9]/.test(c) ? 0.53 : /[ijltfrI.,:;'!|]/.test(c) ? 0.3
-    : /s/.test(c) ? 0.27 : /[a-zа-яёäöüß]/.test(c) ? 0.53 : 0.56;
+  /[mwMWжшщыюМШЩЖЮœ]/.test(c) ? 0.8 : /[A-ZА-ЯЁÄÖÜÉÈÊÀÇ]/.test(c) ? 0.62 : /[0-9]/.test(c) ? 0.53 : /[ijltfrIîï.,:;'’!|]/.test(c) ? 0.3
+    : /s/.test(c) ? 0.27 : /[a-zа-яёäöüßéèêëàâçôûù]/.test(c) ? 0.53 : 0.56;
 const textWidth = (s, size, weight = 400) =>
   [...s].reduce((a, c) => a + charWidth(c), 0) * size * (weight >= 600 ? 1.05 : 1);
 
 function text(x, y, s, { size = 13, weight = 400, fill = T.text, anchor, font = FONT, ls } = {}) {
   return `<text x="${f(x)}" y="${f(y)}"${anchor ? ` text-anchor="${anchor}"` : ''} font-family="${font}" font-size="${size}"${weight !== 400 ? ` font-weight="${weight}"` : ''}${ls ? ` letter-spacing="${ls}"` : ''} fill="${fill}">${esc(s)}</text>`;
 }
-
-// Squircle of the app icon, kept so the docs mark and the taskbar icon share a silhouette.
 const SQUIRCLE = (() => {
   const pts = [];
   for (let i = 0; i < 120; i++) {
@@ -40,9 +35,6 @@ const SQUIRCLE = (() => {
   }
   return `M${pts.join('L')}Z`;
 })();
-
-// Flat mark: an "N" drawn as one stroke between two endpoints, this computer and the server.
-// Same geometry as the app icon, without the glow, so it holds up from 16 px to the hero.
 function logo(x, y, size) {
   const s = size / 100;
   const sw = size < 28 ? 9.5 : 8;
@@ -60,12 +52,8 @@ const svg = (w, h, body, title) =>
 ${body}
 </svg>
 `;
-
-// Docs surfaces: one flat card colour and one hairline, readable on GitHub's light and dark themes.
 const card = (w, h, r = 12) => `<rect width="${w}" height="${h}" rx="${r}" fill="${T.card}"/>
 ${r ? `<rect x=".5" y=".5" width="${w - 1}" height="${h - 1}" rx="${r - 0.5}" fill="none" stroke="#fff" stroke-opacity=".08"/>` : ''}`;
-
-// 24 px glyphs from the app's line icon set, stroked at the size they are drawn.
 const glyph = (x, y, size, color, d, sw = 1.6) =>
   `<g transform="translate(${f(x)} ${f(y)}) scale(${f(size / 24)})" fill="none" stroke="${color}" stroke-width="${f(sw * 24 / size)}" stroke-linecap="round" stroke-linejoin="round">${d}</g>`;
 const G = {
@@ -81,9 +69,6 @@ const G = {
 };
 const folderIcon = (x, y) => `<path d="M${f(x)} ${f(y + 2)}q0-2 2-2h3.6l1.8 1.8h6.6q2 0 2 2v7.2q0 2-2 2h-12q-2 0-2-2z" fill="${T.accent}" fill-opacity=".9"/><path d="M${f(x)} ${f(y + 5.5)}h16" stroke="#000" stroke-opacity=".25"/>`;
 const fileIcon = (x, y) => `<path d="M${f(x + 8)} ${f(y)}h-5.5q-1.5 0-1.5 1.5v11q0 1.5 1.5 1.5h9q1.5 0 1.5-1.5v-8z" fill="none" stroke="${T.faint}" stroke-width="1.2" stroke-linejoin="round"/>`;
-
-// The session window, drawn from the real layout at 1:1: title bar, connection strip,
-// two file panes and the transfer dock. Rows and numbers come from the demo profile.
 function windowMock(L, wx, wy) {
   const ww = 656, wh = 512;
   const X = (x) => wx + x, Y = (y) => wy + y;
@@ -199,9 +184,6 @@ ${right}
 ${dock}
 <rect x="${wx + 0.5}" y="${wy + 0.5}" width="${ww - 1}" height="${wh - 1}" rx="7.5" fill="none" stroke="#fff" stroke-opacity=".14"/>`;
 }
-
-// README banner and social preview share one 2:1 layout: the claim on the left, the window on the right,
-// drawn 10% over 1:1 so its 13 px rows still read when GitHub scales the banner to the README column.
 function banner(L, { radius = 12 } = {}) {
   const W = 1280, H = 640;
   const lead = L.lead.map((t, i) => `<tspan x="64" y="${334 + i * 38}">${esc(t)}</tspan>`).join('');
@@ -244,8 +226,6 @@ ${logo(28, 24, 48)}
 ${text(92, 59, 'Nexa', { size: 32, weight: 700, ls: '-.5', font: DISPLAY })}
 ${protocols}`, 'Nexa');
 }
-
-// A hairline with the 2 px accent bar the app draws over the focused pane.
 function divider() {
   const W = 1280, H = 24;
   return svg(W, H, `<rect x="0" y="11.5" width="${W}" height="1" fill="#8b949e" fill-opacity=".3"/>
@@ -282,7 +262,6 @@ const ICONS = {
   trash: `<path d="M4.5 7L19.5 7"/><path d="${pl([[9.5, 7], [9.5, 4.5], [14.5, 4.5], [14.5, 7]])}"/><path d="${pl([[6.5, 7], [7.3, 18.2], [8.8, 19.5], [15.2, 19.5], [16.7, 18.2], [17.5, 7]])}"/><path d="M10.3 10.5L10.3 16M13.7 10.5L13.7 16"/>`,
   plug: `<path d="M9 3.5L9 7.5M15 3.5L15 7.5"/><path d="${pl([[6, 7.5], [18, 7.5], [18, 11], [12, 17], [6, 11], [6, 7.5]])}M12 17L12 20.5"/>`,
 };
-// Heading icons sit on the same dark card as the header, so they read the same in both GitHub themes.
 function iconTile(name) {
   const S = 32;
   return svg(S, S, `<rect x=".5" y=".5" width="31" height="31" rx="8" fill="${T.card}" stroke="#fff" stroke-opacity=".1"/>
@@ -346,15 +325,36 @@ const DE = {
     ['0,44', 's', 'bis zur ersten Liste', 'nach der Anmeldung bei 200 ms'],
   ],
 };
+const FR = {
+  title: 'Nexa — un client SFTP, FTP et FTPS rapide pour Windows',
+  lead: ['Un client SFTP, FTP et FTPS', 'rapide pour Windows.'],
+  rest: ['Un onglet par serveur.', 'Des transferts sans coupure.'],
+  local: 'CET ORDINATEUR', server: 'SERVEUR', cols: ['NOM', 'TAILLE', 'MODIFIÉ'],
+  search: 'Recherche et commandes', filter: 'Filtre', connected: 'Connecté · ping 24 ms',
+  dates: ['aujourd’hui 00:11', 'aujourd’hui 00:09', '22 oct. 21:14', '22 oct. 00:02', 'aujourd’hui 00:42', '22 oct. 22:11', '21 oct. 23:15', '21 oct. 00:45', '22 oct. 00:43'],
+  kb: (v) => `${v.replace('.', ',')} Ko`,
+  footerLocal: 'Dossiers : 3 · Fichiers : 4 · 8,4 Ko', footerServer: 'Dossiers : 5 · Fichiers : 2 · 5,5 Ko',
+  done: '412 Mo / 1,2 Go · 1186/3240', rate: '38 Mo/s · 22 s',
+  transfers: 'Transferts', active: 'actifs : 1 · 38 Mo/s · reste 22 s', ifExists: 'Si le fichier existe :', rule: 'Reprendre',
+  statsTitle: 'Nexa en chiffres',
+  cards: [
+    ['4,3', 's', '3 000 petits fichiers', 'scp met 673 s à 50 ms'],
+    ['64', '', 'fichiers en vol', 'par connexion'],
+    ['1–16', '', 'connexions parallèles', 'par serveur'],
+    ['0,44', 's', 'jusqu’à la première liste', 'après l’authentification à 200 ms'],
+  ],
+};
 
 writeFileSync(join(out, 'logo.svg'), svg(100, 100, logo(0, 0, 100), 'Nexa'));
 writeFileSync(join(out, 'hero.svg'), banner(EN));
 writeFileSync(join(out, 'ru', 'hero.svg'), banner(RU));
 writeFileSync(join(out, 'de', 'hero.svg'), banner(DE));
+writeFileSync(join(out, 'fr', 'hero.svg'), banner(FR));
 writeFileSync(join(out, 'social.svg'), banner(EN, { radius: 0 }));
 writeFileSync(join(out, 'stats.svg'), stats(EN));
 writeFileSync(join(out, 'ru', 'stats.svg'), stats(RU));
 writeFileSync(join(out, 'de', 'stats.svg'), stats(DE));
+writeFileSync(join(out, 'fr', 'stats.svg'), stats(FR));
 writeFileSync(join(out, 'header.svg'), header());
 writeFileSync(join(out, 'divider.svg'), divider());
 for (const name of Object.keys(ICONS)) writeFileSync(join(out, 'icons', `${name}.svg`), iconTile(name));

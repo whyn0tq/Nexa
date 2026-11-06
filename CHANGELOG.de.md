@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="CHANGELOG.md">English</a> · <a href="CHANGELOG.ru.md">Русский</a> · <strong>Deutsch</strong>
+  <a href="CHANGELOG.md">English</a> · <a href="CHANGELOG.ru.md">Русский</a> · <strong>Deutsch</strong> · <a href="CHANGELOG.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>
@@ -23,13 +23,36 @@ Hier sind die wichtigen Änderungen an Nexa gesammelt. Die Versionen folgen der
 
 | Version | Datum | Kurz gesagt |
 |---|---|---|
-| [**1.2.1**](#121---2026-10-27) | 2026-10-27 | Schnellere Übertragung großer Dateien |
+| [**1.3.0**](#130---2026-11-06) | 2026-11-06 | Französische Oberfläche und Dokumentation |
+| [1.2.1](#121---2026-10-27) | 2026-10-27 | Schnellere Übertragung großer Dateien |
 | [1.2.0](#120---2026-10-24) | 2026-10-24 | Neues Aussehen und Symbol, Dokumentation auf Deutsch |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | Deutsch, Dateien aus einem ZIP |
 | [1.0.0](#100---2026-10-15) | 2026-10-15 | Tabs und die neue Übertragungs-Engine |
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP und FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Übertragungswarteschlange und Fortsetzen |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | Erster zweispaltiger SFTP-Client |
+
+## [1.3.0] - 2026-11-06
+
+> [!IMPORTANT]
+> Französisch. Die Oberfläche und die Dokumentation gibt es jetzt auch auf
+> Französisch.
+
+### Hinzugefügt
+
+- Französische Oberfläche: Wählen Sie sie in den Einstellungen oder starten Sie
+  `Nexa.exe --language fr`.
+- Dokumentation auf Französisch.
+- Windows-Installer zusätzlich zum portablen ZIP: Ordnerauswahl, Startmenü,
+  optionale Desktop-Verknüpfung und Deinstallation über Windows.
+- Die Deinstallation entfernt den Installationsordner, Einstellungen,
+  gespeicherte Server, Cache und temporäre Anwendungsdateien.
+
+### Behoben
+
+- Dateigrößen und Geschwindigkeiten verwenden das Dezimaltrennzeichen der
+  Oberflächensprache, zum Beispiel ein Komma auf Russisch, Deutsch und
+  Französisch.
 
 ## [1.2.1] - 2026-10-27
 

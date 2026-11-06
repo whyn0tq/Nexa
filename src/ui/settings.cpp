@@ -224,7 +224,13 @@ void paintFlag(QPainter &painter, const QRectF &r, I18n::Language language)
     painter.save();
     painter.setClipPath(shape);
     painter.setPen(Qt::NoPen);
-    if (language == I18n::Language::Russian || language == I18n::Language::German) {
+    if (language == I18n::Language::French) {
+        const qreal w = r.width() / 3;
+        painter.fillRect(QRectF(r.left(), r.top(), w, r.height()), QColor(0, 85, 164));
+        painter.fillRect(QRectF(r.left() + w, r.top(), w, r.height()), QColor(255, 255, 255));
+        painter.fillRect(QRectF(r.left() + 2 * w, r.top(), r.width() - 2 * w, r.height()),
+                         QColor(239, 65, 53));
+    } else if (language == I18n::Language::Russian || language == I18n::Language::German) {
         const bool russian = language == I18n::Language::Russian;
         const QColor stripes[3] = {
             russian ? QColor(255, 255, 255) : QColor(0, 0, 0),
@@ -350,7 +356,10 @@ SettingsSheet::SettingsSheet(QWidget *host) : Sheet(host, 560)
          QStringLiteral("Русский")},
         {I18n::Language::German, tr("Немецкий"),
          now == I18n::Language::German ? QStringLiteral("German") : QStringLiteral("Deutsch"),
-         QStringLiteral("Deutsch")}};
+         QStringLiteral("Deutsch")},
+        {I18n::Language::French, tr("Французский"),
+         now == I18n::Language::French ? QStringLiteral("French") : QStringLiteral("Français"),
+         QStringLiteral("Français")}};
     for (const Choice &choice : choices) {
         auto *option = new LanguageOption(choice.language, choice.title, choice.native);
         const I18n::Language language = choice.language;

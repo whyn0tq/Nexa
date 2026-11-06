@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="CONTRIBUTING.ru.md">Русский</a> · <a href="CONTRIBUTING.de.md">Deutsch</a>
+  <strong>English</strong> · <a href="CONTRIBUTING.ru.md">Русский</a> · <a href="CONTRIBUTING.de.md">Deutsch</a> · <a href="CONTRIBUTING.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>
@@ -51,20 +51,21 @@ ctest --test-dir build --output-on-failure
 
 ## Documentation
 
-Every document has three versions: `NAME.md` in English, `NAME.ru.md` in
-Russian and `NAME.de.md` in German. Change one, change the others in the same
-pull request. They have the same structure and the same content, and only the
-language differs.
+Every document has four versions: `NAME.md` in English, `NAME.ru.md` in
+Russian, `NAME.de.md` in German and `NAME.fr.md` in French. Change one, change
+the others in the same pull request. They have the same structure and the same
+content, and only the language differs.
 
 - UI strings are written in Russian in the source, and the translations live in
-  `src/ui/i18n_en.cpp` and `src/ui/i18n_de.cpp`. Button names in the docs must
-  match what you see in the app.
+  `src/ui/i18n_en.cpp`, `src/ui/i18n_de.cpp` and `src/ui/i18n_fr.cpp`. Button
+  names in the docs must match what you see in the app.
 - The app takes its own screenshots:
 
   ```powershell
   .\build\Nexa.exe --demo-shots docs\assets --language en
   .\build\Nexa.exe --demo-shots docs\assets\ru --language ru
   .\build\Nexa.exe --demo-shots docs\assets\de --language de
+  .\build\Nexa.exe --demo-shots docs\assets\fr --language fr
   ```
 
 - The banner, numbers and icons in `docs/assets/brand` come from a script. Edit

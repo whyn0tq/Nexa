@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <strong>English</strong> · <a href="SECURITY.ru.md">Русский</a> · <a href="SECURITY.de.md">Deutsch</a>
+  <strong>English</strong> · <a href="SECURITY.ru.md">Русский</a> · <a href="SECURITY.de.md">Deutsch</a> · <a href="SECURITY.fr.md">Français</a>
 </p>
 
 <p align="center"><sub>
