@@ -3,6 +3,7 @@
 #include "types.h"
 
 #include <QCoreApplication>
+#include <QDeadlineTimer>
 #include <QMutex>
 #include <QString>
 #include <QStringList>
@@ -39,6 +40,7 @@ struct FileTask {
     bool restarted = false;
     int attempt = 0;
     qint64 reported = 0;
+    QDeadlineTimer retryAt;
 
     std::shared_ptr<SegmentGroup> group;
     qint64 segmentStart = 0;

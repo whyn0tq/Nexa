@@ -23,7 +23,8 @@ Notable changes to Nexa are collected here. Versions follow
 
 | Version | Date | In short |
 |---|---|---|
-| [**1.3.0**](#130---2026-11-06) | 2026-11-06 | French interface and documentation |
+| [**1.3.2**](#132---2026-11-17) | 2026-11-17 | FTP upload recovery and the version in Settings |
+| [1.3.0](#130---2026-11-06) | 2026-11-06 | French interface and documentation |
 | [1.2.1](#121---2026-10-27) | 2026-10-27 | Faster transfers of large files |
 | [1.2.0](#120---2026-10-24) | 2026-10-24 | New look and icon, documentation in German |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | German, files from a ZIP |
@@ -31,6 +32,24 @@ Notable changes to Nexa are collected here. Versions follow
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP and FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Transfer queue and resume |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | First two-pane SFTP client |
+
+## [1.3.2] - 2026-11-17
+
+### Added
+
+- Settings shows the build version in the lower-left corner.
+
+### Fixed
+
+- FTP uploads now reconnect and retry temporary failures without an overall
+  timeout. Nexa resumes from the saved offset when the server supports it and
+  restarts the file otherwise.
+- FTP uploads recover from a server-side hidden file collision using a unique
+  temporary name.
+
+### Changed
+
+- FTP uploads use a larger buffer. Replace mode skips the per-file size query.
 
 ## [1.3.0] - 2026-11-06
 

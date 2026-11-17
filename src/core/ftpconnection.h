@@ -44,6 +44,7 @@ private:
     bool login();
     void loadFeatures();
     QString failureText(const QString &prefix, const Reply &reply) const;
+    static bool retryable(const Reply &reply);
 
     QByteArray encodePath(const QString &path) const;
     QString decodeText(const QByteArray &data) const;
@@ -54,14 +55,15 @@ private:
 
     bool enterPassiveMode(QHostAddress &address, quint16 &port);
     QSslSocket *openData(const QString &verb, const QString &argument,
-                         qint64 *restartOffset = nullptr);
-    void closeData(QSslSocket *socket);
+                         qint64 *restartOffset = nullptr, Reply *response = nullptr);
+    QSslSocket *openUpload(const QString &destination, QString &staging, qint64 &offset);
+    bool flushData(QSslSocket &socket, qint64 limit) const;
+    void closeData(QSslSocket *socket, bool upload = false);
     bool finishData();
 
     bool changeDirectory(const QString &path);
     qint64 remoteSize(const QString &path);
     qint64 remoteTime(const QString &path);
-    bool remoteIsDirectory(const QString &path);
     bool readDirectory(const QString &path, RemoteEntries &entries);
     bool ensureDirectory(const QString &path, bool &created);
 

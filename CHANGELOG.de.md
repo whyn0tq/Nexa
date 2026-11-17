@@ -23,7 +23,8 @@ Hier sind die wichtigen Änderungen an Nexa gesammelt. Die Versionen folgen der
 
 | Version | Datum | Kurz gesagt |
 |---|---|---|
-| [**1.3.0**](#130---2026-11-06) | 2026-11-06 | Französische Oberfläche und Dokumentation |
+| [**1.3.2**](#132---2026-11-17) | 2026-11-17 | FTP-Uploads nach Verbindungsabbruch und Versionsanzeige |
+| [1.3.0](#130---2026-11-06) | 2026-11-06 | Französische Oberfläche und Dokumentation |
 | [1.2.1](#121---2026-10-27) | 2026-10-27 | Schnellere Übertragung großer Dateien |
 | [1.2.0](#120---2026-10-24) | 2026-10-24 | Neues Aussehen und Symbol, Dokumentation auf Deutsch |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | Deutsch, Dateien aus einem ZIP |
@@ -31,6 +32,27 @@ Hier sind die wichtigen Änderungen an Nexa gesammelt. Die Versionen folgen der
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP und FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | Übertragungswarteschlange und Fortsetzen |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | Erster zweispaltiger SFTP-Client |
+
+## [1.3.2] - 2026-11-17
+
+### Hinzugefügt
+
+- Die Build-Version steht unten links in den Einstellungen.
+
+### Behoben
+
+- Nach einem Verbindungsabbruch oder einem vorübergehenden FTP-Fehler stellt
+  Nexa die Verbindung wieder her und wiederholt den Upload ohne
+  Gesamtzeitlimit. Unterstützt der Server die Wiederaufnahme, lädt Nexa ab
+  der gespeicherten Position weiter. Andernfalls lädt Nexa die Datei erneut
+  hoch.
+- Bei einem Konflikt mit einer versteckten Serverdatei nutzt der FTP-Upload
+  einen eindeutigen temporären Namen.
+
+### Geändert
+
+- FTP-Uploads nutzen einen größeren Puffer. Im Modus „Ersetzen“ entfällt die
+  Größenabfrage pro Datei.
 
 ## [1.3.0] - 2026-11-06
 

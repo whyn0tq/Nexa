@@ -81,6 +81,7 @@ public:
     }
 
 private:
+    bool hasWorkLocked() const;
     void settleLocked(Job &job);
     void skipCanceledLocked();
 

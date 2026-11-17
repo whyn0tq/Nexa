@@ -6,6 +6,7 @@
 #include "theme.h"
 #include "transferprefs.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFileDialog>
 #include <QGridLayout>
@@ -460,6 +461,8 @@ SettingsSheet::SettingsSheet(QWidget *host) : Sheet(host, 560)
 
     auto *done = makeButton(tr("Готово"), QStringLiteral("primary"));
     auto *row = new QHBoxLayout;
+    row->addWidget(makeLabel(tr("Версия: %1").arg(QCoreApplication::applicationVersion()),
+                             12.5, Theme::TextSecondary));
     row->addStretch();
     row->addWidget(done);
     body()->addSpacing(4);

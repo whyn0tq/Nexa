@@ -93,16 +93,24 @@ int TransferQueue::queuedItems() const
 bool TransferQueue::hasWork() const
 {
     QMutexLocker locker(&m_mutex);
-    return !m_items.empty();
+    return hasWorkLocked();
+}
+
+bool TransferQueue::hasWorkLocked() const
+{
+    return std::any_of(m_items.begin(), m_items.end(), [](const WorkItem &item) {
+        return item.kind == WorkItem::Kind::Expand || item.file.retryAt.hasExpired();
+    });
 }
 
 bool TransferQueue::waitForWork(int milliseconds)
 {
     QMutexLocker locker(&m_mutex);
-    if (!m_items.empty() || m_stopping)
-        return !m_items.empty();
-    m_condition.wait(&m_mutex, static_cast<unsigned long>(milliseconds));
-    return !m_items.empty();
+    if (m_stopping || hasWorkLocked())
+        return !m_stopping;
+    const int timeout = m_items.empty() ? milliseconds : std::min(milliseconds, 250);
+    m_condition.wait(&m_mutex, static_cast<unsigned long>(timeout));
+    return hasWorkLocked();
 }
 
 void TransferQueue::wakeAll()
@@ -125,6 +133,8 @@ bool TransferQueue::take(WorkItem &item, bool allowExpand, bool allowSegments)
             continue;
         if (it->kind == WorkItem::Kind::File && it->file.isSegment() && !allowSegments)
             continue;
+        if (it->kind == WorkItem::Kind::File && !it->file.retryAt.hasExpired())
+            continue;
         item = *it;
         m_items.erase(it);
         return true;
@@ -139,6 +149,12 @@ void TransferQueue::pushFront(const QVector<FileTask> &tasks)
         WorkItem item;
         item.file = *it;
         m_items.push_front(item);
+    }
+    for (const FileTask &task : tasks) {
+        if (auto job = m_jobs.value(task.jobId); job && job->canceled) {
+            skipCanceledLocked();
+            break;
+        }
     }
     m_condition.wakeAll();
 }
@@ -190,6 +206,8 @@ void TransferQueue::requeueJob(const TransferJob &job)
     item.kind = WorkItem::Kind::Expand;
     item.job = job;
     m_items.push_front(item);
+    if (const auto record = m_jobs.value(job.id); record && record->canceled)
+        skipCanceledLocked();
     m_condition.wakeAll();
 }
 
@@ -388,7 +406,8 @@ void TransferWorker::run()
         if (!healthy) {
             connection->close();
             m_connected = false;
-            QThread::msleep(300);
+            if (!m_stop && !m_queue->stopping())
+                QThread::msleep(300);
         }
     }
     connection->close();
@@ -539,7 +558,7 @@ void TransferEngine::workerFailed(TransferWorker *worker, const QString &error,
     if (!m_failingSince.isValid()) {
         m_failingSince.start();
         emit notice(tr("Передачи ждут соединения: %1").arg(error));
-    } else if (m_failingSince.elapsed() > GiveUpAfterMs) {
+    } else if (m_profile.protocol != Protocol::Ftp && m_failingSince.elapsed() > GiveUpAfterMs) {
         m_queue->failQueued(error);
         m_failingSince.invalidate();
     }

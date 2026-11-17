@@ -20,8 +20,8 @@
 
 | Élément | Valeur |
 |---|---|
-| **Version** | **1.3.0** |
-| Date | 6 novembre 2026 |
+| **Version** | **1.3.2** |
+| Date | 17 novembre 2026 |
 | Système | Windows 10 et 11, x64 |
 | Langage | C++20, interface en Qt 6 |
 | SFTP | client maison basé sur libssh 0.12 |
@@ -33,7 +33,7 @@
 > [!IMPORTANT]
 > Le numéro est écrit à la main à deux endroits. Modifiez-les ensemble :
 >
-> - `project(Nexa VERSION 1.3.0 ...)` dans `CMakeLists.txt` ;
+> - `project(Nexa VERSION 1.3.2 ...)` dans `CMakeLists.txt` ;
 > - le tableau ci-dessus, dans `VERSION.md`, `VERSION.ru.md`, `VERSION.de.md`
 >   et `VERSION.fr.md`.
 >
@@ -42,7 +42,7 @@
 
 Les numéros suivent le [versionnage sémantique](https://semver.org/lang/fr/) :
 `MAJOR.MINOR.PATCH`. Une nouvelle fonctionnalité est un MINOR (1.4.0), une
-correction de bogue est un PATCH (1.3.1). Pour les versions d’essai, ajoutez
+correction de bogue est un PATCH (1.3.3). Pour les versions d’essai, ajoutez
 `-beta.1` ou `-rc.1`.
 
 ## Comment publier une version
@@ -59,8 +59,8 @@ correction de bogue est un PATCH (1.3.1). Pour les versions d’essai, ajoutez
 6. Créez un tag et poussez-le :
 
    ```powershell
-   git tag -a v1.3.0 -m "Nexa 1.3.0"
-   git push origin v1.3.0
+   git tag -a v1.3.2 -m "Nexa 1.3.2"
+   git push origin v1.3.2
    ```
 
 7. GitHub Actions crée le ZIP portable et le programme d’installation et prépare

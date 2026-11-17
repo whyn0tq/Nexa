@@ -20,8 +20,8 @@
 
 | Item | Value |
 |---|---|
-| **Version** | **1.3.0** |
-| Date | November 6, 2026 |
+| **Version** | **1.3.2** |
+| Date | November 17, 2026 |
 | System | Windows 10 and 11, x64 |
 | Language | C++20, Qt 6 interface |
 | SFTP | own client on top of libssh 0.12 |
@@ -33,7 +33,7 @@
 > [!IMPORTANT]
 > The number is written by hand in two places. Change them together:
 >
-> - `project(Nexa VERSION 1.3.0 ...)` in `CMakeLists.txt`;
+> - `project(Nexa VERSION 1.3.2 ...)` in `CMakeLists.txt`;
 > - the table above, in `VERSION.md`, `VERSION.ru.md`, `VERSION.de.md` and
 >   `VERSION.fr.md`.
 >
@@ -41,7 +41,7 @@
 > in the README shows the latest GitHub release by itself.
 
 Numbers follow [semantic versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
-A new feature is a MINOR bump (1.4.0), a bug fix is a PATCH (1.3.1). Add `-beta.1`
+A new feature is a MINOR bump (1.4.0), a bug fix is a PATCH (1.3.3). Add `-beta.1`
 or `-rc.1` for trial builds.
 
 ## How to make a release
@@ -58,8 +58,8 @@ or `-rc.1` for trial builds.
 6. Tag it and push the tag:
 
    ```powershell
-   git tag -a v1.3.0 -m "Nexa 1.3.0"
-   git push origin v1.3.0
+   git tag -a v1.3.2 -m "Nexa 1.3.2"
+   git push origin v1.3.2
    ```
 
 7. GitHub Actions builds the portable ZIP and Windows installer and drafts the

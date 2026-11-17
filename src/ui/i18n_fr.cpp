@@ -312,6 +312,7 @@ const Pair French[] = {
     {"найден", "trouvé"},
     {"нет", "aucun"},
     {"Изменения применяются сразу.", "Les modifications s’appliquent immédiatement."},
+    {"Версия: %1", "Version : %1"},
     {"Редактор для просмотра и правки", "Éditeur pour afficher / modifier"},
     {"По умолчанию файлы открываются в Блокноте. Если выбранного редактора нет, Nexa сама откроет "
      "файл в VS Code, а если нет и его — в Notepad++.",

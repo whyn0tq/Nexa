@@ -22,8 +22,8 @@ seul.
 - **Rapide.** 3 000 petits fichiers sont envoyés en 4 secondes. `scp` met
   11 minutes sur la même liaison.
 - **Plusieurs serveurs.** Un onglet, un serveur.
-- **Sans coupure.** La liaison tombe, Nexa se reconnecte, et le fichier reprend
-  là où il s’est arrêté.
+- **Reconnexion automatique.** Nexa relance les transferts interrompus et reprend
+  à la position enregistrée si le serveur le permet.
 - **Glisser-déposer.** Faites glisser des fichiers depuis l’Explorateur, même
   depuis un ZIP, directement dans la fenêtre.
 - **Sûr.** Windows chiffre vos mots de passe (DPAPI). Les clés d’hôte et les
@@ -76,6 +76,10 @@ fichier du même nom existe déjà, Nexa suit la règle que vous avez choisie :
 | **Remplacer** | Le fichier est toujours écrasé |
 | **Ignorer** | Les fichiers existants ne sont pas modifiés |
 | **Renommer** | Le nouveau fichier reçoit un autre nom, l’ancien est conservé |
+
+Après une coupure, Nexa relance automatiquement les envois FTP. Si le serveur
+permet la reprise, Nexa repart de la position enregistrée. Sinon, Nexa renvoie
+le fichier depuis le début.
 
 L’interface existe en anglais, en russe, en allemand et en français. Choisissez
 la langue dans les Paramètres (`Ctrl` + `,`) ou au lancement :

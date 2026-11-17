@@ -80,6 +80,7 @@ struct TransferJob {
     bool upload = false;
     bool directory = false;
     bool overwrite = false;
+    QVector<QPair<QString, QString>> pendingDirectories;
 };
 
 struct TransferStatus {

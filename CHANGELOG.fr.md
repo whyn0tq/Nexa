@@ -23,7 +23,8 @@ Les changements notables de Nexa sont rassemblés ici. Les versions suivent le
 
 | Version | Date | En bref |
 |---|---|---|
-| [**1.3.0**](#130---2026-11-06) | 2026-11-06 | Interface et documentation en français |
+| [**1.3.2**](#132---2026-11-17) | 2026-11-17 | Reprise des envois FTP et numéro de version dans les paramètres |
+| [1.3.0](#130---2026-11-06) | 2026-11-06 | Interface et documentation en français |
 | [1.2.1](#121---2026-10-27) | 2026-10-27 | Transferts plus rapides des gros fichiers |
 | [1.2.0](#120---2026-10-24) | 2026-10-24 | Nouvel aspect et nouvelle icône, documentation en allemand |
 | [1.1.0](#110---2026-10-21) | 2026-10-21 | Allemand, fichiers depuis un ZIP |
@@ -31,6 +32,26 @@ Les changements notables de Nexa sont rassemblés ici. Les versions suivent le
 | [0.3.0](#030---2026-09-02) | 2026-09-02 | FTP et FTPS |
 | [0.2.0](#020---2026-08-01) | 2026-08-01 | File de transferts et reprise |
 | [0.1.0](#010---2026-07-29) | 2026-07-29 | Premier client SFTP à deux panneaux |
+
+## [1.3.2] - 2026-11-17
+
+### Ajouté
+
+- Le numéro de version apparaît en bas à gauche des paramètres.
+
+### Corrigé
+
+- Après une coupure ou une erreur FTP temporaire, Nexa se reconnecte et retente
+  l’envoi sans limite de durée globale. Si le serveur permet la reprise, Nexa
+  repart de la position enregistrée. Sinon, Nexa renvoie le fichier depuis le
+  début.
+- En cas de conflit avec un fichier masqué sur le serveur, Nexa réessaie
+  l’envoi FTP sous un nom temporaire unique.
+
+### Modifié
+
+- Les envois FTP utilisent un tampon plus grand. Le mode « Remplacer » évite la
+  requête de taille pour chaque fichier.
 
 ## [1.3.0] - 2026-11-06
 

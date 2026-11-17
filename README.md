@@ -21,8 +21,8 @@ Nexa reconnects and finishes the file on its own.
 - **Fast.** 3,000 small files go up in 4 seconds. `scp` on the same link takes
   11 minutes.
 - **Many servers.** One tab, one server.
-- **No drops.** The link breaks, Nexa reconnects, and the file carries on from
-  where it stopped.
+- **Automatic reconnect.** Nexa retries interrupted transfers and resumes
+  them from the saved position when the server supports it.
 - **Drag and drop.** Drag files from Explorer, even out of a ZIP, straight into
   the window.
 - **Safe.** Windows encrypts your passwords (DPAPI). Host keys and certificates
@@ -74,6 +74,10 @@ same name already exists, Nexa follows the rule you picked:
 | **Replace** | The file is always overwritten |
 | **Skip** | Existing files are left alone |
 | **Rename** | The new file gets another name, the old one stays |
+
+After a connection drop, FTP uploads retry automatically. If the server
+supports upload resume, Nexa continues from the saved position. Otherwise it
+sends the file again.
 
 The interface is in English, Russian, German and French. Pick the language in
 Settings (`Ctrl` + `,`) or at launch:

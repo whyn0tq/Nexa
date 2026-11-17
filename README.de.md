@@ -22,8 +22,8 @@ gleichzeitig, und bricht die Verbindung ab, verbindet sich Nexa neu und
 - **Schnell.** 3.000 kleine Dateien sind in 4 Sekunden hochgeladen. `scp`
   braucht auf derselben Leitung 11 Minuten.
 - **Viele Server.** Ein Tab, ein Server.
-- **Keine Abbrüche.** Reißt die Verbindung ab, verbindet sich Nexa neu, und die
-  Datei läuft dort weiter, wo sie stehen geblieben ist.
+- **Automatische Wiederverbindung.** Nexa wiederholt unterbrochene Übertragungen.
+  Unterstützt der Server die Wiederaufnahme, geht es ab der gespeicherten Position weiter.
 - **Drag & Drop.** Ziehen Sie Dateien aus dem Explorer, sogar aus einem ZIP,
   direkt ins Fenster.
 - **Sicher.** Windows verschlüsselt Ihre Passwörter (DPAPI). Hostschlüssel und
@@ -75,6 +75,10 @@ Datei mit demselben Namen, folgt Nexa der gewählten Regel:
 | **Ersetzen** | Die Datei wird immer überschrieben |
 | **Überspringen** | Vorhandene Dateien bleiben unberührt |
 | **Umbenennen** | Die neue Datei bekommt einen anderen Namen, die alte bleibt |
+
+Nach einem Verbindungsabbruch wiederholt Nexa FTP-Uploads automatisch.
+Unterstützt der Server die Wiederaufnahme, lädt Nexa ab der gespeicherten
+Position weiter. Andernfalls lädt Nexa die Datei erneut hoch.
 
 Die Oberfläche gibt es auf Englisch, Russisch, Deutsch und Französisch. Die
 Sprache wählen Sie in den Einstellungen (`Strg` + `,`) oder beim Start:

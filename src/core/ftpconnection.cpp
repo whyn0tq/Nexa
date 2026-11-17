@@ -10,6 +10,8 @@
 #include <QFileInfo>
 #include <QHostAddress>
 #include <QRegularExpression>
+#include <QScopeGuard>
+#include <QScopedValueRollback>
 #include <QSettings>
 #include <QSslCertificate>
 #include <QSslConfiguration>
@@ -17,6 +19,7 @@
 #include <QStringList>
 #include <QTimeZone>
 #include <QUrl>
+#include <QUuid>
 
 #include <algorithm>
 
@@ -24,7 +27,8 @@ namespace {
 constexpr int ConnectTimeout = 15000;
 constexpr int ControlTimeout = 20000;
 constexpr int DataTimeout = 30000;
-constexpr qint64 ChunkSize = 256 * 1024;
+constexpr qint64 ChunkSize = 512 * 1024;
+constexpr qint64 UploadBuffer = 4 * 1024 * 1024;
 
 QString fingerprintText(const QByteArray &digest)
 {
@@ -229,6 +233,11 @@ QString FtpConnection::failureText(const QString &prefix, const Reply &reply) co
     return detail.isEmpty()
                ? prefix
                : QStringLiteral("%1: %2 (%3)").arg(prefix, detail).arg(reply.code);
+}
+
+bool FtpConnection::retryable(const Reply &reply)
+{
+    return !reply.valid || (reply.code >= 400 && reply.code < 500);
 }
 
 bool FtpConnection::waitForData(QTcpSocket *socket, int milliseconds) const
@@ -473,6 +482,11 @@ RemoteConnection::OpenResult FtpConnection::finishOpen()
         return network ? OpenResult::Failed : OpenResult::AuthFailed;
     }
     loadFeatures();
+    if (m_broken) {
+        fail(tr("Сервер перестал отвечать."), true);
+        close();
+        return OpenResult::Failed;
+    }
     return OpenResult::Ok;
 }
 
@@ -488,20 +502,23 @@ bool FtpConnection::login()
         reply = command(QStringLiteral("PASS"), secret);
     }
     if (reply.code != 230 && reply.code != 202) {
-        fail(failureText(tr("Ошибка входа"), reply), !reply.valid);
+        const bool limit = reply.code == 530 &&
+            reply.text.contains(QStringLiteral("maximum number of"), Qt::CaseInsensitive);
+        fail(failureText(tr("Ошибка входа"), reply), retryable(reply) || limit);
         return false;
     }
     if (m_tlsActive) {
         command(QStringLiteral("PBSZ"), QStringLiteral("0"));
         const Reply protection = command(QStringLiteral("PROT"), QStringLiteral("P"));
         if (protection.code != 200) {
-            fail(failureText(tr("Сервер отказал в защите канала данных"), protection));
+            fail(failureText(tr("Сервер отказал в защите канала данных"), protection),
+                 retryable(protection));
             return false;
         }
     }
     const Reply binary = command(QStringLiteral("TYPE"), QStringLiteral("I"));
     if (binary.code != 200) {
-        fail(failureText(tr("Сервер не принял двоичный режим"), binary), !binary.valid);
+        fail(failureText(tr("Сервер не принял двоичный режим"), binary), retryable(binary));
         return false;
     }
     return true;
@@ -594,13 +611,17 @@ bool FtpConnection::enterPassiveMode(QHostAddress &address, quint16 &port)
                 }
             }
         }
-        if (!reply.valid)
+        if (retryable(reply)) {
+            m_broken = true;
             return false;
+        }
         m_useEpsv = false;
     }
     const Reply reply = command(QStringLiteral("PASV"));
-    if (reply.code != 227)
+    if (reply.code != 227) {
+        m_broken = m_broken || retryable(reply);
         return false;
+    }
     static const QRegularExpression pattern(QStringLiteral(
         "(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*"
         "(\\d+)\\s*,\\s*(\\d+)"));
@@ -623,7 +644,7 @@ bool FtpConnection::enterPassiveMode(QHostAddress &address, quint16 &port)
 }
 
 QSslSocket *FtpConnection::openData(const QString &verb, const QString &argument,
-                                    qint64 *restartOffset)
+                                    qint64 *restartOffset, Reply *response)
 {
     QHostAddress address;
     quint16 port = 0;
@@ -660,32 +681,109 @@ QSslSocket *FtpConnection::openData(const QString &verb, const QString &argument
     if (restartOffset && *restartOffset > 0) {
         const Reply marker =
             command(QStringLiteral("REST"), QString::number(*restartOffset));
+        if (retryable(marker)) {
+            fail(failureText(tr("Сервер отклонил %1").arg(QStringLiteral("REST")), marker), true);
+            delete socket;
+            return nullptr;
+        }
         if (marker.code != 350)
             *restartOffset = 0;
     }
     const Reply reply = command(verb, argument);
+    if (response)
+        *response = reply;
     if (reply.code != 150 && reply.code != 125) {
-        fail(failureText(tr("Сервер отклонил %1").arg(verb), reply), !reply.valid);
+        fail(failureText(tr("Сервер отклонил %1").arg(verb), reply),
+             !reply.valid || (!response && retryable(reply)));
         delete socket;
         return nullptr;
     }
     if (m_tlsActive) {
         socket->startClientEncryption();
         if (!socket->waitForEncrypted(ConnectTimeout)) {
-            fail(tr("Не удалось защитить канал данных: %1").arg(socket->errorString()));
-            closeData(socket);
-            finishData();
+            fail(tr("Не удалось защитить канал данных: %1").arg(socket->errorString()), true);
+            delete socket;
             return nullptr;
         }
     }
     return socket;
 }
 
-void FtpConnection::closeData(QSslSocket *socket)
+QSslSocket *FtpConnection::openUpload(const QString &destination, QString &staging,
+                                      qint64 &offset)
+{
+    const QString stor = QStringLiteral("STOR");
+    Reply reply;
+    QSslSocket *data = openData(stor, destination, &offset, &reply);
+    const bool restartDenied = offset > 0 &&
+        ((reply.code == 501 &&
+          reply.text.compare(QStringLiteral("REST not compatible with server configuration"),
+                             Qt::CaseInsensitive) == 0) ||
+         (reply.code == 451 &&
+          reply.text.endsWith(QStringLiteral("Append/Restart not permitted, try again"),
+                              Qt::CaseInsensitive)));
+    const auto hiddenConflict = [&reply] {
+        return reply.code == 550 &&
+               reply.text.contains(QStringLiteral("Temporary hidden file"), Qt::CaseInsensitive) &&
+               reply.text.endsWith(QStringLiteral("already exists"), Qt::CaseInsensitive);
+    };
+    if (data || m_broken)
+        return data;
+    if (!restartDenied && !hiddenConflict()) {
+        m_broken = reply.valid && retryable(reply);
+        return nullptr;
+    }
+
+    m_error.clear();
+    if (offset > 0) {
+        const Reply reset = command(QStringLiteral("REST"), QStringLiteral("0"));
+        if (reset.code != 350) {
+            fail(failureText(tr("Сервер отклонил %1").arg(QStringLiteral("REST")), reset), true);
+            return nullptr;
+        }
+        offset = 0;
+    }
+    if (restartDenied) {
+        reply = {};
+        data = openData(stor, destination, &offset, &reply);
+        if (data || m_broken)
+            return data;
+        if (!hiddenConflict()) {
+            m_broken = reply.valid && retryable(reply);
+            return nullptr;
+        }
+    }
+
+    m_error.clear();
+    staging = join(parentPath(destination),
+                   QStringLiteral("nexa-") + QUuid::createUuid().toString(QUuid::WithoutBraces) +
+                       partialSuffix());
+    return openData(stor, staging);
+}
+
+bool FtpConnection::flushData(QSslSocket &socket, qint64 limit) const
+{
+    const auto pending = [&socket] {
+        return socket.bytesToWrite() + (socket.isEncrypted() ? socket.encryptedBytesToWrite() : 0);
+    };
+    if (pending() <= limit)
+        return socket.state() == QAbstractSocket::ConnectedState;
+    QElapsedTimer idle;
+    idle.start();
+    while (pending() > limit && socket.state() == QAbstractSocket::ConnectedState) {
+        if ((m_abort && m_abort()) || idle.elapsed() >= DataTimeout)
+            return false;
+        if (socket.waitForBytesWritten(250))
+            idle.restart();
+    }
+    return socket.state() == QAbstractSocket::ConnectedState;
+}
+
+void FtpConnection::closeData(QSslSocket *socket, bool upload)
 {
     if (!socket)
         return;
-    if (socket->state() == QAbstractSocket::ConnectedState) {
+    if (!upload && socket->state() == QAbstractSocket::ConnectedState) {
         while (socket->bytesToWrite() > 0 && socket->waitForBytesWritten(DataTimeout)) {
         }
         for (int pass = 0; pass < 4; ++pass) {
@@ -705,6 +803,7 @@ void FtpConnection::closeData(QSslSocket *socket)
 bool FtpConnection::finishData()
 {
     const Reply reply = readReply();
+    m_broken = m_broken || retryable(reply);
     return reply.valid && (reply.code == 226 || reply.code == 250);
 }
 
@@ -714,8 +813,10 @@ bool FtpConnection::changeDirectory(const QString &path)
     if (m_workingDirectory == target)
         return true;
     const Reply reply = command(QStringLiteral("CWD"), target);
-    if (reply.code != 250 && reply.code != 200)
+    if (reply.code != 250 && reply.code != 200) {
+        m_broken = m_broken || retryable(reply);
         return false;
+    }
     m_workingDirectory = target;
     return true;
 }
@@ -725,6 +826,7 @@ qint64 FtpConnection::remoteSize(const QString &path)
     if (!m_hasSize)
         return -1;
     const Reply reply = command(QStringLiteral("SIZE"), normalized(path));
+    m_broken = m_broken || retryable(reply);
     if (reply.code == 500 || reply.code == 502)
         m_hasSize = false;
     if (reply.code != 213)
@@ -741,16 +843,6 @@ qint64 FtpConnection::remoteTime(const QString &path)
         return 0;
     const QDateTime stamp = machineTime(reply.text.trimmed());
     return stamp.isValid() ? stamp.toSecsSinceEpoch() : 0;
-}
-
-bool FtpConnection::remoteIsDirectory(const QString &path)
-{
-    const QString previous = m_workingDirectory;
-    if (!changeDirectory(path))
-        return false;
-    if (!previous.isEmpty())
-        changeDirectory(previous);
-    return true;
 }
 
 bool FtpConnection::readDirectory(const QString &path, RemoteEntries &entries)
@@ -871,13 +963,13 @@ bool FtpConnection::rename(const QString &from, const QString &to)
     const Reply source = command(QStringLiteral("RNFR"), normalized(from));
     if (source.code != 350) {
         fail(failureText(tr("Не удалось переименовать «%1»").arg(from), source),
-             !source.valid);
+             retryable(source));
         return false;
     }
     const Reply target = command(QStringLiteral("RNTO"), normalized(to));
     if (target.code != 250) {
         fail(failureText(tr("Не удалось переименовать «%1»").arg(from), target),
-             !target.valid);
+             retryable(target));
         return false;
     }
     return true;
@@ -946,16 +1038,19 @@ bool FtpConnection::ensureDirectory(const QString &path, bool &created)
 {
     const QString target = normalized(path);
     created = false;
-    if (command(QStringLiteral("MKD"), target).code == 257) {
+    const Reply reply = command(QStringLiteral("MKD"), target);
+    if (reply.code == 257) {
         created = true;
         return true;
     }
-    return remoteIsDirectory(target);
+    m_broken = m_broken || retryable(reply);
+    return !m_broken && changeDirectory(target);
 }
 
 bool FtpConnection::expand(const TransferJob &job, TransferHost &host)
 {
     m_error.clear();
+    const QScopedValueRollback abortGuard(m_abort);
     m_abort = [&host, &job] { return host.stopping() || host.canceled(job.id); };
     if (job.upload) {
         const QFileInfo source(job.localPath);
@@ -977,16 +1072,20 @@ bool FtpConnection::expand(const TransferJob &job, TransferHost &host)
             host.expansionFinished(job.id);
             return true;
         }
-        bool anyAdded = false;
-        QVector<QPair<QString, QString>> pending{{job.localPath, normalized(job.remotePath)}};
+        auto pending = job.pendingDirectories;
+        if (pending.isEmpty())
+            pending.append({job.localPath, normalized(job.remotePath)});
         while (!pending.isEmpty()) {
             if (host.canceled(job.id) || host.stopping())
                 break;
             const auto [localDirectory, remoteDirectory] = pending.takeFirst();
             bool created = false;
             if (!ensureDirectory(remoteDirectory, created)) {
-                if (m_broken && !anyAdded) {
-                    host.requeueJob(job);
+                if (m_broken) {
+                    TransferJob retry = job;
+                    pending.prepend({localDirectory, remoteDirectory});
+                    retry.pendingDirectories = std::move(pending);
+                    host.requeueJob(retry);
                     return false;
                 }
                 host.expansionFailed(job.id, tr("Не удалось создать папку «%1»: %2")
@@ -1016,10 +1115,8 @@ bool FtpConnection::expand(const TransferJob &job, TransferHost &host)
                 task.remoteAbsent = created;
                 tasks.append(task);
             }
-            if (!tasks.isEmpty()) {
+            if (!tasks.isEmpty())
                 host.addTasks(job.id, tasks);
-                anyAdded = true;
-            }
         }
         host.expansionFinished(job.id);
         return true;
@@ -1101,24 +1198,34 @@ bool FtpConnection::runTransfers(TransferHost &host)
             host.finished(task, FileOutcome::Canceled, true, QString());
             continue;
         }
+        const QScopedValueRollback abortGuard(m_abort);
         m_abort = [&host, &task] {
             return host.stopping() || host.canceled(task.jobId);
         };
         QString error;
         const FileOutcome outcome =
             task.upload ? upload(task, host, error) : download(task, host, error);
-        if (outcome == FileOutcome::Failed && (m_broken || !isOpen())) {
+        const bool canceled = host.canceled(task.jobId) || host.stopping();
+        if (outcome == FileOutcome::Failed && !canceled && (m_broken || !isOpen())) {
             host.progress(task.jobId, -task.reported);
+            host.current(task.jobId, tr("Переподключение…"));
             task.reported = 0;
-            task.attempt += 1;
-            task.restarted = true;
+            task.attempt = std::min(task.attempt + 1, 7);
+            task.retryAt.setRemainingTime(std::min(30000, 500 << (task.attempt - 1)));
+            if (!task.upload)
+                task.restarted = true;
             host.pushFront({task});
             m_broken = true;
             if (m_error.isEmpty())
                 m_error = error;
             return false;
         }
-        host.finished(task, outcome, true, error);
+        if (canceled && outcome == FileOutcome::Failed)
+            host.finished(task, FileOutcome::Canceled, true, QString());
+        else
+            host.finished(task, outcome, true, error);
+        if (m_broken || !isOpen())
+            return false;
     }
     return true;
 }
@@ -1250,8 +1357,9 @@ FileOutcome FtpConnection::download(FileTask &task, TransferHost &host,
 
 FileOutcome FtpConnection::upload(FileTask &task, TransferHost &host, QString &error)
 {
+    const auto policy = task.overwrite ? OverwritePolicy::Overwrite : host.policy();
     TransferPlan::Destination state;
-    if (!task.remoteAbsent || task.restarted) {
+    if (task.restarted || (!task.remoteAbsent && policy != OverwritePolicy::Overwrite)) {
         const qint64 size = remoteSize(task.remotePath);
         if (size >= 0) {
             state.exists = true;
@@ -1263,7 +1371,6 @@ FileOutcome FtpConnection::upload(FileTask &task, TransferHost &host, QString &e
     if (task.restarted) {
         startOffset = state.exists && state.size < task.size ? state.size : 0;
     } else {
-        const auto policy = task.overwrite ? OverwritePolicy::Overwrite : host.policy();
         QString renamed = task.remotePath;
         if (state.exists && policy == OverwritePolicy::Rename) {
             for (int index = 2; index < 1000; ++index) {
@@ -1282,6 +1389,10 @@ FileOutcome FtpConnection::upload(FileTask &task, TransferHost &host, QString &e
         destination = plan.destination;
         startOffset = plan.startOffset;
     }
+    if (m_broken) {
+        error = tr("Ошибка при загрузке «%1»: %2").arg(task.localPath, m_lastReply.trimmed());
+        return FileOutcome::Failed;
+    }
     destination = normalized(destination);
 
     QFile input(task.localPath);
@@ -1289,60 +1400,74 @@ FileOutcome FtpConnection::upload(FileTask &task, TransferHost &host, QString &e
         error = tr("Не удалось открыть «%1»: %2").arg(task.localPath, input.errorString());
         return FileOutcome::Failed;
     }
-    QSslSocket *data = openData(QStringLiteral("STOR"), destination, &startOffset);
+    QString staging;
+    QSslSocket *data = openUpload(destination, staging, startOffset);
     if (!data) {
         error = m_error;
         return FileOutcome::Failed;
     }
-    if (!input.seek(startOffset)) {
-        closeData(data);
-        finishData();
-        error = tr("Не удалось прочитать «%1».").arg(task.localPath);
-        return FileOutcome::Failed;
+    if (staging.isEmpty()) {
+        task.remotePath = destination;
+        task.restarted = true;
     }
+    const auto cleanup = qScopeGuard([this, &staging] {
+        if (!staging.isEmpty() && !m_broken && isOpen())
+            command(QStringLiteral("DELE"), staging);
+    });
+    const bool seekFailed = !input.seek(startOffset);
     task.reported += startOffset;
     host.progress(task.jobId, startOffset);
 
     qint64 done = startOffset;
+    QByteArray chunk(ChunkSize, Qt::Uninitialized);
     bool failed = false;
-    bool canceled = false;
-    while (!input.atEnd()) {
-        if (host.canceled(task.jobId) || host.stopping()) {
-            canceled = true;
+    bool readFailed = seekFailed;
+    while (!readFailed && !m_abort()) {
+        const qint64 count = input.read(chunk.data(), chunk.size());
+        if (count <= 0) {
+            readFailed = count < 0;
             break;
         }
-        const QByteArray chunk = input.read(ChunkSize);
-        if (chunk.isEmpty()) {
-            failed = !input.atEnd();
-            break;
-        }
-        if (data->write(chunk) != chunk.size()) {
+        if (data->write(chunk.constData(), count) != count || !flushData(*data, UploadBuffer)) {
             failed = true;
             break;
         }
-        while (data->bytesToWrite() > 4 * ChunkSize) {
-            if (!data->waitForBytesWritten(DataTimeout)) {
-                failed = true;
-                break;
-            }
-        }
-        if (failed)
-            break;
-        done += chunk.size();
-        task.reported += chunk.size();
-        host.progress(task.jobId, chunk.size());
+        done += count;
+        task.reported += count;
+        host.progress(task.jobId, count);
     }
     input.close();
-    closeData(data);
-    const bool acknowledged = finishData();
-    if (canceled)
-        return FileOutcome::Canceled;
-    if (failed || !acknowledged || (task.size >= 0 && done != task.size)) {
+    if (!failed && !m_abort())
+        failed = !flushData(*data, 0);
+    if (failed || m_abort()) {
         if (failed)
-            m_broken = true;
+            error = tr("Ошибка при загрузке «%1»: %2").arg(task.localPath, data->errorString());
+        data->abort();
+        m_broken = true;
+    }
+    closeData(data, true);
+    if (m_abort())
+        return FileOutcome::Canceled;
+    if (readFailed) {
+        finishData();
+        error = tr("Не удалось прочитать «%1».").arg(task.localPath);
+        return FileOutcome::Failed;
+    }
+    if (failed)
+        return FileOutcome::Failed;
+    if (!finishData() || (task.size >= 0 && done != task.size)) {
         error = tr("Ошибка при загрузке «%1»: %2")
                     .arg(task.localPath, m_lastReply.trimmed());
         return FileOutcome::Failed;
+    }
+    if (!staging.isEmpty()) {
+        if (host.canceled(task.jobId) || host.stopping())
+            return FileOutcome::Canceled;
+        if (!rename(staging, destination)) {
+            error = m_error;
+            return FileOutcome::Failed;
+        }
+        staging.clear();
     }
     if (m_hasMfmt && task.modified > 0) {
         const QString stamp = QDateTime::fromSecsSinceEpoch(task.modified, QTimeZone::UTC)
